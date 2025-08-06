@@ -28,8 +28,8 @@ RandomizedLinearAlgebra<FloatType>::randomMatrix(int rows, int cols, int seed) {
     } else {
         gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
     }
-    
-    std::uniform_real_distribution<FloatType> dist(0.0, 1.0);
+
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
     
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
@@ -39,5 +39,6 @@ RandomizedLinearAlgebra<FloatType>::randomMatrix(int rows, int cols, int seed) {
     
     return result;
 }
+
 
 } // namespace StochasticLA
