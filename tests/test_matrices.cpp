@@ -22,8 +22,12 @@ void testAlgorithms() {
               << RLA::realError(A, Q_power) << std::endl;
     std::cout << "Subspace Iteration error: " << std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_subspace) << std::endl;
-    std::cout << "Posterior error estimate: " << std::fixed << std::setprecision(4) 
+    std::cout << "Posterior error estimate (r=1): " << std::fixed << std::setprecision(4) 
+            << RLA::posteriorErrorEstimation(A, Q_power, 1, seed) << std::endl;
+    std::cout << "Posterior error estimate (r=5): " << std::fixed << std::setprecision(4) 
               << RLA::posteriorErrorEstimation(A, Q_power, 5, seed) << std::endl;
+    std::cout << "Posterior error estimate (r=10): " << std::fixed << std::setprecision(4) 
+            << RLA::posteriorErrorEstimation(A, Q_power, 10, seed) << std::endl;
 }
 
 int main() {

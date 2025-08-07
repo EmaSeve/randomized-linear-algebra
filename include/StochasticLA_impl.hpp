@@ -35,27 +35,6 @@ RandomizedLinearAlgebra<FloatType>::randomMatrix(int rows, int cols, int seed) {
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Vector 
-RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed) {
-    Vector result(size);
-    
-    std::mt19937 gen;
-    if (seed >= 0) {
-        gen.seed(seed);
-    } else {
-        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-    }
-
-    std::normal_distribution<FloatType> dist(0.0, 1.0);
-    
-    for (int i = 0; i < size; ++i) {
-        result(i) = dist(gen);
-    }
-    
-    return result;
-}
-
-template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q) {
     Matrix result(A.rows(), l);
@@ -106,7 +85,7 @@ RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, co
     
     const FloatType coeff = 10.0 * std::sqrt(2.0 / M_PI);
     FloatType max_norm = 0.0;
-    
+
     std::mt19937 gen;
     if (seed >= 0) {
         gen.seed(seed);
@@ -115,7 +94,11 @@ RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, co
     }
     
     for (int i = 0; i < r; ++i) {
-        Vector omega = randomGaussianVector(A.cols(), gen());
+        std::normal_distribution<FloatType> dist(0.0, 1.0);
+        Vector omega(A.cols());
+        for (int j = 0; j < A.cols(); ++j) {
+            omega(j) = dist(gen);
+        }
         
         Vector A_omega = A * omega;
         
