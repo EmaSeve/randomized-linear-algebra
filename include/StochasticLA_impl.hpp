@@ -136,15 +136,9 @@ template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Scalar 
 RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) {
     // Compute the real error: ||A - QQ*A|| = ||(I - QQ*)A||
-    // This is the Frobenius norm of the error matrix
     
-    // Compute QQ*A = Q * (Q^T * A)
-    Matrix QQt_A = Q * (Q.transpose() * A);
-    
-    // Compute the error matrix: A - QQ*A
+    Matrix QQt_A = Q * (Q.transpose() * A);  
     Matrix error_matrix = A - QQt_A;
-    
-    // Return the Frobenius norm
     return error_matrix.norm();
 }
 
