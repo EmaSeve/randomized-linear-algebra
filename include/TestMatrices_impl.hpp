@@ -15,7 +15,7 @@ namespace StochasticLA {
 
 template<typename FloatType>
 typename TestMatrices<FloatType>::Matrix 
-TestMatrices<FloatType>::randomMatrix(int rows, int cols, int seed) {
+TestMatrices<FloatType>::randomGaussianMatrix(int rows, int cols, int seed) {
     Matrix result(rows, cols);
     
     std::mt19937 gen;
@@ -97,8 +97,8 @@ TestMatrices<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scalar d
     int min_dim = std::min(rows, cols);
     
     // Create random orthogonal matrices U and V
-    Matrix U_full = randomMatrix(rows, rows, seed);
-    Matrix V_full = randomMatrix(cols, cols, seed + 1);
+    Matrix U_full = randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = randomGaussianMatrix(cols, cols, seed + 1);
     
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
@@ -132,13 +132,13 @@ TestMatrices<FloatType>::lowRankMatrixWithNoise(int rows, int cols, int rank, Sc
     }
     
     // Generate low-rank matrix
-    Matrix U = randomMatrix(rows, rank, seed);
-    Matrix V = randomMatrix(cols, rank, seed + 1);
+    Matrix U = randomGaussianMatrix(rows, rank, seed);
+    Matrix V = randomGaussianMatrix(cols, rank, seed + 1);
     Matrix A_lowrank = U * V.transpose();
     
     // Add noise if requested
     if (noise_level > 0.0) {
-        Matrix noise = randomMatrix(rows, cols, seed + 2);
+        Matrix noise = randomGaussianMatrix(rows, cols, seed + 2);
         return A_lowrank + noise_level * noise;
     }
     
@@ -164,8 +164,8 @@ TestMatrices<FloatType>::matrixWithSingularValues(int rows, int cols, const Vect
     }
     
     // Create random orthogonal matrices U and V
-    Matrix U_full = randomMatrix(rows, rows, seed);
-    Matrix V_full = randomMatrix(cols, cols, seed + 1);
+    Matrix U_full = randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = randomGaussianMatrix(cols, cols, seed + 1);
     
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();

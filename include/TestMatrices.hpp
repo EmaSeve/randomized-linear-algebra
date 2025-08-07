@@ -30,7 +30,7 @@ public:
      * @param seed Random seed (if negative, uses current time)
      * @return Random matrix
      */
-    static Matrix randomMatrix(int rows, int cols, int seed = -1);
+    static Matrix randomGaussianMatrix(int rows, int cols, int seed = -1);
     
     /**
      * @brief Generate a random Gaussian vector

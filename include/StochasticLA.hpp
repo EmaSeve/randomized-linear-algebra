@@ -29,7 +29,7 @@ public:
      * @param seed Random seed (if negative, uses current time)
      * @return Random matrix
      */
-    static Matrix randomMatrix(int rows, int cols, int seed = -1);
+    static Matrix randomGaussianMatrix(int rows, int cols, int seed = -1);
     
     /**
      * @brief Generate a standard Gaussian random vector
@@ -39,6 +39,14 @@ public:
      */
     static Vector randomGaussianVector(int size, int seed = -1);
     
+    /**
+     * @brief Algorithm 4.1: Randomize Range Finder
+     * @param A Input matrix
+     * @param l Target subspace dimension
+     * @return Orthonormal matrix Q approximating the range of A
+     */
+    static Matrix randomizedRangeFinder(const Matrix & A, int l);
+
     /**
      * @brief Algorithm 4.3: Randomized power iteration
      * @param A Input matrix

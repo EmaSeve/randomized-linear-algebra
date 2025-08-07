@@ -13,7 +13,7 @@ namespace StochasticLA {
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomMatrix(int rows, int cols, int seed) {
+RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int seed) {
     Matrix result(rows, cols);
     
     std::mt19937 gen;
@@ -34,11 +34,29 @@ RandomizedLinearAlgebra<FloatType>::randomMatrix(int rows, int cols, int seed) {
     return result;
 }
 
+/**
+ * 
+ */
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Matrix 
+RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int l){
+    Matrix result(A.cols(), l);
+    // step 1.
+    Matrix omega = randomGaussianMatrix(A.cols(), l);
+    // step 2.
+    Matrix Y = A * omega;
+    // step 3.
+    Eigen::HouseholderQR<Matrix> qr(Y);
+    result = qr.householderQ();
+
+    return result;
+}
+
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q) {
     Matrix result(A.rows(), l);
-    Matrix Omega = randomMatrix(A.cols(), l);
+    Matrix Omega = randomGaussianMatrix(A.cols(), l);
 
     Matrix Y = A * Omega;  // First application: A * Ω
     
@@ -59,7 +77,7 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q) {
-    Matrix Omega = randomMatrix(A.cols(), l);
+    Matrix Omega = randomGaussianMatrix(A.cols(), l);
     
     Matrix Y = A * Omega;
     Eigen::HouseholderQR<Matrix> qr0(Y);
