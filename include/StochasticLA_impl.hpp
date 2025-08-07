@@ -3,6 +3,7 @@
 #include <random>
 #include <chrono>
 #include <cmath>
+#include <Eigen/QR>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -70,7 +71,7 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
     // construct an m x l matrix W whose columns form an orthonormal basis for the range of Y
     // via the QR factorizatoin Y = Q * R
     Eigen::HouseholderQR<Matrix> qr(Y);
-    Matrix Q = qr.householderQ();
+    Matrix Q = Matrix(qr.householderQ());
     result = Q.leftCols(l); 
 
     return result;
@@ -83,16 +84,16 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
     
     Matrix Y = A * Omega;
     Eigen::HouseholderQR<Matrix> qr0(Y);
-    Matrix Q = qr0.householderQ().leftCols(l);
+    Matrix Q = Matrix(qr0.householderQ()).leftCols(l);
     
     for (int j = 1; j <= q; ++j) {
         Matrix Y_tilde = A.transpose() * Q;
         Eigen::HouseholderQR<Matrix> qr_tilde(Y_tilde);
-        Matrix Q_tilde = qr_tilde.householderQ().leftCols(l);
+        Matrix Q_tilde = Matrix(qr_tilde.householderQ()).leftCols(l);
         
         Y = A * Q_tilde;
         Eigen::HouseholderQR<Matrix> qr_j(Y);
-        Q = qr_j.householderQ().leftCols(l);
+        Q = Matrix(qr_j.householderQ()).leftCols(l);
     }
     
     return Q;
@@ -141,6 +142,5 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) 
     Matrix error_matrix = A - QQt_A;
     return error_matrix.norm();
 }
-
 
 } // namespace StochasticLA
