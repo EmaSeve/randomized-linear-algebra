@@ -50,7 +50,7 @@ int main() {
     try {
         testRandomMatrix();
         
-        std::cout << "All tests PASSED! ✅\n";
+        std::cout << "Tests PASSED!\n";
         std::cout << "Eigen integration is working correctly.\n";
         
     } catch (const std::exception& e) {
