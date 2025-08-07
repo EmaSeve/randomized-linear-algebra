@@ -28,16 +28,16 @@ void testMatrixTypes() {
     const int size = 50;
     const int seed = 42;
     
-    std::cout << "=== TEST MATRICI ===" << std::endl;
+    std::cout << "=== MATRIX TESTS ===" << std::endl;
     
-    // Matrici base
+    // Basic matrices
     auto dense = RLA::randomMatrix(size, size, seed);
     printSingularValues(dense, "Dense");
     
     auto sparse = TestMat::randomSparseMatrix(size, size, 0.1, seed);
     printSingularValues(sparse, "Sparse (10%)");
     
-    // Decadimento
+    // Decay
     auto exp_fast = TestMat::matrixWithExponentialDecay(size, size, 0.5, seed);
     printSingularValues(exp_fast, "Exp decay (fast)");
     
@@ -51,7 +51,7 @@ void testMatrixTypes() {
     auto lowrank_noisy = TestMat::lowRankMatrixWithNoise(size, size, 5, 0.1, seed);
     printSingularValues(lowrank_noisy, "Low-rank + noise");
     
-    // Strutturate
+    // Structured
     auto hankel = TestMat::hankelMatrix(size, seed);
     printSingularValues(hankel, "Hankel");
     
@@ -60,7 +60,7 @@ void testMatrixTypes() {
 }
 
 void testAlgorithms() {
-    std::cout << "\n=== TEST ALGORITMI ===" << std::endl;
+    std::cout << "\n=== ALGORITHM TESTS ===" << std::endl;
     
     const int m = 100, n = 80, l = 10, q = 2;
     const int seed = 123;
@@ -69,11 +69,11 @@ void testAlgorithms() {
     auto Q_power = RLA::randomizedPowerIteration(A, l, q);
     auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q);
     
-    std::cout << "Errore Power Iteration: " << std::fixed << std::setprecision(4) 
+    std::cout << "Power Iteration error: " << std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_power) << std::endl;
-    std::cout << "Errore Subspace Iteration: " << std::fixed << std::setprecision(4) 
+    std::cout << "Subspace Iteration error: " << std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_subspace) << std::endl;
-    std::cout << "Stima errore posteriori: " << std::fixed << std::setprecision(4) 
+    std::cout << "Posterior error estimate: " << std::fixed << std::setprecision(4) 
               << RLA::posteriorErrorEstimation(A, Q_power, 5, seed) << std::endl;
 }
 
@@ -82,7 +82,7 @@ int main() {
         testMatrixTypes();
         testAlgorithms();
     } catch (const std::exception& e) {
-        std::cerr << "Errore: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
     return 0;
