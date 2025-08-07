@@ -2,6 +2,11 @@
 
 #include <random>
 #include <chrono>
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace StochasticLA {
 
@@ -23,6 +28,27 @@ RandomizedLinearAlgebra<FloatType>::randomMatrix(int rows, int cols, int seed) {
         for (int j = 0; j < cols; ++j) {
             result(i, j) = dist(gen);
         }
+    }
+    
+    return result;
+}
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Vector 
+RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed) {
+    Vector result(size);
+    
+    std::mt19937 gen;
+    if (seed >= 0) {
+        gen.seed(seed);
+    } else {
+        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    }
+
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+    
+    for (int i = 0; i < size; ++i) {
+        result(i) = dist(gen);
     }
     
     return result;
@@ -70,6 +96,56 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
     }
     
     return Q;
+}
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Scalar 
+RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
+    // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
+    
+    const FloatType coeff = 10.0 * std::sqrt(2.0 / M_PI);
+    FloatType max_norm = 0.0;
+    
+    std::mt19937 gen;
+    if (seed >= 0) {
+        gen.seed(seed);
+    } else {
+        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    }
+    
+    for (int i = 0; i < r; ++i) {
+        Vector omega = randomGaussianVector(A.cols(), gen());
+        
+        Vector A_omega = A * omega;
+        
+        Vector QQt_A_omega = Q * (Q.transpose() * A_omega);
+        
+        Vector residual = A_omega - QQt_A_omega;
+        
+        FloatType norm = residual.norm();
+        
+        if (norm > max_norm) {
+            max_norm = norm;
+        }
+    }
+    
+    return coeff * max_norm;
+}
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Scalar 
+RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) {
+    // Compute the real error: ||A - QQ*A|| = ||(I - QQ*)A||
+    // This is the Frobenius norm of the error matrix
+    
+    // Compute QQ*A = Q * (Q^T * A)
+    Matrix QQt_A = Q * (Q.transpose() * A);
+    
+    // Compute the error matrix: A - QQ*A
+    Matrix error_matrix = A - QQt_A;
+    
+    // Return the Frobenius norm
+    return error_matrix.norm();
 }
 
 
