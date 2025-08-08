@@ -17,11 +17,18 @@ void testAlgorithms() {
     auto A = TestMat::matrixWithExponentialDecay(m, n, 0.3, seed);
     auto Q_power = RLA::randomizedPowerIteration(A, l, q);
     auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q);
+
+    auto Q_range = RLA::randomizedRangeFinder(A, l);
+
+    std::cout<< "Dimension of Q_range: "<<Q_range.rows()<< " x "<<Q_range.cols()<<std::endl;
+    
     
     std::cout << "Power Iteration error: " << std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_power) << std::endl;
     std::cout << "Subspace Iteration error: " << std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_subspace) << std::endl;
+    std::cout<< "Range Finder error: "<< std::fixed << std::setprecision(4) 
+              << RLA::realError(A, Q_range) << std::endl;
     std::cout << "Posterior error estimate (r=1): " << std::fixed << std::setprecision(4) 
             << RLA::posteriorErrorEstimation(A, Q_power, 1, seed) << std::endl;
     std::cout << "Posterior error estimate (r=5): " << std::fixed << std::setprecision(4) 

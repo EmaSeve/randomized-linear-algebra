@@ -40,16 +40,15 @@ RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int l){
-    Matrix result(A.cols(), l);
     // step 1.
     Matrix omega = randomGaussianMatrix(A.cols(), l);
     // step 2.
     Matrix Y = A * omega;
     // step 3.
     Eigen::HouseholderQR<Matrix> qr(Y);
-    result = qr.householderQ();
+    Matrix Q = qr.householderQ() * Matrix::Identity(Y.rows(), l);
 
-    return result;
+    return Q;
 }
 
 template<typename FloatType>
