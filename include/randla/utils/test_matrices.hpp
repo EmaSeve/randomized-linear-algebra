@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <type_traits>
 
-namespace randla {
+namespace randla::utils {
 
 /**
  * @brief Utility class for generating test matrices with specific properties
@@ -115,7 +115,7 @@ using TestMatricesF = TestMatrices<float>;
 using TestMatricesD = TestMatrices<double>;
 using TestMatricesLD = TestMatrices<long double>;
 
-} // namespace randla
+} // namespace randla::utils
 
 // Include implementation
-#include "TestMatrices_impl.hpp"
+#include "test_matrices_impl.hpp"

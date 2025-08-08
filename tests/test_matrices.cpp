@@ -1,10 +1,11 @@
 #include <iostream>
 #include <iomanip>
 #include <Eigen/SVD>
-#include "../include/RandomizedLinearAlgebra.hpp"
-#include "../include/TestMatrices.hpp"
+#include "../include/randla/algorithms/randomized_linear_algebra.hpp"
+#include "../include/randla/utils/test_matrices.hpp"
 
-using namespace randla;
+using namespace randla::algorithms;
+using namespace randla::utils;
 using RLA = RandomizedLinearAlgebraD;
 using TestMat = TestMatricesD;
 

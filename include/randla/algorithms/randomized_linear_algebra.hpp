@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <type_traits>
 
-namespace randla {
+namespace randla::algorithms {
 
 /**
  * @brief Main class implementing randomized linear algebra algorithms
@@ -100,7 +100,7 @@ using RandomizedLinearAlgebraF = RandomizedLinearAlgebra<float>;
 using RandomizedLinearAlgebraD = RandomizedLinearAlgebra<double>;
 using RandomizedLinearAlgebraLD = RandomizedLinearAlgebra<long double>;
 
-} // namespace randla
+} // namespace randla::algorithms
 
 // Include implementation
-#include "RandomizedLinearAlgebra_impl.hpp"
+#include "randomized_linear_algebra_impl.hpp"

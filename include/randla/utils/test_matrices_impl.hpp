@@ -6,12 +6,13 @@
 #include <stdexcept>
 #include <string>
 #include <Eigen/QR>
+#include "../algorithms/randomized_linear_algebra.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace randla {
+namespace randla::utils {
 
 template<typename FloatType>
 typename TestMatrices<FloatType>::Vector 
@@ -75,8 +76,8 @@ TestMatrices<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scalar d
     int effective_rank = (rank <= 0) ? min_dim : std::min(rank, min_dim);
     
     // Create random orthogonal matrices U and V
-    Matrix U_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
-    Matrix V_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
+    Matrix U_full = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
     
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
@@ -111,13 +112,13 @@ TestMatrices<FloatType>::lowRankMatrixWithNoise(int rows, int cols, int rank, Sc
     }
     
     // Generate low-rank matrix
-    Matrix U = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rank, seed);
-    Matrix V = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, rank, seed + 1);
+    Matrix U = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rank, seed);
+    Matrix V = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, rank, seed + 1);
     Matrix A_lowrank = U * V.transpose();
     
     // Add noise if requested
     if (noise_level > 0.0) {
-        Matrix noise = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, cols, seed + 2);
+        Matrix noise = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, cols, seed + 2);
         return A_lowrank + noise_level * noise;
     }
     
@@ -143,8 +144,8 @@ TestMatrices<FloatType>::matrixWithSingularValues(int rows, int cols, const Vect
     }
     
     // Create random orthogonal matrices U and V
-    Matrix U_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
-    Matrix V_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
+    Matrix U_full = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
     
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
@@ -237,4 +238,4 @@ TestMatrices<FloatType>::tridiagonalMatrix(int size, Scalar main_diag_value, Sca
     return result;
 }
 
-} // namespace randla
+} // namespace randla::utils
