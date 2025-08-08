@@ -46,9 +46,10 @@ RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int 
     Matrix Y = A * omega;
     // step 3.
     Eigen::HouseholderQR<Matrix> qr(Y);
-    Matrix Q = qr.householderQ() * Matrix::Identity(Y.rows(), l);
+    Matrix thinQ = Matrix::Identity(Y.rows(), l);
+    thinQ = qr.householderQ() * thinQ;
 
-    return Q;
+    return thinQ;
 }
 
 template<typename FloatType>
@@ -64,9 +65,10 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
     }
     
     Eigen::HouseholderQR<Matrix> qr(Y);
-    Matrix Q = qr.householderQ() * Matrix::Identity(Y.rows(), l);
+    Matrix thinQ = Matrix::Identity(Y.rows(), l);
+    thinQ = qr.householderQ() * thinQ;
 
-    return Q;
+    return thinQ;
 }
 
 template<typename FloatType>
@@ -76,19 +78,21 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
     
     Matrix Y = A * Omega;
     Eigen::HouseholderQR<Matrix> qr0(Y);
-    Matrix Q = qr0.householderQ() * Matrix::Identity(Y.rows(), l);
+    Matrix thinQ = Matrix::Identity(Y.rows(), l);
+    thinQ = qr0.householderQ() * thinQ;
     
     for (int j = 1; j <= q; ++j) {
-        Matrix Y_tilde = A.transpose() * Q;
+        Matrix Y_tilde = A.transpose() * thinQ;
         Eigen::HouseholderQR<Matrix> qr_tilde(Y_tilde);
-        Matrix Q_tilde = qr_tilde.householderQ() * Matrix::Identity(Y_tilde.rows(), l);
+        Matrix thinQ_tilde = Matrix::Identity(Y_tilde.rows(), l);
+        thinQ_tilde = qr_tilde.householderQ() * thinQ_tilde;
         
-        Y = A * Q_tilde;
+        Y = A * thinQ_tilde;
         Eigen::HouseholderQR<Matrix> qr_j(Y);
-        Q = qr_j.householderQ() * Matrix::Identity(Y.rows(), l);
+        thinQ = qr_j.householderQ() * thinQ;  // Riusa thinQ
     }
     
-    return Q;
+    return thinQ;
 }
 
 template<typename FloatType>
