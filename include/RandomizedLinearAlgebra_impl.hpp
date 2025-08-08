@@ -34,6 +34,27 @@ RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int
     return result;
 }
 
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Vector 
+RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed) {
+    Vector result(size);
+    
+    std::mt19937 gen;
+    if (seed >= 0) {
+        gen.seed(seed);
+    } else {
+        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    }
+
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+    
+    for (int i = 0; i < size; ++i) {
+        result(i) = dist(gen);
+    }
+    
+    return result;
+}
+
 /**
  * 
  */
@@ -50,6 +71,59 @@ RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int 
     thinQ = qr.householderQ() * thinQ;
 
     return thinQ;
+}
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Matrix
+RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double tol, int r){
+    
+    const size_t rows = A.rows();
+    const size_t cols = A.cols();
+
+    // draw 'r' standard gaussian vector: Matrix omega
+    Matrix omega = randomGaussianMatrix(cols, r);
+    // compute the vector y_i: Matrix Y
+    Matrix Y(rows, r);
+    Y = A * omega;
+
+    int iteration = -1;
+
+    // start with empty Q
+    Matrix Q(rows, 0);
+
+    const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
+    size_t index;
+
+    while(Y.colwise().norm().maxCoeff() >  threshold){
+        iteration++;
+        index = iteration % r;
+
+        Vector y_i = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * Y.col(index);
+
+        // normalize and compute the new column q_i
+        const double norm = y_i.norm();
+        if(norm > 0) y_i.normalize();
+
+        // add new column to Q
+        Q.conservativeResize(Eigen::NoChange, Q.cols() + 1);
+        Q.col(Q.cols() - 1) = y_i;
+        const auto q_i = Q.col(Q.cols() - 1); 
+
+        // draw standard gaussian vector w_i 
+        Vector w_i = randomGaussianVector(cols);
+        
+        // replace the vector y_j with y_j+r 
+        Y.col(index) = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * (A * w_i);
+
+        // update all the other vector except the new one
+        for(size_t j = 0; j < r; j++){
+            if(j == index) continue;
+            // overwrite y_j = y_j - q_it * <q_it, y_j>
+            Y.col(j) -= q_i * q_i.dot(Y.col(j));  
+        }
+    }
+
+    return Q;
 }
 
 template<typename FloatType>

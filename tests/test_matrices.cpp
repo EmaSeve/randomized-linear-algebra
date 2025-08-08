@@ -19,9 +19,9 @@ void testAlgorithms() {
     auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q);
 
     auto Q_range = RLA::randomizedRangeFinder(A, l);
+    auto Q_adaptiveRange = RLA::adaptiveRangeFinder(A, 0.5, 10);
 
-    std::cout<< "Dimension of Q_range: "<<Q_range.rows()<< " x "<<Q_range.cols()<<std::endl;
-    
+    std::cout<< "Dimension of Q_Adaptive range: "<<Q_range.rows()<< " x "<<Q_range.cols()<<std::endl;
     
     std::cout << "Power Iteration error: " << std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_power) << std::endl;
@@ -29,6 +29,9 @@ void testAlgorithms() {
               << RLA::realError(A, Q_subspace) << std::endl;
     std::cout<< "Range Finder error: "<< std::fixed << std::setprecision(4) 
               << RLA::realError(A, Q_range) << std::endl;
+    std::cout<< "Adaptive Range Finder error: "<< std::fixed << std::setprecision(4) 
+              << RLA::realError(A, Q_adaptiveRange) << std::endl;
+                       
     std::cout << "Posterior error estimate (r=1): " << std::fixed << std::setprecision(4) 
             << RLA::posteriorErrorEstimation(A, Q_power, 1, seed) << std::endl;
     std::cout << "Posterior error estimate (r=5): " << std::fixed << std::setprecision(4) 

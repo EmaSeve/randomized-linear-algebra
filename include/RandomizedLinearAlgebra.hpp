@@ -40,12 +40,23 @@ public:
     static Vector randomGaussianVector(int size, int seed = -1);
     
     /**
-     * @brief Algorithm 4.1: Randomize Range Finder
+     * @brief   Algorithm 4.1: Randomize Range Finder
      * @param A Input matrix
      * @param l Target subspace dimension
-     * @return Orthonormal matrix Q approximating the range of A
+     * @return  Orthonormal matrix Q approximating the range of A
      */
     static Matrix randomizedRangeFinder(const Matrix & A, int l);
+
+    /**
+     * @brief     Algorithm 4.2: Adaptive Range Finder
+     * @param A   Input matrix
+     * @param tol Error tolerance 
+     * @param r   Number of consecutive vectors q_i whose norms
+     *            must be below the threshold τ = tol / (10 * sqrt(2/π)) before terminating.
+     *            (We stop once we observe r consecutive such vectors)
+     * @return    Orthonormal matrix Q approximating the range of A
+     * */
+    static Matrix adaptiveRangeFinder(const Matrix & A, double tol, int r);
 
     /**
      * @brief Algorithm 4.3: Randomized power iteration
