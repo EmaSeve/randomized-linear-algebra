@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <type_traits>
 
-namespace StochasticLA {
+namespace randla {
 
 /**
  * @brief Main class implementing randomized linear algebra algorithms
@@ -89,7 +89,7 @@ using RandomizedLinearAlgebraF = RandomizedLinearAlgebra<float>;
 using RandomizedLinearAlgebraD = RandomizedLinearAlgebra<double>;
 using RandomizedLinearAlgebraLD = RandomizedLinearAlgebra<long double>;
 
-} // namespace StochasticLA
+} // namespace randla
 
 // Include implementation
 #include "StochasticLA_impl.hpp"

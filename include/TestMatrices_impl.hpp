@@ -11,7 +11,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace StochasticLA {
+namespace randla {
 
 template<typename FloatType>
 typename TestMatrices<FloatType>::Vector 
@@ -235,4 +235,4 @@ TestMatrices<FloatType>::tridiagonalMatrix(int size, Scalar main_diag_value, Sca
     return result;
 }
 
-} // namespace StochasticLA
+} // namespace randla

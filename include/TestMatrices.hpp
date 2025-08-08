@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <type_traits>
 
-namespace StochasticLA {
+namespace randla {
 
 /**
  * @brief Utility class for generating test matrices with specific properties
@@ -114,7 +114,7 @@ using TestMatricesF = TestMatrices<float>;
 using TestMatricesD = TestMatrices<double>;
 using TestMatricesLD = TestMatrices<long double>;
 
-} // namespace StochasticLA
+} // namespace randla
 
 // Include implementation
 #include "TestMatrices_impl.hpp"

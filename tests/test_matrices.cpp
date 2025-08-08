@@ -4,7 +4,7 @@
 #include "../include/StochasticLA.hpp"
 #include "../include/TestMatrices.hpp"
 
-using namespace StochasticLA;
+using namespace randla;
 using RLA = RandomizedLinearAlgebraD;
 using TestMat = TestMatricesD;
 

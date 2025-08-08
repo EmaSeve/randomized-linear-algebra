@@ -9,7 +9,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace StochasticLA {
+namespace randla {
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
@@ -144,4 +144,4 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) 
     return error_matrix.norm();
 }
 
-} // namespace StochasticLA
+} // namespace randla
