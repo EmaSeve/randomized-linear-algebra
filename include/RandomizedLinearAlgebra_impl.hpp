@@ -89,7 +89,8 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
         
         Y = A * thinQ_tilde;
         Eigen::HouseholderQR<Matrix> qr_j(Y);
-        thinQ = qr_j.householderQ() * thinQ;  // Riusa thinQ
+        Matrix fresh_identity = Matrix::Identity(Y.rows(), l);
+        thinQ = qr_j.householderQ() * fresh_identity;
     }
     
     return thinQ;
