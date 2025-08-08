@@ -13,7 +13,7 @@ int main() {
     const int m = 1000, n = 800, l = 15, rank = 100, seed = 42;
     
     // Matrix with exponential decay
-    auto A_decay = TestMat::matrixWithExponentialDecay(m, n, 0.25, rank, seed);
+    auto A_decay = TestMat::matrixWithExponentialDecay(m, n, 0.1, rank, seed);
     
     std::cout << "\nEXPONENTIAL DECAY:" << std::endl;
     auto Q1 = RLA::randomizedRangeFinder(A_decay, l);
