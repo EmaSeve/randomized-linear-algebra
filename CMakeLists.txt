@@ -29,3 +29,7 @@ enable_testing()
 add_executable(test_matrices tests/test_matrices.cpp)
 target_link_libraries(test_matrices StochasticLA)
 add_test(NAME MatricesTest COMMAND test_matrices)
+
+add_executable(test_spectrum_comparison tests/test_spectrum_comparison.cpp)
+target_link_libraries(test_spectrum_comparison StochasticLA)
+add_test(NAME SpectrumComparisonTest COMMAND test_spectrum_comparison)
