@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <type_traits>
+#include "../types.hpp"
 
 namespace randla::utils {
 
@@ -14,14 +15,15 @@ namespace randla::utils {
  * structured matrices.
  */
 template<typename FloatType = double>
-class TestMatrices {
+class TestMatrices : public randla::Types<FloatType> {
     static_assert(std::is_floating_point_v<FloatType>, 
                   "FloatType must be a floating point type");
 
 public:
-    using Scalar = FloatType;
-    using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
-    using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+    // Inherit type aliases from base class
+    using typename randla::Types<FloatType>::Scalar;
+    using typename randla::Types<FloatType>::Matrix;
+    using typename randla::Types<FloatType>::Vector;
 
     /**
      * @brief Generate a random matrix with standard Gaussian entries
