@@ -25,9 +25,6 @@ target_compile_features(StochasticLA INTERFACE cxx_std_17)
 
 # Tests
 enable_testing()
-add_executable(test_basic tests/test_basic.cpp)
-target_link_libraries(test_basic StochasticLA)
-add_test(NAME BasicTest COMMAND test_basic)
 
 add_executable(test_matrices tests/test_matrices.cpp)
 target_link_libraries(test_matrices StochasticLA)

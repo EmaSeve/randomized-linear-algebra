@@ -14,29 +14,6 @@
 namespace StochasticLA {
 
 template<typename FloatType>
-typename TestMatrices<FloatType>::Matrix 
-TestMatrices<FloatType>::randomGaussianMatrix(int rows, int cols, int seed) {
-    Matrix result(rows, cols);
-    
-    std::mt19937 gen;
-    if (seed >= 0) {
-        gen.seed(seed);
-    } else {
-        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-    }
-
-    std::normal_distribution<FloatType> dist(0.0, 1.0);
-    
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            result(i, j) = dist(gen);
-        }
-    }
-    
-    return result;
-}
-
-template<typename FloatType>
 typename TestMatrices<FloatType>::Vector 
 TestMatrices<FloatType>::randomGaussianVector(int size, int seed) {
     Vector result(size);
@@ -97,8 +74,8 @@ TestMatrices<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scalar d
     int min_dim = std::min(rows, cols);
     
     // Create random orthogonal matrices U and V
-    Matrix U_full = randomGaussianMatrix(rows, rows, seed);
-    Matrix V_full = randomGaussianMatrix(cols, cols, seed + 1);
+    Matrix U_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
     
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
@@ -132,13 +109,13 @@ TestMatrices<FloatType>::lowRankMatrixWithNoise(int rows, int cols, int rank, Sc
     }
     
     // Generate low-rank matrix
-    Matrix U = randomGaussianMatrix(rows, rank, seed);
-    Matrix V = randomGaussianMatrix(cols, rank, seed + 1);
+    Matrix U = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rank, seed);
+    Matrix V = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, rank, seed + 1);
     Matrix A_lowrank = U * V.transpose();
     
     // Add noise if requested
     if (noise_level > 0.0) {
-        Matrix noise = randomGaussianMatrix(rows, cols, seed + 2);
+        Matrix noise = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, cols, seed + 2);
         return A_lowrank + noise_level * noise;
     }
     
@@ -164,8 +141,8 @@ TestMatrices<FloatType>::matrixWithSingularValues(int rows, int cols, const Vect
     }
     
     // Create random orthogonal matrices U and V
-    Matrix U_full = randomGaussianMatrix(rows, rows, seed);
-    Matrix V_full = randomGaussianMatrix(cols, cols, seed + 1);
+    Matrix U_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
     
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
