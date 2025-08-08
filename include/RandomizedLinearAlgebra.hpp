@@ -92,4 +92,4 @@ using RandomizedLinearAlgebraLD = RandomizedLinearAlgebra<long double>;
 } // namespace randla
 
 // Include implementation
-#include "StochasticLA_impl.hpp"
+#include "RandomizedLinearAlgebra_impl.hpp"

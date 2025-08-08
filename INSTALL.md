@@ -50,8 +50,8 @@ ctest --output-on-failure
 ## Usage
 
 ```cpp
-#include "StochasticLA.hpp"
-using namespace StochasticLA;
+#include "RandomizedLinearAlgebra.hpp"
+using namespace randla;
 
 // Use double precision (default)
 using RLA = RandomizedLinearAlgebraD;
@@ -78,8 +78,8 @@ using RLALD = RandomizedLinearAlgebraLD; // long double
 
 ```
 ├── include/
-│   ├── StochasticLA.hpp      # Main header file
-│   └── StochasticLA_impl.hpp # Implementation
+│   ├── RandomizedLinearAlgebra.hpp      # Main header file
+│   └── RandomizedLinearAlgebra_impl.hpp # Implementation
 ├── src/
 │   └── CMakeLists.txt        # Library build configuration
 ├── tests/

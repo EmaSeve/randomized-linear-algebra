@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <Eigen/SVD>
-#include "../include/StochasticLA.hpp"
+#include "../include/RandomizedLinearAlgebra.hpp"
 #include "../include/TestMatrices.hpp"
 
 using namespace randla;
