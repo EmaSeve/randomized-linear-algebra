@@ -41,6 +41,11 @@ public:
      */
     static Vector randomGaussianVector(int size, int seed = -1);
     
+
+    // Stage A:
+    // This section outlines algorithms for constructing a subspace that captures most of the action
+    // of a matrix.
+
     /**
      * @brief   Algorithm 4.1: Randomize Range Finder
      * @param A Input matrix
@@ -95,6 +100,27 @@ public:
      * @return Exact approximation error
      */
     static Scalar realError(const Matrix& A, const Matrix& Q);
+
+
+    // Stage B: 
+    // This section describes methods for approximating standard factorizations of 
+    // A using the information in the basis Q.
+    
+    struct DirectSVDResult {
+        Matrix U;
+        Vector S;
+        Matrix V;
+    };
+
+    /**
+     * @brief Computes an aproximate factorization A ≈ U S V^*
+     * @param A
+     * @param Q
+     * @return Returns the object containing the three matrices
+     */
+    static DirectSVDResult directSVD(const Matrix & A, const Matrix & Q, double tol);
+
+
 };
 
 // Type aliases for convenience

@@ -4,6 +4,8 @@
 #include <chrono>
 #include <cmath>
 #include <Eigen/QR>
+#include <Eigen/SVD> 
+#include <stdexcept>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -217,5 +219,34 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) 
     Matrix error_matrix = A - QQt_A;
     return error_matrix.norm();
 }
+
+
+
+// Stage B:
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::DirectSVDResult 
+RandomizedLinearAlgebra<FloatType>::directSVD(const Matrix & A, const Matrix & Q, double tol){
+
+    double error = realError(A, Q);
+    if(error > tol) throw std::runtime_error("Error, directSVD: ||A - QQ*A|| > tol"); 
+
+    Matrix B = Q.transpose() * A;
+
+    // compute SVD on B
+    Eigen::JacobiSVD<Matrix> svd(B, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+    Matrix U_tilde = svd.matrixU();        
+    Vector S = svd.singularValues();        
+    Matrix V = svd.matrixV();          
+
+    // Step 3: 
+    Matrix U = Q * U_tilde;
+
+    return DirectSVDResult{std::move(U), std::move(S), std::move(V)};
+}
+
+
+
 
 } // namespace randla::algorithms
