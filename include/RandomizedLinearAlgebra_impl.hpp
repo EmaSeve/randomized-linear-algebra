@@ -54,7 +54,6 @@ RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q) {
-    Matrix result(A.rows(), l);
     Matrix Omega = randomGaussianMatrix(A.cols(), l);
 
     Matrix Y = A * Omega;  // First application: A * Ω
@@ -64,13 +63,10 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
         Y = A * Y;              // Apply A
     }
     
-    // construct an m x l matrix W whose columns form an orthonormal basis for the range of Y
-    // via the QR factorizatoin Y = Q * R
     Eigen::HouseholderQR<Matrix> qr(Y);
-    Matrix Q = Matrix(qr.householderQ());
-    result = Q.leftCols(l); 
+    Matrix Q = qr.householderQ() * Matrix::Identity(Y.rows(), l);
 
-    return result;
+    return Q;
 }
 
 template<typename FloatType>
@@ -80,16 +76,16 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
     
     Matrix Y = A * Omega;
     Eigen::HouseholderQR<Matrix> qr0(Y);
-    Matrix Q = Matrix(qr0.householderQ()).leftCols(l);
+    Matrix Q = qr0.householderQ() * Matrix::Identity(Y.rows(), l);
     
     for (int j = 1; j <= q; ++j) {
         Matrix Y_tilde = A.transpose() * Q;
         Eigen::HouseholderQR<Matrix> qr_tilde(Y_tilde);
-        Matrix Q_tilde = Matrix(qr_tilde.householderQ()).leftCols(l);
+        Matrix Q_tilde = qr_tilde.householderQ() * Matrix::Identity(Y_tilde.rows(), l);
         
         Y = A * Q_tilde;
         Eigen::HouseholderQR<Matrix> qr_j(Y);
-        Q = Matrix(qr_j.householderQ()).leftCols(l);
+        Q = qr_j.householderQ() * Matrix::Identity(Y.rows(), l);
     }
     
     return Q;
