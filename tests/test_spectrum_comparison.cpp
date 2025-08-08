@@ -1,6 +1,5 @@
 #include <iostream>
 #include <iomanip>
-#include <Eigen/SVD>
 #include "../include/RandomizedLinearAlgebra.hpp"
 #include "../include/TestMatrices.hpp"
 
@@ -8,48 +7,41 @@ using namespace randla;
 using RLA = RandomizedLinearAlgebraD;
 using TestMat = TestMatricesD;
 
-void testAlgorithms(const RLA::Matrix& A, const std::string& name, int l) {
-    std::cout << "\n" << name << std::endl;
-    
-    auto Q1 = RLA::randomizedRangeFinder(A, l);           
-    auto Q2 = RLA::randomizedPowerIteration(A, l, 2);     
-    auto Q3 = RLA::randomizedSubspaceIteration(A, l, 2);  
-    
-    double err1 = RLA::realError(A, Q1);
-    double err2 = RLA::realError(A, Q2);
-    double err3 = RLA::realError(A, Q3);
-    
-    std::cout << std::fixed << std::setprecision(4);
-    std::cout << "Alg 4.1: " << err1 << "  ";
-    std::cout << "Alg 4.3: " << err2 << "  ";
-    std::cout << "Alg 4.4: " << err3 << std::endl;
-    
-    if (err1 > 1e-10) {
-        std::cout << "Improvement vs 4.1: ";
-        std::cout << "4.3=" << std::setprecision(1) << err1/err2 << "x  ";
-        std::cout << "4.4=" << err1/err3 << "x" << std::endl;
-    }
-}
-
 int main() {
-    std::cout << "Testing algorithms on matrices with different singular spectra" << std::endl;
-    std::cout << "Theory: Alg 4.1 works well with decay, poorly with flat spectrum" << std::endl;
+    std::cout << "Testing algorithms on different singular spectra" << std::endl;
     
-    const int m = 200, n = 150, l = 50;
+    const int m = 1000, n = 800, l = 20;
     
     // Matrix with exponential decay
     auto A_decay = TestMat::matrixWithExponentialDecay(m, n, 0.1, 123);
-    testAlgorithms(A_decay, "Matrix with EXPONENTIAL DECAY", l);
     
-    // Matrix with flat spectrum
-    RLA::Vector sigma_flat = RLA::Vector::Zero(std::min(m, n));
-    for (int i = 0; i < 80; ++i) {
-        sigma_flat(i) = 1.0;
-    }
-    auto A_flat = TestMat::matrixWithSingularValues(m, n, sigma_flat, 123);
-    testAlgorithms(A_flat, "Matrix with FLAT SPECTRUM", l);
+    std::cout << "\nEXPONENTIAL DECAY:" << std::endl;
+    auto Q1 = RLA::randomizedRangeFinder(A_decay, l);
+    auto Q2 = RLA::randomizedPowerIteration(A_decay, l, 3);
+    auto Q3 = RLA::randomizedSubspaceIteration(A_decay, l, 3);
     
-    std::cout << "\nExpected: 4.3 and 4.4 should improve much more on flat spectrum" << std::endl;
+    double err1 = RLA::realError(A_decay, Q1);
+    double err2 = RLA::realError(A_decay, Q2);
+    double err3 = RLA::realError(A_decay, Q3);
+    
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << "4.1: " << err1 << "  4.3: " << err2 << "  4.4: " << err3 << std::endl;
+    
+    // Matrix with very slow decay (almost flat)
+    auto A_flat = TestMat::matrixWithExponentialDecay(m, n, 0.001, 123);
+    
+    std::cout << "\nFLAT SPECTRUM:" << std::endl;
+    Q1 = RLA::randomizedRangeFinder(A_flat, l);
+    Q2 = RLA::randomizedPowerIteration(A_flat, l, 3);
+    Q3 = RLA::randomizedSubspaceIteration(A_flat, l, 3);
+    
+    err1 = RLA::realError(A_flat, Q1);
+    err2 = RLA::realError(A_flat, Q2);
+    err3 = RLA::realError(A_flat, Q3);
+    
+    std::cout << "4.1: " << err1 << "  4.3: " << err2 << "  4.4: " << err3 << std::endl;
+    
+    std::cout << "\nExpected: 4.3 and 4.4 should be better on flat spectrum" << std::endl;
     
     return 0;
 }
