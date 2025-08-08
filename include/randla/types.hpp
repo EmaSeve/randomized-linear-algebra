@@ -14,9 +14,4 @@ struct Types {
     using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 };
 
-// Convenience aliases for common floating point types
-using TypesF = Types<float>;
-using TypesD = Types<double>;
-using TypesLD = Types<long double>;
-
 } // namespace randla
