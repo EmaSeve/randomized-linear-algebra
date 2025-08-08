@@ -66,12 +66,13 @@ TestMatrices<FloatType>::randomSparseMatrix(int rows, int cols, Scalar density, 
 
 template<typename FloatType>
 typename TestMatrices<FloatType>::Matrix 
-TestMatrices<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scalar decay_rate, int seed) {
+TestMatrices<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scalar decay_rate, int rank, int seed) {
     if (decay_rate < 0.0) {
         throw std::invalid_argument("Decay rate must be non-negative");
     }
     
     int min_dim = std::min(rows, cols);
+    int effective_rank = (rank <= 0) ? min_dim : std::min(rank, min_dim);
     
     // Create random orthogonal matrices U and V
     Matrix U_full = RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, rows, seed);
@@ -85,9 +86,10 @@ TestMatrices<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scalar d
     
     // Create diagonal matrix with exponentially decaying singular values
     Vector sigma = Vector::Zero(min_dim);
-    for (int i = 0; i < min_dim; ++i) {
+    for (int i = 0; i < effective_rank; ++i) {
         sigma(i) = std::exp(-decay_rate * i);
     }
+    // All other singular values remain 0 (rank deficient)
     
     // Construct A = U * Sigma * V^T
     Matrix S = Matrix::Zero(rows, cols);

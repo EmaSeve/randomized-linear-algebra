@@ -55,10 +55,11 @@ public:
      * @param rows Number of rows
      * @param cols Number of columns
      * @param decay_rate Exponential decay rate (larger values = faster decay)
+     * @param rank Effective rank of the matrix (if <= 0, uses min(rows,cols))
      * @param seed Random seed (if negative, uses current time)
      * @return Matrix with exponential singular value decay
      */
-    static Matrix matrixWithExponentialDecay(int rows, int cols, Scalar decay_rate, int seed = -1);
+    static Matrix matrixWithExponentialDecay(int rows, int cols, Scalar decay_rate, int rank = -1, int seed = -1);
     
     /**
      * @brief Generate low-rank matrix with additive noise: A = U * S * V^T + noise_level * N
