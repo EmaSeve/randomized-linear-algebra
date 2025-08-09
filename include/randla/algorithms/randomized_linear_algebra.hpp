@@ -23,6 +23,7 @@ public:
     using typename randla::Types<FloatType>::Scalar;
     using typename randla::Types<FloatType>::Matrix;
     using typename randla::Types<FloatType>::Vector;
+    using typename randla::Types<FloatType>::DirectSVDResult;
 
     /**
      * @brief Generate a random matrix with standard Gaussian entries
@@ -106,12 +107,6 @@ public:
     // This section describes methods for approximating standard factorizations of 
     // A using the information in the basis Q.
     
-    struct DirectSVDResult {
-        Matrix U;
-        Vector S;
-        Matrix V;
-    };
-
     /**
      * @brief Computes an aproximate factorization A ≈ U S V^*
      * @param A
