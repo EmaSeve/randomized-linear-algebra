@@ -13,7 +13,7 @@ int main() {
     using FloatType = double;
     using Matrix = Eigen::MatrixXd;
 
-    std::cout << "=== Adaptive Algorithms Test (Simplified) ===" << std::endl;
+    std::cout << "=== Adaptive Algorithms Test ===" << std::endl;
     std::cout << std::fixed << std::setprecision(6);
 
     // Parameters
@@ -22,21 +22,22 @@ int main() {
     const int rank = 10;          // exact rank
     const double tol = 1;         // broad tolerance
     const int r = 10;             // number of probes
+    const int seed = 42;          
 
     std::cout << "Parameters: " << rows << "x" << cols
               << ", rank=" << rank
               << ", tol=" << tol << ", r=" << r << std::endl;
 
-    using TM = randla::utils::MatrixGenerators<FloatType>;
+    using GM = randla::utils::MatrixGenerators<FloatType>;
 
     // Create vector of singular values: first k >0, rest = 0
-    TM::Vector sv = TM::Vector::Zero(std::min(rows, cols));
+    GM::Vector sv = GM::Vector::Zero(std::min(rows, cols));
     for (int i = 0; i < rank; ++i) {
         sv(i) = 1.0; // all equal to 1
     }
 
     // Matrix with exact rank k
-    Matrix A = TM::matrixWithSingularValues(rows, cols, sv, /*seed=*/42);
+    Matrix A = GM::matrixWithSingularValues(rows, cols, sv, seed);
 
     std::cout << "Norm of A: " << A.norm() << std::endl;
 
@@ -45,7 +46,7 @@ int main() {
     std::cout << "------------------------------" << std::endl;
     try {
         std::cout << "Starting adaptiveRangeFinder..." << std::endl;
-    Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r, /*seed=*/777);
+    Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r, seed);
         double error1 = RLA::realError(A, Q1);
 
         std::cout << "Success" << std::endl;
@@ -63,7 +64,7 @@ int main() {
         const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
         std::cout << "Internal threshold: " << threshold << std::endl;
 
-    Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2, /*seed=*/888);
+    Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2, seed);
         double error2 = RLA::realError(A, Q2);
 
         std::cout << "Success" << std::endl;
