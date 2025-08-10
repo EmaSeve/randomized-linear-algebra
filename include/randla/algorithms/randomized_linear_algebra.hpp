@@ -80,10 +80,10 @@ public:
      * @param A Input matrix
      * @param tol Error tolerance
      * @param r Number of consecutive vectors q_i whose norms
-     * @param max_iterations Maximum number of power iterations (safety limit)
+     * @param q Number of power iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix adaptivePowerIteration(const Matrix& A, double tol, int r, int max_iterations = 10);
+    static Matrix adaptivePowerIteration(const Matrix& A, double tol, int r, int q = 10);
     
     /**
      * @brief Algorithm 4.4: Randomized subspace iteration

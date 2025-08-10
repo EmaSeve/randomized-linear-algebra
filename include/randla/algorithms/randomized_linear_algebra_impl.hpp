@@ -145,14 +145,13 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int max_iterations) {
+RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int q) {
 
     const size_t rows = A.rows();
     const size_t cols = A.cols();
 
     // use the provided r parameter (window size for testing)
     const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
-    const int q = std::max(0, max_iterations); // # di passi power (vedi Alg. 4.3)
 
     auto apply_power = [&](const Vector& w) -> Vector {
         Vector y = A * w;                 // A w
