@@ -149,7 +149,7 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, int /*l*/, double tol, int r, int max_iterations) {
+RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int max_iterations) {
 
     const size_t rows = A.rows();
     const size_t cols = A.cols();
