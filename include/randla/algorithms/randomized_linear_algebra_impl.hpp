@@ -62,10 +62,11 @@ RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int 
     Matrix Y = A * omega;
     // step 3.
     Eigen::HouseholderQR<Matrix> qr(Y);
-    Matrix thinQ = Matrix::Identity(Y.rows(), l);
-    thinQ = qr.householderQ() * thinQ;
+    Matrix Q(Y.rows(), l);
+    Q.setIdentity();
+    qr.householderQ().applyThisOnTheLeft(Q);
 
-    return thinQ;
+    return Q;
 }
 
 template<typename FloatType>
@@ -94,7 +95,8 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
         iteration++;
         index = iteration % r;
 
-        Vector y_i = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * Y.col(index);
+        Vector y_i = Y.col(index);
+        y_i -= Q * (Q.transpose() * y_i);
 
         // normalize and compute the new column q_i
         const double norm = y_i.norm();
@@ -106,10 +108,12 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
         const auto q_i = Q.col(Q.cols() - 1); 
 
         // draw standard gaussian vector w_i 
-    Vector w_i = randomGaussianVector(cols, gen);
+        Vector w_i = randomGaussianVector(cols, gen);
         
         // replace the vector y_j with y_j+r 
-        Y.col(index) = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * (A * w_i);
+        Vector temp = A * w_i;                       
+        temp -= Q * (Q.transpose() * temp);          
+        Y.col(index) = temp;
 
         // update all the other vector except the new one
         for(size_t j = 0; j < r; j++){
