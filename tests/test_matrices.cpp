@@ -16,11 +16,11 @@ void testAlgorithms() {
     const int seed = 123;
     
     auto A = TestMat::matrixWithExponentialDecay(m, n, 0.3, seed);
-    auto Q_power = RLA::randomizedPowerIteration(A, l, q);
-    auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q);
+    auto Q_power = RLA::randomizedPowerIteration(A, l, q, seed+1);
+    auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q, seed+2);
 
-    auto Q_range = RLA::randomizedRangeFinder(A, l);
-    auto Q_adaptiveRange = RLA::adaptiveRangeFinder(A, 0.5, 10);
+    auto Q_range = RLA::randomizedRangeFinder(A, l, seed+3);
+    auto Q_adaptiveRange = RLA::adaptiveRangeFinder(A, 0.5, 10, seed+4);
 
     std::cout<< "Dimension of Q_Adaptive range: "<<Q_range.rows()<< " x "<<Q_range.cols()<<std::endl;
     

@@ -2,7 +2,8 @@
 
 #include <Eigen/Dense>
 #include <type_traits>
-#include "../types.hpp"
+#include <random>
+#include <randla/types.hpp>
 
 namespace randla::algorithms {
 
@@ -33,6 +34,14 @@ public:
      * @return Random matrix
      */
     static Matrix randomGaussianMatrix(int rows, int cols, int seed = -1);
+    /**
+     * @brief Generate a random matrix with standard Gaussian entries using an existing generator
+     * @param rows Number of rows
+     * @param cols Number of columns
+     * @param gen  Pseudo-random number engine (state is advanced)
+     * @return Random matrix
+     */
+    static Matrix randomGaussianMatrix(int rows, int cols, std::mt19937 & gen);
     
     /**
      * @brief Generate a standard Gaussian random vector
@@ -41,6 +50,13 @@ public:
      * @return Random vector
      */
     static Vector randomGaussianVector(int size, int seed = -1);
+    /**
+     * @brief Generate a standard Gaussian random vector using an existing generator
+     * @param size Vector size
+     * @param gen  Pseudo-random number engine (state is advanced)
+     * @return Random vector
+     */
+    static Vector randomGaussianVector(int size, std::mt19937 & gen);
     
 
     // Stage A:
@@ -53,7 +69,7 @@ public:
      * @param l Target subspace dimension
      * @return  Orthonormal matrix Q approximating the range of A
      */
-    static Matrix randomizedRangeFinder(const Matrix & A, int l);
+    static Matrix randomizedRangeFinder(const Matrix & A, int l, int seed = -1);
 
     /**
      * @brief     Algorithm 4.2: Adaptive Range Finder
@@ -64,7 +80,7 @@ public:
      *            (We stop once we observe r consecutive such vectors)
      * @return    Orthonormal matrix Q approximating the range of A
      * */
-    static Matrix adaptiveRangeFinder(const Matrix & A, double tol, int r);
+    static Matrix adaptiveRangeFinder(const Matrix & A, double tol, int r, int seed = -1);
 
     /**
      * @brief Algorithm 4.3: Randomized power iteration
@@ -73,7 +89,7 @@ public:
      * @param q Number of power iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix randomizedPowerIteration(const Matrix& A, int l, int q);
+    static Matrix randomizedPowerIteration(const Matrix& A, int l, int q, int seed = -1);
     
     /**
      * @brief Adaptive version of randomized power iteration
@@ -83,7 +99,7 @@ public:
      * @param q Number of power iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix adaptivePowerIteration(const Matrix& A, double tol, int r, int q = 10);
+    static Matrix adaptivePowerIteration(const Matrix& A, double tol, int r, int q = 10, int seed = -1);
     
     /**
      * @brief Algorithm 4.4: Randomized subspace iteration
@@ -92,7 +108,7 @@ public:
      * @param q Number of subspace iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix randomizedSubspaceIteration(const Matrix& A, int l, int q);
+    static Matrix randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed = -1);
     
     /**
      * @brief Posterior error estimation using Equation 4.3

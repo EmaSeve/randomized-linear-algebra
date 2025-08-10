@@ -11,56 +11,51 @@ namespace randla::algorithms {
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int seed) {
+RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, std::mt19937 & gen) {
     Matrix result(rows, cols);
-    
-    std::mt19937 gen;
-    if (seed >= 0) {
-        gen.seed(seed);
-    } else {
-        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-    }
-
     std::normal_distribution<FloatType> dist(0.0, 1.0);
-    
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             result(i, j) = dist(gen);
         }
     }
-    
+    return result;
+}
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Matrix 
+RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int seed){
+    std::mt19937 gen;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    return randomGaussianMatrix(rows, cols, gen);
+}
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Vector 
+RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, std::mt19937 & gen) {
+    Vector result(size);
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+    for (int i = 0; i < size; ++i) {
+        result(i) = dist(gen);
+    }
     return result;
 }
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Vector 
-RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed) {
-    Vector result(size);
-    
+RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed){
     std::mt19937 gen;
-    if (seed >= 0) {
-        gen.seed(seed);
-    } else {
-        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-    }
-
-    std::normal_distribution<FloatType> dist(0.0, 1.0);
-    
-    for (int i = 0; i < size; ++i) {
-        result(i) = dist(gen);
-    }
-    
-    return result;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    return randomGaussianVector(size, gen);
 }
 
-/**
- * 
- */
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int l){
-    // step 1.
-    Matrix omega = randomGaussianMatrix(A.cols(), l);
+RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int l, int seed){
+    std::mt19937 gen;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    // step 1: draw test matrix
+    Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
     // step 2.
     Matrix Y = A * omega;
     // step 3.
@@ -73,13 +68,15 @@ RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int 
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix
-RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double tol, int r){
+RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double tol, int r, int seed){
     
     const size_t rows = A.rows();
     const size_t cols = A.cols();
 
-    // draw 'r' standard gaussian vector: Matrix omega
-    Matrix omega = randomGaussianMatrix(cols, r);
+    std::mt19937 gen;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    // draw 'r' standard gaussian vectors: Matrix omega
+    Matrix omega = randomGaussianMatrix(cols, r, gen);
     // compute the vector y_i: Matrix Y
     Matrix Y(rows, r);
     Y = A * omega;
@@ -108,7 +105,7 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
         const auto q_i = Q.col(Q.cols() - 1); 
 
         // draw standard gaussian vector w_i 
-        Vector w_i = randomGaussianVector(cols);
+    Vector w_i = randomGaussianVector(cols, gen);
         
         // replace the vector y_j with y_j+r 
         Y.col(index) = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * (A * w_i);
@@ -126,8 +123,10 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q) {
-    Matrix Omega = randomGaussianMatrix(A.cols(), l);
+RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q, int seed) {
+    std::mt19937 gen;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
 
     Matrix Y = A * Omega;  // First application: A * Ω
     
@@ -145,7 +144,7 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int q) {
+RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int q, int seed) {
 
     const size_t rows = A.rows();
     const size_t cols = A.cols();
@@ -162,7 +161,9 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
         return y; // = (AA^*)^q A w
     };
 
-    Matrix Omega = randomGaussianMatrix(cols, r);
+    std::mt19937 gen;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    Matrix Omega = randomGaussianMatrix(cols, r, gen);
     Matrix Y(rows, r);
     for (int j = 0; j < r; ++j) {
         Y.col(j) = apply_power(Omega.col(j));
@@ -185,7 +186,7 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
         Q.col(Q.cols() - 1) = y_i;
         const auto q_i = Q.col(Q.cols() - 1);
 
-        Vector w_new = randomGaussianVector(cols);
+    Vector w_new = randomGaussianVector(cols, gen);
         Vector y_new = apply_power(w_new);
         Y.col(index) = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * y_new;
 
@@ -202,8 +203,10 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q) {
-    Matrix Omega = randomGaussianMatrix(A.cols(), l);
+RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed) {
+    std::mt19937 gen;
+    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
     
     Matrix Y = A * Omega;
     Eigen::HouseholderQR<Matrix> qr0(Y);
@@ -298,8 +301,4 @@ RandomizedLinearAlgebra<FloatType>::directSVD(const Matrix & A, const Matrix & Q
 
     return DirectSVDResult{std::move(U), std::move(S), std::move(V)};
 }
-
-
-
-
 } // namespace randla::algorithms

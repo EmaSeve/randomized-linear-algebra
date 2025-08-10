@@ -45,7 +45,7 @@ int main() {
     std::cout << "------------------------------" << std::endl;
     try {
         std::cout << "Starting adaptiveRangeFinder..." << std::endl;
-        Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r);
+    Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r, /*seed=*/777);
         double error1 = RLA::realError(A, Q1);
 
         std::cout << "Success" << std::endl;
@@ -63,7 +63,7 @@ int main() {
         const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
         std::cout << "Internal threshold: " << threshold << std::endl;
 
-        Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2);
+    Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2, /*seed=*/888);
         double error2 = RLA::realError(A, Q2);
 
         std::cout << "Success" << std::endl;

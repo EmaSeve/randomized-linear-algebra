@@ -17,9 +17,9 @@ int main() {
     auto A_decay = TestMat::matrixWithExponentialDecay(m, n, 0.1, rank, seed);
     
     std::cout << "\nEXPONENTIAL DECAY:" << std::endl;
-    auto Q1 = RLA::randomizedRangeFinder(A_decay, l);
-    auto Q2 = RLA::randomizedPowerIteration(A_decay, l, 3);
-    auto Q3 = RLA::randomizedSubspaceIteration(A_decay, l, 3);
+    auto Q1 = RLA::randomizedRangeFinder(A_decay, l, seed + 10);
+    auto Q2 = RLA::randomizedPowerIteration(A_decay, l, 3, seed + 11);
+    auto Q3 = RLA::randomizedSubspaceIteration(A_decay, l, 3, seed + 12);
     
     double err1 = RLA::realError(A_decay, Q1);
     double err2 = RLA::realError(A_decay, Q2);
@@ -46,9 +46,9 @@ int main() {
     auto A_flat = TestMat::matrixWithExponentialDecay(m, n, 0.01, rank, seed);
     
     std::cout << "\nFLAT SPECTRUM (rank 100):" << std::endl;
-    Q1 = RLA::randomizedRangeFinder(A_flat, l);
-    Q2 = RLA::randomizedPowerIteration(A_flat, l, 3);
-    Q3 = RLA::randomizedSubspaceIteration(A_flat, l, 3);
+    Q1 = RLA::randomizedRangeFinder(A_flat, l, seed + 13);
+    Q2 = RLA::randomizedPowerIteration(A_flat, l, 3, seed + 14);
+    Q3 = RLA::randomizedSubspaceIteration(A_flat, l, 3, seed + 15);
     
     err1 = RLA::realError(A_flat, Q1);
     err2 = RLA::realError(A_flat, Q2);
