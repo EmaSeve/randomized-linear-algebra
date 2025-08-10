@@ -9,6 +9,11 @@
 
 namespace randla::algorithms {
 
+inline std::mt19937 make_generator(int seed) {
+    if (seed >= 0) return std::mt19937(seed);
+    return std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
+}
+
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, std::mt19937 & gen) {
@@ -25,8 +30,7 @@ RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, std
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int seed){
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     return randomGaussianMatrix(rows, cols, gen);
 }
 
@@ -44,16 +48,14 @@ RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, std::mt19937 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Vector 
 RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed){
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     return randomGaussianVector(size, gen);
 }
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int l, int seed){
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     // step 1: draw test matrix
     Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
     // step 2.
@@ -73,8 +75,7 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
     const size_t rows = A.rows();
     const size_t cols = A.cols();
 
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     // draw 'r' standard gaussian vectors: Matrix omega
     Matrix omega = randomGaussianMatrix(cols, r, gen);
     // compute the vector y_i: Matrix Y
@@ -124,8 +125,7 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q, int seed) {
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
 
     Matrix Y = A * Omega;  // First application: A * Ω
@@ -161,8 +161,7 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
         return y; // = (AA^*)^q A w
     };
 
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(cols, r, gen);
     Matrix Y(rows, r);
     for (int j = 0; j < r; ++j) {
@@ -204,8 +203,7 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed) {
-    std::mt19937 gen;
-    if(seed >= 0) gen.seed(seed); else gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+    auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
     
     Matrix Y = A * Omega;
@@ -236,12 +234,7 @@ RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, co
     const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
     FloatType max_norm = 0.0;
 
-    std::mt19937 gen;
-    if (seed >= 0) {
-        gen.seed(seed);
-    } else {
-        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-    }
+    auto gen = make_generator(seed);
     
     for (int i = 0; i < r; ++i) {
         std::normal_distribution<FloatType> dist(0.0, 1.0);
