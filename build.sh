@@ -8,7 +8,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${YELLOW}Building StochasticLA library...${NC}"
+echo -e "${YELLOW}Building randomized-linear-algebra library...${NC}"
 
 # Create build directory if it doesn't exist
 if [ ! -d "build" ]; then

@@ -7,5 +7,5 @@
 
 #include <randla/types.hpp>
 #include <randla/algorithms/randomized_linear_algebra.hpp>
-#include <randla/utils/test_matrices.hpp>
+#include <randla/utils/matrix_generators.hpp>
 #include <randla/aliases.hpp>

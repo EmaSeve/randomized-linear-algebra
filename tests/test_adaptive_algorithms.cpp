@@ -6,7 +6,7 @@ using namespace randla::algorithms;
 using namespace randla::utils;
 
 using RLA     = randla::RandomizedLinearAlgebraD;
-using TestMat = randla::TestMatricesD;
+using TestMat = randla::MatrixGeneratorsD;
 
 
 int main() {
@@ -27,7 +27,7 @@ int main() {
               << ", rank=" << rank
               << ", tol=" << tol << ", r=" << r << std::endl;
 
-    using TM = randla::utils::TestMatrices<FloatType>;
+    using TM = randla::utils::MatrixGenerators<FloatType>;
 
     // Create vector of singular values: first k >0, rest = 0
     TM::Vector sv = TM::Vector::Zero(std::min(rows, cols));

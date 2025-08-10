@@ -6,7 +6,7 @@
 using namespace randla::algorithms;
 using namespace randla::utils;
 using RLA     = randla::RandomizedLinearAlgebraD;
-using TestMat = randla::TestMatricesD;
+using TestMat = randla::MatrixGeneratorsD;
 
 
 void testAlgorithms() {
