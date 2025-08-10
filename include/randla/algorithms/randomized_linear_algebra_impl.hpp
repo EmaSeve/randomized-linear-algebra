@@ -149,6 +149,64 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
+RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, int /*l*/, double tol, int r, int max_iterations) {
+
+    const size_t rows = A.rows();
+    const size_t cols = A.cols();
+
+    // use the provided r parameter (window size for testing)
+    const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
+    const int q = std::max(0, max_iterations); // # di passi power (vedi Alg. 4.3). :contentReference[oaicite:2]{index=2}
+
+    auto apply_power = [&](const Vector& w) -> Vector {
+        Vector y = A * w;                 // A w
+        for (int t = 0; t < q; ++t) {
+            y = A.transpose() * y;        // A^* y
+            y = A * y;                    // A y
+        }
+        return y; // = (AA^*)^q A w
+    };
+
+    Matrix Omega = randomGaussianMatrix(cols, r);
+    Matrix Y(rows, r);
+    for (int j = 0; j < r; ++j) {
+        Y.col(j) = apply_power(Omega.col(j));
+    }
+
+    Matrix Q(rows, 0);
+    int iteration = -1;
+    size_t index;
+
+    while (Y.colwise().norm().maxCoeff() > threshold) {
+        iteration++;
+        index = iteration % r;
+
+        Vector y_i = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * Y.col(index);
+
+        const double norm = y_i.norm();
+        if (norm > 0) y_i.normalize();
+
+        Q.conservativeResize(Eigen::NoChange, Q.cols() + 1);
+        Q.col(Q.cols() - 1) = y_i;
+        const auto q_i = Q.col(Q.cols() - 1);
+
+        Vector w_new = randomGaussianVector(cols);
+        Vector y_new = apply_power(w_new);
+        Y.col(index) = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * y_new;
+
+        for (size_t j = 0; j < r; ++j) {
+            if (j == index) continue;
+            Y.col(j) -= q_i * q_i.dot(Y.col(j));
+        }
+    }
+
+    return Q;
+}
+
+
+
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Matrix 
 RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q) {
     Matrix Omega = randomGaussianMatrix(A.cols(), l);
     
