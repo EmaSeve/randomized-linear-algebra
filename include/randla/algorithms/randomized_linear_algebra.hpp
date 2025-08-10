@@ -146,9 +146,5 @@ public:
 
 } // namespace randla::algorithms
 
-namespace randla::algorithms {
-using RandomizedLinearAlgebraD = RandomizedLinearAlgebra<double>;
-}
-
 // Include implementation
 #include "randomized_linear_algebra_impl.hpp"

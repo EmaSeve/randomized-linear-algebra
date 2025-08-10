@@ -26,6 +26,8 @@ target_compile_features(StochasticLA INTERFACE cxx_std_17)
 # Tests
 enable_testing()
 
+file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(test_matrices tests/test_matrices.cpp)
 target_link_libraries(test_matrices StochasticLA)
 add_test(NAME MatricesTest COMMAND test_matrices)

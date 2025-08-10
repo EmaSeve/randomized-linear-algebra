@@ -89,4 +89,23 @@ MatrixGenerators<FloatType>::matrixWithSingularValues(int rows, int cols, const 
     return U * S * V.transpose();
 }
 
+template<typename FloatType>
+typename MatrixGenerators<FloatType>::Matrix
+MatrixGenerators<FloatType>::lowRankPlusNoise(int rows, int cols, int rank, Scalar noise_level, int seed) {
+    if (noise_level < 0.0) {
+        throw std::invalid_argument("Noise level must be non-negative");
+    }
+    int min_dim = std::min(rows, cols);
+    Vector sv = Vector::Zero(min_dim);
+    for (int i = 0; i < std::min(rank, min_dim); ++i) {
+        sv(i) = 1.0;
+    }
+    Matrix A_lowrank = matrixWithSingularValues(rows, cols, sv, seed);
+
+    Matrix noise = randla::algorithms::RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(rows, cols, seed + 123);
+
+    return A_lowrank + noise_level * noise;
+}
+
+
 } // namespace randla::utils
