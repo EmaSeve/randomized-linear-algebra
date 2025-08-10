@@ -7,10 +7,6 @@
 #include <Eigen/SVD> 
 #include <stdexcept>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 namespace randla::algorithms {
 
 template<typename FloatType>
@@ -93,7 +89,7 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
     // start with empty Q
     Matrix Q(rows, 0);
 
-    const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
+    const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
     size_t index;
 
     while(Y.colwise().norm().maxCoeff() >  threshold){
@@ -155,8 +151,8 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
     const size_t cols = A.cols();
 
     // use the provided r parameter (window size for testing)
-    const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
-    const int q = std::max(0, max_iterations); // # di passi power (vedi Alg. 4.3). :contentReference[oaicite:2]{index=2}
+    const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
+    const int q = std::max(0, max_iterations); // # di passi power (vedi Alg. 4.3)
 
     auto apply_power = [&](const Vector& w) -> Vector {
         Vector y = A * w;                 // A w
@@ -235,7 +231,7 @@ typename RandomizedLinearAlgebra<FloatType>::Scalar
 RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
     // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
     
-    const FloatType coeff = 10.0 * std::sqrt(2.0 / M_PI);
+    const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
     FloatType max_norm = 0.0;
 
     std::mt19937 gen;

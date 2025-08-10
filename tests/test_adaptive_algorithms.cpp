@@ -1,10 +1,13 @@
 #include <iostream>
 #include <iomanip>
-#include "../include/randla/algorithms/randomized_linear_algebra.hpp"
-#include "../include/randla/utils/test_matrices.hpp"
+#include <randla/randla.hpp>
 
 using namespace randla::algorithms;
 using namespace randla::utils;
+
+using RLA     = randla::RandomizedLinearAlgebraD;
+using TestMat = randla::TestMatricesD;
+
 
 int main() {
     using FloatType = double;
@@ -42,8 +45,8 @@ int main() {
     std::cout << "------------------------------" << std::endl;
     try {
         std::cout << "Starting adaptiveRangeFinder..." << std::endl;
-        Matrix Q1 = RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(A, tol, r);
-        double error1 = RandomizedLinearAlgebra<FloatType>::realError(A, Q1);
+        Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r);
+        double error1 = RLA::realError(A, Q1);
 
         std::cout << "Success" << std::endl;
         std::cout << "  Q dimensions: " << Q1.rows() << "x" << Q1.cols() << std::endl;
@@ -60,8 +63,8 @@ int main() {
         const double threshold = tol / (10 * std::sqrt(2.0 / M_PI));
         std::cout << "Internal threshold: " << threshold << std::endl;
 
-        Matrix Q2 = RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(A, tol, r, 2);
-        double error2 = RandomizedLinearAlgebra<FloatType>::realError(A, Q2);
+        Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2);
+        double error2 = RLA::realError(A, Q2);
 
         std::cout << "Success" << std::endl;
         std::cout << "  Q dimensions: " << Q2.rows() << "x" << Q2.cols() << std::endl;

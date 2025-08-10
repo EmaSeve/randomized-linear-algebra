@@ -128,12 +128,11 @@ public:
 
 };
 
-// Type aliases for convenience
-using RandomizedLinearAlgebraF = RandomizedLinearAlgebra<float>;
-using RandomizedLinearAlgebraD = RandomizedLinearAlgebra<double>;
-using RandomizedLinearAlgebraLD = RandomizedLinearAlgebra<long double>;
-
 } // namespace randla::algorithms
+
+namespace randla::algorithms {
+using RandomizedLinearAlgebraD = RandomizedLinearAlgebra<double>;
+}
 
 // Include implementation
 #include "randomized_linear_algebra_impl.hpp"

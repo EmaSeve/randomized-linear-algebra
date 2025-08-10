@@ -1,13 +1,12 @@
 #include <iostream>
 #include <iomanip>
-#include "../include/randla/algorithms/randomized_linear_algebra.hpp"
-#include "../include/randla/utils/test_matrices.hpp"
+#include <randla/randla.hpp>
 
 using namespace randla::algorithms;
 using namespace randla::utils;
 
-using RLA = RandomizedLinearAlgebraD;
-using TestMat = TestMatricesD;
+using RLA     = randla::RandomizedLinearAlgebraD;
+using TestMat = randla::TestMatricesD;
 
 int main() {
     std::cout << "Testing algorithms on different singular spectra" << std::endl;

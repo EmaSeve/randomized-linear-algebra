@@ -58,12 +58,11 @@ public:
     
 };
 
-// Type aliases for convenience
-using TestMatricesF = TestMatrices<float>;
-using TestMatricesD = TestMatrices<double>;
-using TestMatricesLD = TestMatrices<long double>;
-
 } // namespace randla::utils
 
 // Include implementation
 #include "test_matrices_impl.hpp"
+
+namespace randla::utils {
+using TestMatricesD = TestMatrices<double>;
+}
