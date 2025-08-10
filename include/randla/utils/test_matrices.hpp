@@ -24,23 +24,6 @@ public:
     using typename randla::Types<FloatType>::Scalar;
     using typename randla::Types<FloatType>::Matrix;
     using typename randla::Types<FloatType>::Vector;
-
-    /**
-     * @brief Generate a random matrix with standard Gaussian entries
-     * @param rows Number of rows
-     * @param cols Number of columns  
-     * @param seed Random seed (if negative, uses current time)
-     * @return Random matrix
-     */
-    static Matrix randomGaussianMatrix(int rows, int cols, int seed = -1);
-    
-    /**
-     * @brief Generate a random Gaussian vector
-     * @param size Vector size
-     * @param seed Random seed (if negative, uses current time)
-     * @return Random vector
-     */
-    static Vector randomGaussianVector(int size, int seed = -1);
     
     /**
      * @brief Generate a sparse matrix with given density
@@ -64,17 +47,6 @@ public:
     static Matrix matrixWithExponentialDecay(int rows, int cols, Scalar decay_rate, int rank = -1, int seed = -1);
     
     /**
-     * @brief Generate low-rank matrix with additive noise: A = U * S * V^T + noise_level * N
-     * @param rows Number of rows
-     * @param cols Number of columns
-     * @param rank Target rank of the low-rank component
-     * @param noise_level Noise amplitude (0 = no noise)
-     * @param seed Random seed (if negative, uses current time)
-     * @return Low-rank matrix with noise
-     */
-    static Matrix lowRankMatrixWithNoise(int rows, int cols, int rank, Scalar noise_level, int seed = -1);
-    
-    /**
      * @brief Generate matrix with user-specified singular values
      * @param rows Number of rows
      * @param cols Number of columns
@@ -84,32 +56,6 @@ public:
      */
     static Matrix matrixWithSingularValues(int rows, int cols, const Vector& singular_values, int seed = -1);
     
-    /**
-     * @brief Generate Hankel matrix (constant along anti-diagonals)
-     * @param size Matrix size (square matrix)
-     * @param seed Random seed (if negative, uses current time)
-     * @return Hankel matrix
-     */
-    static Matrix hankelMatrix(int size, int seed = -1);
-    
-    /**
-     * @brief Generate Toeplitz matrix (constant along diagonals)
-     * @param rows Number of rows
-     * @param cols Number of columns
-     * @param seed Random seed (if negative, uses current time)
-     * @return Toeplitz matrix
-     */
-    static Matrix toeplitzMatrix(int rows, int cols, int seed = -1);
-    
-    /**
-     * @brief Generate a tridiagonal matrix
-     * @param size Matrix size (square matrix)
-     * @param main_diag_value Value for main diagonal elements
-     * @param off_diag_value Value for off-diagonal elements
-     * @param seed Random seed (if negative, uses current time for random perturbations)
-     * @return Tridiagonal matrix
-     */
-    static Matrix tridiagonalMatrix(int size, Scalar main_diag_value = 2.0, Scalar off_diag_value = -1.0, int seed = -1);
 };
 
 // Type aliases for convenience
