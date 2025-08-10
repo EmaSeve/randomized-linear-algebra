@@ -140,10 +140,11 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
     }
     
     Eigen::HouseholderQR<Matrix> qr(Y);
-    Matrix thinQ = Matrix::Identity(Y.rows(), l);
-    thinQ = qr.householderQ() * thinQ;
+    Matrix Q(Y.rows(), l);
+    Q.setIdentity();
+    qr.householderQ().applyThisOnTheLeft(Q);
 
-    return thinQ;
+    return Q;
 }
 
 template<typename FloatType>
@@ -153,16 +154,15 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
     const size_t rows = A.rows();
     const size_t cols = A.cols();
 
-    // use the provided r parameter (window size for testing)
     const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
 
     auto apply_power = [&](const Vector& w) -> Vector {
-        Vector y = A * w;                 // A w
+        Vector y = A * w;
         for (int t = 0; t < q; ++t) {
-            y = A.transpose() * y;        // A^* y
-            y = A * y;                    // A y
+            y = A.transpose() * y;
+            y = A * y;
         }
-        return y; // = (AA^*)^q A w
+        return y;
     };
 
     auto gen = make_generator(seed);
@@ -180,7 +180,10 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
         iteration++;
         index = iteration % r;
 
-        Vector y_i = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * Y.col(index);
+        Vector y_i = Y.col(index);
+        if (Q.cols() > 0) {
+            y_i -= Q * (Q.transpose() * y_i);
+        }
 
         const double norm = y_i.norm();
         if (norm > 0) y_i.normalize();
@@ -189,9 +192,11 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
         Q.col(Q.cols() - 1) = y_i;
         const auto q_i = Q.col(Q.cols() - 1);
 
-    Vector w_new = randomGaussianVector(cols, gen);
+        Vector w_new = randomGaussianVector(cols, gen);
         Vector y_new = apply_power(w_new);
-        Y.col(index) = (Matrix::Identity(rows, rows) - Q * Q.transpose()) * y_new;
+
+        y_new -= Q * (Q.transpose() * y_new);
+        Y.col(index) = y_new;
 
         for (size_t j = 0; j < r; ++j) {
             if (j == index) continue;
@@ -201,8 +206,6 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
 
     return Q;
 }
-
-
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Matrix 
