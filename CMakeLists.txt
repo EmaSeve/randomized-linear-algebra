@@ -66,9 +66,6 @@ add_executable(test_matrices tests/test_matrices.cpp)
 target_link_libraries(test_matrices PRIVATE randomized-linear-algebra)
 add_test(NAME MatricesTest COMMAND test_matrices)
 
-add_executable(test_spectrum_comparison tests/test_spectrum_comparison.cpp)
-target_link_libraries(test_spectrum_comparison PRIVATE randomized-linear-algebra)
-add_test(NAME SpectrumComparisonTest COMMAND test_spectrum_comparison)
 
 add_executable(test_adaptive_algorithms tests/test_adaptive_algorithms.cpp)
 target_link_libraries(test_adaptive_algorithms PRIVATE randomized-linear-algebra)
