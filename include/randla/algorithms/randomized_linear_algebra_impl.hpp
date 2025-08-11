@@ -238,39 +238,6 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Scalar 
-RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
-    // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
-    
-    const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
-    FloatType max_norm = 0.0;
-
-    auto gen = make_generator(seed);
-    
-    for (int i = 0; i < r; ++i) {
-        std::normal_distribution<FloatType> dist(0.0, 1.0);
-        Vector omega(A.cols());
-        for (int j = 0; j < A.cols(); ++j) {
-            omega(j) = dist(gen);
-        }
-        
-        Vector A_omega = A * omega;
-        
-        Vector QQt_A_omega = Q * (Q.transpose() * A_omega);
-        
-        Vector residual = A_omega - QQt_A_omega;
-        
-        FloatType norm = residual.norm();
-        
-        if (norm > max_norm) {
-            max_norm = norm;
-        }
-    }
-    
-    return coeff * max_norm;
-}
-
-template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::CMatrix
 RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int l, int seed) {
 
@@ -346,6 +313,39 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
     return Q;
 }
 
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Scalar 
+RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
+    // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
+    
+    const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
+    FloatType max_norm = 0.0;
+
+    auto gen = make_generator(seed);
+    
+    for (int i = 0; i < r; ++i) {
+        std::normal_distribution<FloatType> dist(0.0, 1.0);
+        Vector omega(A.cols());
+        for (int j = 0; j < A.cols(); ++j) {
+            omega(j) = dist(gen);
+        }
+        
+        Vector A_omega = A * omega;
+        
+        Vector QQt_A_omega = Q * (Q.transpose() * A_omega);
+        
+        Vector residual = A_omega - QQt_A_omega;
+        
+        FloatType norm = residual.norm();
+        
+        if (norm > max_norm) {
+            max_norm = norm;
+        }
+    }
+    
+    return coeff * max_norm;
+}
+
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Scalar 
@@ -356,6 +356,18 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) 
     Matrix error_matrix = A - QQt_A;
     return error_matrix.norm();
 }
+
+// overload for complex matrices
+template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::Scalar
+RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const CMatrix& Qc) {
+    // interpreta A come matrice complessa (immaginaria zero)
+    CMatrix Ac = A.template cast<Complex>();
+    CMatrix QQH_A = Qc * (Qc.adjoint() * Ac);   // QQ* A
+    CMatrix R = Ac - QQH_A;                     // residuo complesso
+    return R.norm();                            // Frobenius su C (|z|^2)
+}
+
 
 // Stage B:
 
