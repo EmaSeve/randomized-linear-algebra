@@ -6,6 +6,10 @@
 #include <Eigen/QR>
 #include <Eigen/SVD> 
 #include <stdexcept>
+#include <algorithm>
+#include <numeric>
+#include <complex>
+#include <fftw3.h>
 
 namespace randla::algorithms {
 
@@ -267,6 +271,84 @@ RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, co
 }
 
 template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::CMatrix
+RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int l, int seed) {
+
+    static_assert(std::is_same_v<FloatType,double>, 
+                  "This implementation uses FFTW double-precision");
+
+    auto gen = make_generator(seed);
+    const int m = A.rows();
+    const int n = A.cols();
+
+    // 1. Random permutation of column indices (R)
+    std::vector<int> indices(n);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), gen);
+    indices.resize(l);
+
+    // 2. D: random unit phases
+    std::uniform_real_distribution<FloatType> dist_phase(0.0, 2.0 * M_PI);
+    CMatrix AD(m, n);
+    for (int j = 0; j < n; ++j) {
+        Complex phase(std::cos(dist_phase(gen)), std::sin(dist_phase(gen)));
+        for (int i = 0; i < m; ++i) {
+            AD(i, j) = Complex(A(i, j), 0.0) * phase;
+        }
+    }
+
+    // 3. FFT lungo le righe con FFTW
+    // Prepariamo un buffer temporaneo per FFTW
+    fftw_complex* in  = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * n));
+    fftw_complex* out = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * n));
+
+    fftw_plan plan = fftw_plan_dft_1d(
+        n,
+        in,
+        out,
+        FFTW_FORWARD,
+        FFTW_ESTIMATE
+    );
+
+    for (int i = 0; i < m; ++i) {
+        // Copia riga in input FFTW
+        for (int j = 0; j < n; ++j) {
+            in[j][0] = AD(i, j).real();
+            in[j][1] = AD(i, j).imag();
+        }
+
+        // Esegui FFT
+        fftw_execute(plan);
+
+        // Copia risultato nella matrice AD
+        for (int j = 0; j < n; ++j) {
+            AD(i, j) = Complex(out[j][0], out[j][1]);
+        }
+    }
+
+    fftw_destroy_plan(plan);
+    fftw_free(in);
+    fftw_free(out);
+
+    // 4. Subsample e scaling
+    const FloatType scale = std::sqrt(FloatType(n) / FloatType(l));
+    CMatrix Y(m, l);
+    for (int j = 0; j < l; ++j) {
+        for (int i = 0; i < m; ++i) {
+            Y(i, j) = scale * AD(i, indices[j]);
+        }
+    }
+
+    // 5. QR complesso per ortonormalizzare
+    Eigen::HouseholderQR<CMatrix> qr(Y);
+    CMatrix Q = CMatrix::Identity(m, l);
+    qr.householderQ().applyThisOnTheLeft(Q);
+
+    return Q;
+}
+
+
+template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Scalar 
 RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) {
     // Compute the real error: ||A - QQ*A|| = ||(I - QQ*)A||
@@ -275,8 +357,6 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) 
     Matrix error_matrix = A - QQt_A;
     return error_matrix.norm();
 }
-
-
 
 // Stage B:
 

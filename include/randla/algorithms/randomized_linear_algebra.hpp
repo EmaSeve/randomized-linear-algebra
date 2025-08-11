@@ -24,6 +24,8 @@ public:
     using typename randla::Types<FloatType>::Scalar;
     using typename randla::Types<FloatType>::Matrix;
     using typename randla::Types<FloatType>::Vector;
+    using typename randla::Types<FloatType>::Complex;
+    using typename randla::Types<FloatType>::CMatrix;
     using typename randla::Types<FloatType>::DirectSVDResult;
 
     /**
@@ -128,6 +130,15 @@ public:
      */
     static Scalar realError(const Matrix& A, const Matrix& Q);
 
+    /**
+     * @brief Algorithm 4.5: Fast Randomized Range Finder (SRFT-based, complex)
+     * @param A Input real matrix
+     * @param l Target subspace dimension
+     * @param seed Random seed
+     * @return Orthonormal complex matrix Q approximating the range of A
+     */
+    static CMatrix fastRandomizedRangeFinder(const Matrix& A, int l, int seed = -1);
+
 
     // Stage B: 
     // This section describes methods for approximating standard factorizations of 
@@ -140,7 +151,6 @@ public:
      * @return Returns the object containing the three matrices
      */
     static DirectSVDResult directSVD(const Matrix & A, const Matrix & Q, double tol);
-
 
 };
 
