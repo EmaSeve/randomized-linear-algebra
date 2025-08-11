@@ -24,6 +24,8 @@ public:
     using typename randla::Types<FloatType>::Scalar;
     using typename randla::Types<FloatType>::Matrix;
     using typename randla::Types<FloatType>::Vector;
+    using typename randla::Types<FloatType>::Complex;
+    using typename randla::Types<FloatType>::CMatrix;
     using typename randla::Types<FloatType>::DirectSVDResult;
 
     /**
@@ -121,12 +123,44 @@ public:
     static Scalar posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r = 10, int seed = -1);
     
     /**
-     * @brief Compute the exact approximation error: ||A - QQ*A||
+     * @brief Algorithm 4.5: Fast Randomized Range Finder (SRFT-based, complex)
+     * @param A Input real matrix
+     * @param l Target subspace dimension
+     * @param seed Random seed
+     * @return Orthonormal complex matrix Q approximating the range of A
+     */
+    static CMatrix fastRandomizedRangeFinder(const Matrix& A, int l, int seed = -1);
+
+    /**
+     * @brief Fixed-precision variant of the structured randomized range finder (Algorithm 4.5, complex).
+     *        Starts with l0 samples, doubles l until the desired tolerance is met.
+     *
+     * @param A       Real input matrix (m x n).
+     * @param tol     Target tolerance (Frobenius norm of residual).
+     * @param l0      Initial number of samples (e.g., 32).
+     * @param seed    RNG seed (if <0, uses time-based seed).
+     * @return CMatrix Qc (m x l_final), complex orthonormal basis for the approximate range of A.
+     */
+    static CMatrix adaptiveFastRandomizedRangeFinder(const Matrix& A, double tol, int l0, int seed = -1);
+
+    /**
+     * @brief Compute the exact approximation error: ||A - QQ*A|| for real Q
      * @param A Input matrix
-     * @param Q Computed orthonormal basis
+     * @param Q Computed orthonormal basis (real)
      * @return Exact approximation error
      */
     static Scalar realError(const Matrix& A, const Matrix& Q);
+
+    /**
+     * @brief Compute the exact approximation error: ||A - QcQc^*A|| for complex Qc
+     * @param A Input matrix
+     * @param Qc Computed orthonormal basis (complex)
+     * @return Exact approximation error
+     */
+    static Scalar realError(const Matrix& A, const CMatrix& Qc);
+
+
+    
 
 
     // Stage B: 
@@ -140,7 +174,6 @@ public:
      * @return Returns the object containing the three matrices
      */
     static DirectSVDResult directSVD(const Matrix & A, const Matrix & Q, double tol);
-
 
 };
 

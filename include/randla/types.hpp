@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <complex>
 
 namespace randla {
 
@@ -13,6 +14,11 @@ struct Types {
     using Scalar = FloatType;
     using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
     using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+
+    using Complex  = std::complex<Scalar>;
+    using CMatrix  = Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic>;
+    using CVector  = Eigen::Matrix<Complex, Eigen::Dynamic, 1>;
+
     
     /**
      * @brief Result structure for SVD decomposition A ≈ U S V^*
