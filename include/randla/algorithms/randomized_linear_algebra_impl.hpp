@@ -297,8 +297,7 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
         }
     }
 
-    // 3. FFT lungo le righe con FFTW
-    // Prepariamo un buffer temporaneo per FFTW
+    // 3. FFT along the rows using FFTW
     fftw_complex* in  = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * n));
     fftw_complex* out = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * n));
 
@@ -311,16 +310,16 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
     );
 
     for (int i = 0; i < m; ++i) {
-        // Copia riga in input FFTW
+        // Load the i-th row of matrix AD into buffer 'in'
         for (int j = 0; j < n; ++j) {
             in[j][0] = AD(i, j).real();
             in[j][1] = AD(i, j).imag();
         }
 
-        // Esegui FFT
+        // Execute the discrete Fourier transform of the row
         fftw_execute(plan);
 
-        // Copia risultato nella matrice AD
+        // Copy the result from the transform back into the same row of matrix AD
         for (int j = 0; j < n; ++j) {
             AD(i, j) = Complex(out[j][0], out[j][1]);
         }
@@ -330,7 +329,7 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
     fftw_free(in);
     fftw_free(out);
 
-    // 4. Subsample e scaling
+    // 4. Subsample and scale
     const FloatType scale = std::sqrt(FloatType(n) / FloatType(l));
     CMatrix Y(m, l);
     for (int j = 0; j < l; ++j) {
@@ -339,7 +338,7 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
         }
     }
 
-    // 5. QR complesso per ortonormalizzare
+    // 5. Complex QR to orthonormalize
     Eigen::HouseholderQR<CMatrix> qr(Y);
     CMatrix Q = CMatrix::Identity(m, l);
     qr.householderQ().applyThisOnTheLeft(Q);
