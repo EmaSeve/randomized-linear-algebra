@@ -141,7 +141,7 @@ public:
      * @param seed    RNG seed (if <0, uses time-based seed).
      * @return CMatrix Qc (m x l_final), complex orthonormal basis for the approximate range of A.
      */
-    static CMatrix fastRandomizedRangeFinderFixedPrecision(const Matrix& A, double tol, int l0, int seed = -1);
+    static CMatrix adaptiveFastRandomizedRangeFinder(const Matrix& A, double tol, int l0, int seed = -1);
 
     /**
      * @brief Compute the exact approximation error: ||A - QQ*A|| for real Q

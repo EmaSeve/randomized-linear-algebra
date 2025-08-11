@@ -17,30 +17,38 @@ int main() {
     const int rows = 200, cols = 50, rank = 5;
     const int l = 12;           // oversampling moderato (rank < l << min(m,n))
     const int seed = 42;
+    const double tol = 1e-2;    // tolleranza per fixed-precision
 
     using GM = randla::utils::MatrixGenerators<double>;
+    std::cout << std::fixed << std::setprecision(6);
 
     auto run = [&](const std::string& name, const Matrix& A) {
         std::cout << "\n--- " << name << " ---\n";
         std::cout << "Shape: " << A.rows() << "x" << A.cols()
                   << "  ||A||=" << A.norm() << "\n";
 
-        // 4.5: SRFT -> Q complesso
-        auto Qc = RLA::fastRandomizedRangeFinder(A, l, seed);            // :contentReference[oaicite:2]{index=2}
-        double err_srft = RLA::realError(A, Qc);                          // overload complesso appena aggiunto
-        // Check ortonormalità: ||Q*Q - I||_F
+        // ========== Algoritmo 4.5 SRFT ==========
+        auto Qc = RLA::fastRandomizedRangeFinder(A, l, seed);
+        double err_srft = RLA::realError(A, Qc); // overload complesso
         auto I = (Qc.adjoint() * Qc).eval();
         double ortho = (I - decltype(I)::Identity(I.rows(), I.cols())).norm();
-
-        // Baseline: Gaussian RRF (reale) con stesso l
-        auto Qg = RLA::randomizedRangeFinder(A, l, seed);                 // :contentReference[oaicite:3]{index=3}
-        double err_gauss = RLA::realError(A, Qg);                          // versione reale già presente
 
         std::cout << "[SRFT] l=" << l
                   << "  err=" << err_srft
                   << "  ortho(Q*Q-I)=" << ortho << "\n";
+
+        // ========== Gaussian RRF baseline ==========
+        auto Qg = RLA::randomizedRangeFinder(A, l, seed);
+        double err_gauss = RLA::realError(A, Qg); // overload reale
         std::cout << "[RRF ] l=" << l
                   << "  err=" << err_gauss << "\n";
+
+        // ========== SRFT Fixed-Precision ==========
+        std::cout << "[SRFT fixed-precision] tol=" << tol << "\n";
+        auto Qc_fp = RLA::adaptiveFastRandomizedRangeFinder(A, tol, 32, seed);
+        double err_fp = RLA::realError(A, Qc_fp);
+        std::cout << "  Final l=" << Qc_fp.cols()
+                  << "  final err=" << err_fp << "\n";
     };
 
     // Test 1: rango esatto

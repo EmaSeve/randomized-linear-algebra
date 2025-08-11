@@ -315,30 +315,39 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::CMatrix
-RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinderFixedPrecision(
+RandomizedLinearAlgebra<FloatType>::adaptiveFastRandomizedRangeFinder(
     const Matrix& A,
-    double tol,
-    int l0,
-    int seed
+    double tol,   // tolleranza assoluta
+    int l0,       // campioni iniziali
+    int seed      // seed RNG (negativo per time-based)
 ) {
     const int m = A.rows();
     const int n = A.cols();
+
+    const int lmax = std::min(m, n);
 
     int l = l0;
     CMatrix Qc;
 
     while (true) {
         Qc = fastRandomizedRangeFinder(A, l, seed);
-        double err = realError(A, Qc); // overload per Q complesso
 
-        std::cout << "l=" << l << "  err=" << err << "\n";
+        double err_abs = realError(A, Qc);
 
-        if (err <= tol || l >= std::min(m, n)) break;
-        l *= 2;
+        std::cout << "l=" << l
+                  << "  err_abs=" << std::scientific << err_abs
+                  << std::fixed << "\n";
+
+        if (err_abs <= tol || l >= lmax) {
+            break;
+        }
+
+        l = std::min(l * 2, lmax);
     }
 
     return Qc;
 }
+
 
 template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Scalar 
