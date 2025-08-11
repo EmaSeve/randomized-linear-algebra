@@ -334,10 +334,6 @@ RandomizedLinearAlgebra<FloatType>::adaptiveFastRandomizedRangeFinder(
 
         double err_abs = realError(A, Qc);
 
-        std::cout << "l=" << l
-                  << "  err_abs=" << std::scientific << err_abs
-                  << std::fixed << "\n";
-
         if (err_abs <= tol || l >= lmax) {
             break;
         }

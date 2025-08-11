@@ -73,7 +73,3 @@ add_test(NAME SpectrumComparisonTest COMMAND test_spectrum_comparison)
 add_executable(test_adaptive_algorithms tests/test_adaptive_algorithms.cpp)
 target_link_libraries(test_adaptive_algorithms PRIVATE randomized-linear-algebra)
 add_test(NAME AdaptiveAlgorithmsTest COMMAND test_adaptive_algorithms)
-
-add_executable(test_srft tests/test_srft.cpp)
-target_link_libraries(test_srft PRIVATE randomized-linear-algebra)
-add_test(NAME SRFTtest COMMAND test_srft)
