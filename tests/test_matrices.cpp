@@ -10,35 +10,36 @@ using TestMat = randla::MatrixGeneratorsD;
 
 
 void testAlgorithms() {
-    std::cout << "\n=== ALGORITHM TESTS ===" << std::endl;
-    
-    const int m = 1000, n = 800, l = 10, q = 2;
-    const int seed = 123;
-    
+    std::cout << std::fixed << std::setprecision(6);
+
+    const int m = 1000, n = 800;        // matrix shape
+    const int l = 10;                   // target rank / samples
+    const int q = 2;                    // power/subspace iterations
+    const int seed = 123;               // base seed
+    const double tol_adaptive = 5e-1;   // tolerance for adaptive range finder
+    const int r_adaptive = 10;          // probes for adaptive posterior test
+
     auto A = TestMat::matrixWithExponentialDecay(m, n, 0.3, seed);
-    auto Q_power = RLA::randomizedPowerIteration(A, l, q, seed+1);
-    auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q, seed+2);
 
-    auto Q_range = RLA::randomizedRangeFinder(A, l, seed+3);
-    auto Q_adaptiveRange = RLA::adaptiveRangeFinder(A, 0.5, 10, seed+4);
+    std::cout << "\n--- Algorithm comparison (exp decay spectrum) ---\n";
+    std::cout << "Shape: " << A.rows() << " x " << A.cols() << "\n";
+    std::cout << "Norm(A) = " << A.norm() << "\n";
 
-    std::cout<< "Dimension of Q_Adaptive range: "<<Q_range.rows()<< " x "<<Q_range.cols()<<std::endl;
-    
-    std::cout << "Power Iteration error: " << std::fixed << std::setprecision(4) 
-              << RLA::realError(A, Q_power) << std::endl;
-    std::cout << "Subspace Iteration error: " << std::fixed << std::setprecision(4) 
-              << RLA::realError(A, Q_subspace) << std::endl;
-    std::cout<< "Range Finder error: "<< std::fixed << std::setprecision(4) 
-              << RLA::realError(A, Q_range) << std::endl;
-    std::cout<< "Adaptive Range Finder error: "<< std::fixed << std::setprecision(4) 
-              << RLA::realError(A, Q_adaptiveRange) << std::endl;
-                       
-    std::cout << "Posterior error estimate (r=1): " << std::fixed << std::setprecision(4) 
-            << RLA::posteriorErrorEstimation(A, Q_power, 1, seed) << std::endl;
-    std::cout << "Posterior error estimate (r=5): " << std::fixed << std::setprecision(4) 
-              << RLA::posteriorErrorEstimation(A, Q_power, 5, seed) << std::endl;
-    std::cout << "Posterior error estimate (r=10): " << std::fixed << std::setprecision(4) 
-            << RLA::posteriorErrorEstimation(A, Q_power, 10, seed) << std::endl;
+    auto Q_range    = RLA::randomizedRangeFinder(A, l, seed + 1);
+    auto Q_power    = RLA::randomizedPowerIteration(A, l, q, seed + 2);
+    auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q, seed + 3);
+    auto Q_adaptive = RLA::adaptiveRangeFinder(A, tol_adaptive, r_adaptive, seed + 4);
+
+    std::cout << "[RRF] cols=" << Q_range.cols() << " err=" << RLA::realError(A, Q_range) << "\n";
+    std::cout << "[RPI q=" << q << "] cols=" << Q_power.cols() << " err=" << RLA::realError(A, Q_power) << "\n";
+    std::cout << "[RSI q=" << q << "] cols=" << Q_subspace.cols() << " err=" << RLA::realError(A, Q_subspace) << "\n";
+    std::cout << "[AdaptiveRF tol=" << tol_adaptive << "] cols=" << Q_adaptive.cols() << " err=" << RLA::realError(A, Q_adaptive) << "\n";
+
+    // Posterior error estimates on one basis (power iteration)
+    for (int r_probe : {1, 5, 10}) {
+        std::cout << "\n[Posterior r=" << r_probe << "] est="
+                  << RLA::posteriorErrorEstimation(A, Q_power, r_probe, seed) << "\n";
+    }
 }
 
 int main() {
