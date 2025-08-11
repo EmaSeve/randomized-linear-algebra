@@ -65,21 +65,21 @@ int main() {
         tests.push_back({
             "Random sparse (dens=0.05)",
             TestMat::randomSparseMatrix(m, n, 0.05, seed + 10),
-            100, 5, seed + 10
+            100, 2, seed + 10
         });
 
-        // 2. Matrice sparsa random
+        // 2. Matrice dense random
         tests.push_back({
             "Random dense (dens=1.0)",
             TestMat::randomSparseMatrix(m, n, 1.0, seed + 10),
-            500, 5, seed + 10
+            500, 2, seed + 10
         });
 
         // 3. Low-rank + rumore
         tests.push_back({
             "Low-rank + noise (rank=50, noise=0.01)",
             TestMat::lowRankPlusNoise(m, n, 50, 0.01, seed + 20),
-            100, 5, seed + 20
+            100, 2, seed + 20
         });
 
     // Execute tests
