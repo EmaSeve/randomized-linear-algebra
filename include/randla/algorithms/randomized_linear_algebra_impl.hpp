@@ -314,6 +314,33 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
 }
 
 template<typename FloatType>
+typename RandomizedLinearAlgebra<FloatType>::CMatrix
+RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinderFixedPrecision(
+    const Matrix& A,
+    double tol,
+    int l0,
+    int seed
+) {
+    const int m = A.rows();
+    const int n = A.cols();
+
+    int l = l0;
+    CMatrix Qc;
+
+    while (true) {
+        Qc = fastRandomizedRangeFinder(A, l, seed);
+        double err = realError(A, Qc); // overload per Q complesso
+
+        std::cout << "l=" << l << "  err=" << err << "\n";
+
+        if (err <= tol || l >= std::min(m, n)) break;
+        l *= 2;
+    }
+
+    return Qc;
+}
+
+template<typename FloatType>
 typename RandomizedLinearAlgebra<FloatType>::Scalar 
 RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
     // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
@@ -367,7 +394,6 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const CMatrix& Qc
     CMatrix R = Ac - QQH_A;                     // residuo complesso
     return R.norm();                            // Frobenius su C (|z|^2)
 }
-
 
 // Stage B:
 

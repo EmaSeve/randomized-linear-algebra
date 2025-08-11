@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(StochasticLA VERSION 1.0.0 LANGUAGES CXX)
+project(randomized-linear-algebra VERSION 1.0.0 LANGUAGES CXX)
 
 # C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -48,12 +48,12 @@ target_link_libraries(FFTW::Double INTERFACE ${FFTW3_LIB})
 
 
 # ========================
-# StochasticLA library
+# randomized-linear-algebra library
 # ========================
-add_library(StochasticLA INTERFACE)
-target_include_directories(StochasticLA INTERFACE include)
-target_link_libraries(StochasticLA INTERFACE Eigen3::Eigen FFTW::Double)
-target_compile_features(StochasticLA INTERFACE cxx_std_17)
+add_library(randomized-linear-algebra INTERFACE)
+target_include_directories(randomized-linear-algebra INTERFACE include)
+target_link_libraries(randomized-linear-algebra INTERFACE Eigen3::Eigen FFTW::Double)
+target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 
 # ========================
 # Tests
@@ -63,13 +63,17 @@ enable_testing()
 file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(test_matrices tests/test_matrices.cpp)
-target_link_libraries(test_matrices PRIVATE StochasticLA)
+target_link_libraries(test_matrices PRIVATE randomized-linear-algebra)
 add_test(NAME MatricesTest COMMAND test_matrices)
 
 add_executable(test_spectrum_comparison tests/test_spectrum_comparison.cpp)
-target_link_libraries(test_spectrum_comparison PRIVATE StochasticLA)
+target_link_libraries(test_spectrum_comparison PRIVATE randomized-linear-algebra)
 add_test(NAME SpectrumComparisonTest COMMAND test_spectrum_comparison)
 
 add_executable(test_adaptive_algorithms tests/test_adaptive_algorithms.cpp)
-target_link_libraries(test_adaptive_algorithms PRIVATE StochasticLA)
+target_link_libraries(test_adaptive_algorithms PRIVATE randomized-linear-algebra)
 add_test(NAME AdaptiveAlgorithmsTest COMMAND test_adaptive_algorithms)
+
+add_executable(test_srft tests/test_srft.cpp)
+target_link_libraries(test_srft PRIVATE randomized-linear-algebra)
+add_test(NAME SRFTtest COMMAND test_srft)
