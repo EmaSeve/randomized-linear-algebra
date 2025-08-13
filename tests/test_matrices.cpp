@@ -102,6 +102,10 @@ int main() {
         auto A_sparse = TestMat::randomSparseMatrix(m, n, 0.05, seed + 10);
         runAlgorithmsSparse("Random sparse (dens=0.05)", A_sparse, 100, 2, seed + 10);
 
+        // Sparse -> Dense (stessa matrice, ma testata come densa)
+        Eigen::MatrixXd A_sparse_as_dense(A_sparse);
+        runAlgorithmsDense("Random sparse as dense (dens=0.05)", A_sparse_as_dense, 100, 2, seed + 10);
+
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
