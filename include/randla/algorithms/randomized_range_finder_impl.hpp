@@ -351,7 +351,8 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
     const Eigen::MatrixBase<Derived>& A,
     double tol,
     int l0,
-    int seed
+    int seed,
+    double growth_factor
 ) {
     const int m = A.rows();
     const int n = A.cols();
@@ -372,7 +373,21 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
             break;
         }
 
-        l = std::min(l * 2, lmax);
+        // Decide next l based on growth_factor semantics
+        int next_l;
+        if (growth_factor > 1.0) {
+            next_l = static_cast<int>(std::ceil(l * growth_factor));
+        } else if (growth_factor > 0.0) {
+            // additive relative to l0
+            int step = static_cast<int>(std::ceil(growth_factor * l0));
+            if (step <= 0) step = 1;
+            next_l = l + step;
+        } else {
+            // fallback minimal additive growth
+            next_l = l + 1;
+        }
+        if (next_l <= l) next_l = l + 1; // ensure progress
+        l = std::min(next_l, lmax);
     }
 
     return Qc;

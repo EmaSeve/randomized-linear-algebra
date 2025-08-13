@@ -22,10 +22,10 @@ int main() {
     const double tol = 1e-1;   // absolute tolerance (consistent with rest)
     const int r = 10;          // probes for adaptive algorithms
     const int seed = 42;
+    const double growth_factor = 2.0; // for adaptive growth
 
     // SRFT parameters
-    const int l_srft = 12;     // moderate oversampling for bulk SRFT
-    const int l0_fp  = 32;     // initial samples for fixed-precision SRFT
+    const int l_srft = 1;     // moderate oversampling for bulk SRFT
 
     using GM = randla::utils::MatrixGenerators<FloatType>;
     std::cout << std::fixed << std::setprecision(6);
@@ -56,7 +56,7 @@ int main() {
 
     // ====== SRFT fixed-precision (Alg. 4.5) ======
     auto t4 = tic();
-    auto Qc_fp = RLA::adaptiveFastRandomizedRangeFinder(A, tol, l0_fp, seed);
+    auto Qc_fp = RLA::adaptiveFastRandomizedRangeFinder(A, tol, l_srft, seed, growth_factor);
     auto t5 = tic();
     double err_fp = Err::realError(A, Qc_fp); // real error (overload handles complex types)
     std::cout << "[SRFT] l=" << Qc_fp.cols()

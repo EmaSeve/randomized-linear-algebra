@@ -127,16 +127,21 @@ public:
 
     /**
      * @brief Fixed-precision variant of the structured randomized range finder (Algorithm 4.5, complex).
-     *        Starts with l0 samples, doubles l until the desired tolerance is met.
+     *        Starts with l0 samples, and increases l adaptively until the desired tolerance is met.
+     *        By default l is doubled each iteration (growth_factor = 2.0) but this can be tuned.
      *
      * @param A       Real input matrix (m x n).
      * @param tol     Target tolerance (Frobenius norm of residual).
      * @param l0      Initial number of samples (e.g., 32).
      * @param seed    RNG seed (if <0, uses time-based seed).
+     * @param growth_factor  Controls how the sketch size grows when tolerance not yet met:
+     *                       - If growth_factor > 1: multiplicative, new_l = ceil(old_l * growth_factor).
+     *                       - If 0 < growth_factor <= 1: additive step size relative to l0, new_l = old_l + ceil(growth_factor * l0).
+     *                       - If growth_factor <= 0: fallback additive step of +1.
      * @return CMatrix Qc (m x l_final), complex orthonormal basis for the approximate range of A.
      */
     template<typename Derived>
-    static CMatrix adaptiveFastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, double tol, int l0, int seed = -1);
+    static CMatrix adaptiveFastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, double tol, int l0, int seed = -1, double growth_factor = 2.0);
 
 };
 
