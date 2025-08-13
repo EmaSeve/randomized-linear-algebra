@@ -15,7 +15,7 @@ namespace randla::algorithms {
  * randomized subspace iteration, along with error estimation methods.
  */
 template<typename FloatType = double>
-class RandomizedLinearAlgebra : public randla::Types<FloatType> {
+class RandomizedRangeFinder : public randla::Types<FloatType> {
     static_assert(std::is_floating_point_v<FloatType>, 
                   "FloatType must be a floating point type");
 
@@ -179,5 +179,5 @@ public:
 
 } // namespace randla::algorithms
 
-// Include implementation
-#include "randomized_linear_algebra_impl.hpp"
+// Include implementation definitions
+#include "randomized_range_finder_impl.hpp"

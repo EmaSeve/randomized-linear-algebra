@@ -6,6 +6,6 @@
  */
 
 #include <randla/types.hpp>
-#include <randla/algorithms/randomized_linear_algebra.hpp>
+#include <randla/algorithms/randomized_range_finder.hpp>
 #include <randla/utils/matrix_generators.hpp>
 #include <randla/aliases.hpp>

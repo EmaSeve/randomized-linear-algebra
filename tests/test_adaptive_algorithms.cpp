@@ -7,7 +7,7 @@
 using namespace randla::algorithms;
 using namespace randla::utils;
 
-using RLA     = randla::RandomizedLinearAlgebraD;
+using RLA     = randla::RandomizedRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 
 int main() {

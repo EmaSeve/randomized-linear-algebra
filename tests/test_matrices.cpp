@@ -5,7 +5,7 @@
 #include <chrono>
 #include <randla/randla.hpp>
 
-using RLA     = randla::RandomizedLinearAlgebraD;
+using RLA     = randla::RandomizedRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 
 struct TestConfig {

@@ -19,8 +19,8 @@ inline std::mt19937 make_generator(int seed) {
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, std::mt19937 & gen) {
+typename RandomizedRangeFinder<FloatType>::Matrix 
+RandomizedRangeFinder<FloatType>::randomGaussianMatrix(int rows, int cols, std::mt19937 & gen) {
     Matrix result(rows, cols);
     std::normal_distribution<FloatType> dist(0.0, 1.0);
     for (int i = 0; i < rows; ++i) {
@@ -32,15 +32,15 @@ RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, std
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomGaussianMatrix(int rows, int cols, int seed){
+typename RandomizedRangeFinder<FloatType>::Matrix 
+RandomizedRangeFinder<FloatType>::randomGaussianMatrix(int rows, int cols, int seed){
     auto gen = make_generator(seed);
     return randomGaussianMatrix(rows, cols, gen);
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Vector 
-RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, std::mt19937 & gen) {
+typename RandomizedRangeFinder<FloatType>::Vector 
+RandomizedRangeFinder<FloatType>::randomGaussianVector(int size, std::mt19937 & gen) {
     Vector result(size);
     std::normal_distribution<FloatType> dist(0.0, 1.0);
     for (int i = 0; i < size; ++i) {
@@ -50,15 +50,15 @@ RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, std::mt19937 
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Vector 
-RandomizedLinearAlgebra<FloatType>::randomGaussianVector(int size, int seed){
+typename RandomizedRangeFinder<FloatType>::Vector 
+RandomizedRangeFinder<FloatType>::randomGaussianVector(int size, int seed){
     auto gen = make_generator(seed);
     return randomGaussianVector(size, gen);
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int l, int seed){
+typename RandomizedRangeFinder<FloatType>::Matrix 
+RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const Matrix & A, int l, int seed){
     auto gen = make_generator(seed);
     // step 1: draw test matrix
     Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
@@ -74,8 +74,8 @@ RandomizedLinearAlgebra<FloatType>::randomizedRangeFinder(const Matrix & A, int 
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix
-RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double tol, int r, int seed){
+typename RandomizedRangeFinder<FloatType>::Matrix
+RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(const Matrix & A, double tol, int r, int seed){
     
     const size_t rows = A.rows();
     const size_t cols = A.cols();
@@ -131,8 +131,8 @@ RandomizedLinearAlgebra<FloatType>::adaptiveRangeFinder(const Matrix & A, double
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q, int seed) {
+typename RandomizedRangeFinder<FloatType>::Matrix 
+RandomizedRangeFinder<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q, int seed) {
     auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
 
@@ -152,8 +152,8 @@ RandomizedLinearAlgebra<FloatType>::randomizedPowerIteration(const Matrix& A, in
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int q, int seed) {
+typename RandomizedRangeFinder<FloatType>::Matrix 
+RandomizedRangeFinder<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int q, int seed) {
 
     const size_t rows = A.rows();
     const size_t cols = A.cols();
@@ -212,8 +212,8 @@ RandomizedLinearAlgebra<FloatType>::adaptivePowerIteration(const Matrix& A, doub
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Matrix 
-RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed) {
+typename RandomizedRangeFinder<FloatType>::Matrix 
+RandomizedRangeFinder<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed) {
     auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
     
@@ -238,8 +238,8 @@ RandomizedLinearAlgebra<FloatType>::randomizedSubspaceIteration(const Matrix& A,
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::CMatrix
-RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int l, int seed) {
+typename RandomizedRangeFinder<FloatType>::CMatrix
+RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int l, int seed) {
 
     static_assert(std::is_same_v<FloatType,double>, 
                   "This implementation uses FFTW double-precision");
@@ -314,8 +314,8 @@ RandomizedLinearAlgebra<FloatType>::fastRandomizedRangeFinder(const Matrix& A, i
 }
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::CMatrix
-RandomizedLinearAlgebra<FloatType>::adaptiveFastRandomizedRangeFinder(
+typename RandomizedRangeFinder<FloatType>::CMatrix
+RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
     const Matrix& A,
     double tol,   // tolleranza assoluta
     int l0,       // campioni iniziali
@@ -346,8 +346,8 @@ RandomizedLinearAlgebra<FloatType>::adaptiveFastRandomizedRangeFinder(
 
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Scalar 
-RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
+typename RandomizedRangeFinder<FloatType>::Scalar 
+RandomizedRangeFinder<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
     // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
     
     const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
@@ -380,8 +380,8 @@ RandomizedLinearAlgebra<FloatType>::posteriorErrorEstimation(const Matrix& A, co
 
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Scalar 
-RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) {
+typename RandomizedRangeFinder<FloatType>::Scalar 
+RandomizedRangeFinder<FloatType>::realError(const Matrix& A, const Matrix& Q) {
     // Compute the real error: ||A - QQ*A|| = ||(I - QQ*)A||
     
     Matrix QQt_A = Q * (Q.transpose() * A);  
@@ -391,8 +391,8 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const Matrix& Q) 
 
 // overload for complex matrices
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::Scalar
-RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const CMatrix& Qc) {
+typename RandomizedRangeFinder<FloatType>::Scalar
+RandomizedRangeFinder<FloatType>::realError(const Matrix& A, const CMatrix& Qc) {
     // interpreta A come matrice complessa (immaginaria zero)
     CMatrix Ac = A.template cast<Complex>();
     CMatrix QQH_A = Qc * (Qc.adjoint() * Ac);   // QQ* A
@@ -403,8 +403,8 @@ RandomizedLinearAlgebra<FloatType>::realError(const Matrix& A, const CMatrix& Qc
 // Stage B:
 
 template<typename FloatType>
-typename RandomizedLinearAlgebra<FloatType>::DirectSVDResult 
-RandomizedLinearAlgebra<FloatType>::directSVD(const Matrix & A, const Matrix & Q, double tol){
+typename RandomizedRangeFinder<FloatType>::DirectSVDResult 
+RandomizedRangeFinder<FloatType>::directSVD(const Matrix & A, const Matrix & Q, double tol){
 
     double error = realError(A, Q);
     if(error > tol) throw std::runtime_error("Error, directSVD: ||A - QQ*A|| > tol"); 
