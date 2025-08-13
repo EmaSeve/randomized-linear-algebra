@@ -19,7 +19,7 @@ int main() {
     const int rows = 800;
     const int cols = 400;
     const int rank = 20;
-    const double tol = 1e-1;   // absolute tolerance (consistent with rest)
+    const double tol = 0.1;   // absolute tolerance
     const int r = 10;          // probes for adaptive algorithms
     const int seed = 42;
     const double growth_factor = 2.0; // for adaptive growth

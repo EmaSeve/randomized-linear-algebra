@@ -103,17 +103,27 @@ MatrixGenerators<FloatType>::lowRankPlusNoise(int rows, int cols, int rank, Scal
     if (noise_level < 0.0) {
         throw std::invalid_argument("Noise level must be non-negative");
     }
+
     int min_dim = std::min(rows, cols);
     Vector sv = Vector::Zero(min_dim);
     for (int i = 0; i < std::min(rank, min_dim); ++i) {
-        sv(i) = 1.0;
+        sv(i) = 1.0; // singolari = 1 per il segnale
     }
+
+    // Parte low-rank
     Matrix A_lowrank = matrixWithSingularValues(rows, cols, sv, seed);
 
+    // Genera rumore gaussiano N(0,1)
     Matrix noise = randla::algorithms::RandomizedRangeFinder<FloatType>::randomGaussianMatrix(rows, cols, seed + 123);
 
-    return A_lowrank + noise_level * noise;
-}
+    // Scala il rumore alla percentuale della norma Frobenius del segnale
+    Scalar norm_signal = A_lowrank.norm(); // Frobenius norm
+    Scalar norm_noise  = noise.norm();
+    if (norm_noise > Scalar(0)) {
+        noise *= (noise_level * norm_signal) / norm_noise;
+    }
 
+    return A_lowrank + noise;
+}
 
 } // namespace randla::utils
