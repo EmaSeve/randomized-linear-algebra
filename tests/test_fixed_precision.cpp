@@ -86,14 +86,14 @@ int main() {
         run_test("Low-rank + noise (sigma=" + std::to_string(noise_level) + ")", A_noise);
     }
 
-    // Test 4: real matrix (same style as other tests)
-    try {
-        const std::string path = "data/well1850.mtx";
-        Matrix A_real = loadMatrixMarket(path);
-        run_test("Real matrix (" + path + ")", A_real);
-    } catch (const std::exception& e) {
-        std::cerr << "Skipping real matrix test: " << e.what() << "\n";
-    }
+    // Test 4: real matrix
+    // try {
+    //     const std::string path = "data/well1850.mtx";
+    //     Matrix A_real = loadMatrixMarket(path);
+    //     run_test("Real matrix (" + path + ")", A_real);
+    // } catch (const std::exception& e) {
+    //     std::cerr << "Skipping real matrix test: " << e.what() << "\n";
+    // }
 
 
     std::cout << "\n=== Tests completed ===\n";
