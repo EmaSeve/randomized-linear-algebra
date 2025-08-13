@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <Eigen/SparseCore>
 #include <cmath>
 #include <complex>
 
@@ -14,6 +15,10 @@ struct Types {
     using Scalar = FloatType;
     using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
     using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+
+    // Sparse counterparts
+    using SMatrix = Eigen::SparseMatrix<Scalar, Eigen::ColMajor>;
+    using SVector = Eigen::SparseVector<Scalar>;
 
     using Complex  = std::complex<Scalar>;
     using CMatrix  = Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic>;

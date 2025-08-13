@@ -59,8 +59,9 @@ RandomizedRangeFinder<FloatType>::randomGaussianVector(int size, int seed){
 }
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix 
-RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const Matrix & A, int l, int seed){
+RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const MatLike & A, int l, int seed){
     auto gen = make_generator(seed);
     // step 1: draw test matrix
     Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
@@ -76,8 +77,9 @@ RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const Matrix & A, int l,
 }
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix
-RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(const Matrix & A, double tol, int r, int seed){
+RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(const MatLike & A, double tol, int r, int seed){
     
     const size_t rows = A.rows();
     const size_t cols = A.cols();
@@ -133,8 +135,9 @@ RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(const Matrix & A, double t
 }
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix 
-RandomizedRangeFinder<FloatType>::randomizedPowerIteration(const Matrix& A, int l, int q, int seed) {
+RandomizedRangeFinder<FloatType>::randomizedPowerIteration(const MatLike& A, int l, int q, int seed) {
     auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
 
@@ -154,8 +157,9 @@ RandomizedRangeFinder<FloatType>::randomizedPowerIteration(const Matrix& A, int 
 }
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix 
-RandomizedRangeFinder<FloatType>::adaptivePowerIteration(const Matrix& A, double tol, int r, int q, int seed) {
+RandomizedRangeFinder<FloatType>::adaptivePowerIteration(const MatLike& A, double tol, int r, int q, int seed) {
 
     const size_t rows = A.rows();
     const size_t cols = A.cols();
@@ -214,8 +218,9 @@ RandomizedRangeFinder<FloatType>::adaptivePowerIteration(const Matrix& A, double
 }
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix 
-RandomizedRangeFinder<FloatType>::randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed) {
+RandomizedRangeFinder<FloatType>::randomizedSubspaceIteration(const MatLike& A, int l, int q, int seed) {
     auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
     
@@ -265,9 +270,10 @@ struct FRRWorkspace {
 
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
-    const Matrix& A, int l, FRRWorkspace& ws)
+    const MatLike& A, int l, FRRWorkspace& ws)
 {
     using Complex = std::complex<double>;
 
@@ -324,9 +330,10 @@ RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
 }
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
-    const Matrix& A, int l, int seed)
+    const MatLike& A, int l, int seed)
 {
     FRRWorkspace ws(A.cols(), seed);
     return fastRandomizedRangeFinder(A, l, ws);
@@ -334,9 +341,10 @@ RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
 
 
 template<typename FloatType>
+template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
-    const Matrix& A,
+    const MatLike& A,
     double tol,
     int l0,
     int seed

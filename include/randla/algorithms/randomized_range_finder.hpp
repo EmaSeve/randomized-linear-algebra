@@ -72,7 +72,8 @@ public:
      * @param l Target subspace dimension
      * @return  Orthonormal matrix Q approximating the range of A
      */
-    static Matrix randomizedRangeFinder(const Matrix & A, int l, int seed = -1);
+    template<class MatLike>
+    static Matrix randomizedRangeFinder(const MatLike & A, int l, int seed = -1);
 
     /**
      * @brief     Algorithm 4.2: Adaptive Range Finder
@@ -83,7 +84,8 @@ public:
      *            (We stop once we observe r consecutive such vectors)
      * @return    Orthonormal matrix Q approximating the range of A
      * */
-    static Matrix adaptiveRangeFinder(const Matrix & A, double tol, int r, int seed = -1);
+    template<class MatLike>
+    static Matrix adaptiveRangeFinder(const MatLike & A, double tol, int r, int seed = -1);
 
     /**
      * @brief Algorithm 4.3: Randomized power iteration
@@ -92,7 +94,8 @@ public:
      * @param q Number of power iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix randomizedPowerIteration(const Matrix& A, int l, int q, int seed = -1);
+    template<class MatLike>
+    static Matrix randomizedPowerIteration(const MatLike& A, int l, int q, int seed = -1);
     
     /**
      * @brief Adaptive version of randomized power iteration
@@ -102,7 +105,8 @@ public:
      * @param q Number of power iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix adaptivePowerIteration(const Matrix& A, double tol, int r, int q = 10, int seed = -1);
+    template<class MatLike>
+    static Matrix adaptivePowerIteration(const MatLike& A, double tol, int r, int q = 10, int seed = -1);
     
     /**
      * @brief Algorithm 4.4: Randomized subspace iteration
@@ -111,14 +115,17 @@ public:
      * @param q Number of subspace iterations
      * @return Orthonormal matrix Q approximating the range of A
      */
-    static Matrix randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed = -1);
+    template<class MatLike>
+    static Matrix randomizedSubspaceIteration(const MatLike& A, int l, int q, int seed = -1);
     
     
     // Versione con seed (crea internamente il workspace)
-    static CMatrix fastRandomizedRangeFinder(const Matrix& A, int l, int seed = -1);
+    template<class MatLike>
+    static CMatrix fastRandomizedRangeFinder(const MatLike& A, int l, int seed = -1);
 
     // Versione con workspace già pronto (per adaptive)
-    static CMatrix fastRandomizedRangeFinder(const Matrix& A, int l, FRRWorkspace& ws);
+    template<class MatLike>
+    static CMatrix fastRandomizedRangeFinder(const MatLike& A, int l, FRRWorkspace& ws);
 
 
     /**
@@ -131,7 +138,8 @@ public:
      * @param seed    RNG seed (if <0, uses time-based seed).
      * @return CMatrix Qc (m x l_final), complex orthonormal basis for the approximate range of A.
      */
-    static CMatrix adaptiveFastRandomizedRangeFinder(const Matrix& A, double tol, int l0, int seed = -1);
+    template<class MatLike>
+    static CMatrix adaptiveFastRandomizedRangeFinder(const MatLike& A, double tol, int l0, int seed = -1);
 
     // Error computation and factorization routines moved to dedicated classes
     // (ErrorEstimators, MatrixFactorizer).
