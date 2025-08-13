@@ -5,8 +5,10 @@
 #include <chrono>
 #include <randla/randla.hpp>
 
-using RLA     = randla::RandomizedRangeFinderD;
-using TestMat = randla::MatrixGeneratorsD;
+using RLA       = randla::RandomizedRangeFinderD;
+using TestMat   = randla::MatrixGeneratorsD;
+using Err       = randla::algorithms::ErrorEstimators<double>;
+
 
 struct TestConfig {
     std::string label;
@@ -33,10 +35,10 @@ static void runAlgorithms(const TestConfig& cfg) {
     auto Q_fast = RLA::fastRandomizedRangeFinder(cfg.A, cfg.l, cfg.seed + 4);
     auto t4 = tic();
 
-    std::cout << "[RRF]  cols=" << Q_range.cols()    << " err=" << RLA::realError(cfg.A, Q_range)    << " time_ms=" << ms(t0,t1) << "\n";
-    std::cout << "[RPI q=" << cfg.q << "] cols=" << Q_power.cols()    << " err=" << RLA::realError(cfg.A, Q_power)    << " time_ms=" << ms(t1,t2) << "\n";
-    std::cout << "[RSI q=" << cfg.q << "] cols=" << Q_subspace.cols() << " err=" << RLA::realError(cfg.A, Q_subspace) << " time_ms=" << ms(t2,t3) << "\n";
-    std::cout << "[FAST] cols=" << Q_fast.cols()     << " err=" << RLA::realError(cfg.A, Q_fast)     << " time_ms=" << ms(t3,t4) << "\n";
+    std::cout << "[RRF]  cols=" << Q_range.cols()    << " err=" << Err::realError(cfg.A, Q_range)    << " time_ms=" << ms(t0,t1) << "\n";
+    std::cout << "[RPI q=" << cfg.q << "] cols=" << Q_power.cols()    << " err=" << Err::realError(cfg.A, Q_power)    << " time_ms=" << ms(t1,t2) << "\n";
+    std::cout << "[RSI q=" << cfg.q << "] cols=" << Q_subspace.cols() << " err=" << Err::realError(cfg.A, Q_subspace) << " time_ms=" << ms(t2,t3) << "\n";
+    std::cout << "[FAST] cols=" << Q_fast.cols()     << " err=" << Err::realError(cfg.A, Q_fast)     << " time_ms=" << ms(t3,t4) << "\n";
 }
 
 int main() {

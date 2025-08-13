@@ -26,7 +26,6 @@ public:
     using typename randla::Types<FloatType>::Vector;
     using typename randla::Types<FloatType>::Complex;
     using typename randla::Types<FloatType>::CMatrix;
-    using typename randla::Types<FloatType>::DirectSVDResult;
 
     /**
      * @brief Generate a random matrix with standard Gaussian entries
@@ -112,15 +111,6 @@ public:
      */
     static Matrix randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed = -1);
     
-    /**
-     * @brief Posterior error estimation using Equation 4.3
-     * @param A Input matrix
-     * @param Q Computed orthonormal basis
-     * @param r Number of test vectors for estimation
-     * @param seed Random seed (if negative, uses current time)
-     * @return Estimated approximation error
-     */
-    static Scalar posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r = 10, int seed = -1);
     
     /**
      * @brief Algorithm 4.5: Fast Randomized Range Finder (SRFT-based, complex)
@@ -143,38 +133,8 @@ public:
      */
     static CMatrix adaptiveFastRandomizedRangeFinder(const Matrix& A, double tol, int l0, int seed = -1);
 
-    /**
-     * @brief Compute the exact approximation error: ||A - QQ*A|| for real Q
-     * @param A Input matrix
-     * @param Q Computed orthonormal basis (real)
-     * @return Exact approximation error
-     */
-    static Scalar realError(const Matrix& A, const Matrix& Q);
-
-    /**
-     * @brief Compute the exact approximation error: ||A - QcQc^*A|| for complex Qc
-     * @param A Input matrix
-     * @param Qc Computed orthonormal basis (complex)
-     * @return Exact approximation error
-     */
-    static Scalar realError(const Matrix& A, const CMatrix& Qc);
-
-
-    
-
-
-    // Stage B: 
-    // This section describes methods for approximating standard factorizations of 
-    // A using the information in the basis Q.
-    
-    /**
-     * @brief Computes an aproximate factorization A ≈ U S V^*
-     * @param A
-     * @param Q
-     * @return Returns the object containing the three matrices
-     */
-    static DirectSVDResult directSVD(const Matrix & A, const Matrix & Q, double tol);
-
+    // Error computation and factorization routines moved to dedicated classes
+    // (ErrorEstimators, MatrixFactorizer).
 };
 
 } // namespace randla::algorithms

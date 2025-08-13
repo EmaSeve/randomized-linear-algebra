@@ -11,6 +11,8 @@
 #include <complex>
 #include <fftw3.h>
 
+#include "error_estimators.hpp"
+
 namespace randla::algorithms {
 
 inline std::mt19937 make_generator(int seed) {
@@ -332,7 +334,7 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
     while (true) {
         Qc = fastRandomizedRangeFinder(A, l, seed);
 
-        double err_abs = realError(A, Qc);
+    double err_abs = ErrorEstimators<FloatType>::realError(A, Qc);
 
         if (err_abs <= tol || l >= lmax) {
             break;
@@ -345,82 +347,6 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
 }
 
 
-template<typename FloatType>
-typename RandomizedRangeFinder<FloatType>::Scalar 
-RandomizedRangeFinder<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r, int seed) {
-    // Equation (4.3): ||(I - QQ*)A|| ≤ 10 * sqrt(2/π) * max_{i=1,...,r} ||(I - QQ*)Aω^(i)||
-    
-    const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
-    FloatType max_norm = 0.0;
+// (Error and factorization related implementations moved to ErrorEstimators / MatrixFactorizer.)
 
-    auto gen = make_generator(seed);
-    
-    for (int i = 0; i < r; ++i) {
-        std::normal_distribution<FloatType> dist(0.0, 1.0);
-        Vector omega(A.cols());
-        for (int j = 0; j < A.cols(); ++j) {
-            omega(j) = dist(gen);
-        }
-        
-        Vector A_omega = A * omega;
-        
-        Vector QQt_A_omega = Q * (Q.transpose() * A_omega);
-        
-        Vector residual = A_omega - QQt_A_omega;
-        
-        FloatType norm = residual.norm();
-        
-        if (norm > max_norm) {
-            max_norm = norm;
-        }
-    }
-    
-    return coeff * max_norm;
-}
-
-
-template<typename FloatType>
-typename RandomizedRangeFinder<FloatType>::Scalar 
-RandomizedRangeFinder<FloatType>::realError(const Matrix& A, const Matrix& Q) {
-    // Compute the real error: ||A - QQ*A|| = ||(I - QQ*)A||
-    
-    Matrix QQt_A = Q * (Q.transpose() * A);  
-    Matrix error_matrix = A - QQt_A;
-    return error_matrix.norm();
-}
-
-// overload for complex matrices
-template<typename FloatType>
-typename RandomizedRangeFinder<FloatType>::Scalar
-RandomizedRangeFinder<FloatType>::realError(const Matrix& A, const CMatrix& Qc) {
-    // interpreta A come matrice complessa (immaginaria zero)
-    CMatrix Ac = A.template cast<Complex>();
-    CMatrix QQH_A = Qc * (Qc.adjoint() * Ac);   // QQ* A
-    CMatrix R = Ac - QQH_A;                     // residuo complesso
-    return R.norm();                            // Frobenius su C (|z|^2)
-}
-
-// Stage B:
-
-template<typename FloatType>
-typename RandomizedRangeFinder<FloatType>::DirectSVDResult 
-RandomizedRangeFinder<FloatType>::directSVD(const Matrix & A, const Matrix & Q, double tol){
-
-    double error = realError(A, Q);
-    if(error > tol) throw std::runtime_error("Error, directSVD: ||A - QQ*A|| > tol"); 
-
-    Matrix B = Q.transpose() * A;
-
-    // compute SVD on B
-    Eigen::JacobiSVD<Matrix> svd(B, Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-    Matrix U_tilde = svd.matrixU();        
-    Vector S = svd.singularValues();        
-    Matrix V = svd.matrixV();          
-
-    // Step 3: 
-    Matrix U = Q * U_tilde;
-
-    return DirectSVDResult{std::move(U), std::move(S), std::move(V)};
-}
 } // namespace randla::algorithms

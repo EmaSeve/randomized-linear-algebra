@@ -7,8 +7,10 @@
 using namespace randla::algorithms;
 using namespace randla::utils;
 
-using RLA     = randla::RandomizedRangeFinderD;
-using TestMat = randla::MatrixGeneratorsD;
+using RLA       = randla::RandomizedRangeFinderD;
+using TestMat   = randla::MatrixGeneratorsD;
+using Err       = randla::algorithms::ErrorEstimators<double>;
+
 
 int main() {
     using FloatType = double;
@@ -36,17 +38,17 @@ int main() {
         // ====== Adaptive Range Finder (real error) ======
         Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r, seed);
         std::cout << "[ARF] cols=" << Q1.cols()
-                  << " err=" << RLA::realError(A, Q1) << "\n";
+                  << " err=" << Err::realError(A, Q1) << "\n";
 
         // ====== Adaptive Power Iteration (real error) ======
         Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2, seed);
         std::cout << "[API] cols=" << Q2.cols()
-                  << " err=" << RLA::realError(A, Q2) << "\n";
+                  << " err=" << Err::realError(A, Q2) << "\n";
 
         // ====== SRFT fixed-precision (Alg. 4.5) ======
         {
             auto Qc_fp = RLA::adaptiveFastRandomizedRangeFinder(A, tol, l0_fp, seed);
-            double err_fp = RLA::realError(A, Qc_fp); // real error (overload handles complex types)
+            double err_fp = Err::realError(A, Qc_fp); // real error (overload handles complex types)
             std::cout << "[SRFT] l=" << Qc_fp.cols()
                       << " err=" << err_fp << "\n";
         }
