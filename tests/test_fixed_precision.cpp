@@ -16,9 +16,9 @@ int main() {
     using FloatType = double;
     using Matrix = Eigen::MatrixXd;
 
-    const int rows = 200;
-    const int cols = 50;
-    const int rank = 5;
+    const int rows = 800;
+    const int cols = 400;
+    const int rank = 20;
     const double tol = 1e-1;   // absolute tolerance (consistent with rest)
     const int r = 10;          // probes for adaptive algorithms
     const int seed = 42;
@@ -83,7 +83,8 @@ int main() {
     {
         double noise_level = 0.001;
         Matrix A_noise = GM::lowRankPlusNoise(rows, cols, rank, noise_level, seed);
-        run_test("Low-rank + noise (sigma=" + std::to_string(noise_level) + ")", A_noise);
+        run_test("Low-rank + noise (rank=" + std::to_string(rank) +
+                 ", sigma=" + std::to_string(noise_level) + ")", A_noise);
     }
 
     // Test 4: real matrix
