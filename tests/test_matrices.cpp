@@ -74,7 +74,7 @@ int main() {
         tests.push_back({
             "Random dense (dens=1.0)",
             TestMat::randomSparseMatrix(m, n, 1.0, seed + 10),
-            500, 2, seed + 10
+            100, 2, seed + 10
         });
 
         // 3. Low-rank + rumore
