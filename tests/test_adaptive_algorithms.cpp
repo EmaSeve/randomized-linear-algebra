@@ -34,24 +34,34 @@ int main() {
         std::cout << "\n--- " << name << " ---\n";
         std::cout << "Shape: " << A.rows() << " x " << A.cols() << "\n";
         std::cout << "Norm(A) = " << A.norm() << "\n";
+    // Timing helpers
+    auto tic = [](){return std::chrono::high_resolution_clock::now();};
+    auto ms  = [](auto s, auto e){return std::chrono::duration<double, std::milli>(e-s).count();};
 
-        // ====== Adaptive Range Finder (real error) ======
-        Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r, seed);
-        std::cout << "[ARF] cols=" << Q1.cols()
-                  << " err=" << Err::realError(A, Q1) << "\n";
+    // ====== Adaptive Range Finder (real error) ======
+    auto t0 = tic();
+    Matrix Q1 = RLA::adaptiveRangeFinder(A, tol, r, seed);
+    auto t1 = tic();
+    std::cout << "[ARF]  cols=" << Q1.cols()
+          << " err=" << Err::realError(A, Q1)
+          << " time_ms=" << ms(t0,t1) << "\n";
 
-        // ====== Adaptive Power Iteration (real error) ======
-        Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2, seed);
-        std::cout << "[API] cols=" << Q2.cols()
-                  << " err=" << Err::realError(A, Q2) << "\n";
+    // ====== Adaptive Power Iteration (real error) ======
+    auto t2 = tic();
+    Matrix Q2 = RLA::adaptivePowerIteration(A, tol, r, 2, seed);
+    auto t3 = tic();
+    std::cout << "[API]  cols=" << Q2.cols()
+          << " err=" << Err::realError(A, Q2)
+          << " time_ms=" << ms(t2,t3) << "\n";
 
-        // ====== SRFT fixed-precision (Alg. 4.5) ======
-        {
-            auto Qc_fp = RLA::adaptiveFastRandomizedRangeFinder(A, tol, l0_fp, seed);
-            double err_fp = Err::realError(A, Qc_fp); // real error (overload handles complex types)
-            std::cout << "[SRFT] l=" << Qc_fp.cols()
-                      << " err=" << err_fp << "\n";
-        }
+    // ====== SRFT fixed-precision (Alg. 4.5) ======
+    auto t4 = tic();
+    auto Qc_fp = RLA::adaptiveFastRandomizedRangeFinder(A, tol, l0_fp, seed);
+    auto t5 = tic();
+    double err_fp = Err::realError(A, Qc_fp); // real error (overload handles complex types)
+    std::cout << "[SRFT] l=" << Qc_fp.cols()
+          << " err=" << err_fp
+          << " time_ms=" << ms(t4,t5) << "\n";
     };
 
     // Test 1: exact rank
