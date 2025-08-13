@@ -62,11 +62,11 @@ enable_testing()
 
 file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(test_matrices tests/test_matrices.cpp)
-target_link_libraries(test_matrices PRIVATE randomized-linear-algebra)
-add_test(NAME MatricesTest COMMAND test_matrices)
+add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
+target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra)
+add_test(NAME FixedRankTest COMMAND test_fixed_rank)
 
 
-add_executable(test_adaptive_algorithms tests/test_adaptive_algorithms.cpp)
-target_link_libraries(test_adaptive_algorithms PRIVATE randomized-linear-algebra)
-add_test(NAME AdaptiveAlgorithmsTest COMMAND test_adaptive_algorithms)
+add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
+target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
+add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
