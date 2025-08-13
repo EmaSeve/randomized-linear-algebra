@@ -60,7 +60,7 @@ target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 # ========================
 enable_testing()
 
-file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+# file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
 target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra)
