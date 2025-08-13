@@ -16,9 +16,8 @@ struct Types {
     using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
     using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
-    // Sparse counterparts
-    using SMatrix = Eigen::SparseMatrix<Scalar, Eigen::ColMajor>;
-    using SVector = Eigen::SparseVector<Scalar>;
+    using SparseMatrix = Eigen::SparseMatrix<Scalar, Eigen::ColMajor>;
+    using SparseVector = Eigen::SparseVector<Scalar>;
 
     using Complex  = std::complex<Scalar>;
     using CMatrix  = Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic>;

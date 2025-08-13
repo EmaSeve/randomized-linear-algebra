@@ -23,8 +23,9 @@ public:
     using typename randla::Types<FloatType>::Scalar;
     using typename randla::Types<FloatType>::Matrix;
     using typename randla::Types<FloatType>::Vector;
+    using typename randla::Types<FloatType>::SparseMatrix;
 
-    static Matrix randomSparseMatrix(int rows, int cols, Scalar density, int seed = -1);
+    static SparseMatrix randomSparseMatrix(int rows, int cols, Scalar density, int seed = -1);
     static Matrix matrixWithExponentialDecay(int rows, int cols, Scalar decay_rate, int rank = -1, int seed = -1);
     static Matrix matrixWithSingularValues(int rows, int cols, const Vector& singular_values, int seed = -1);
     static Matrix lowRankPlusNoise(int rows, int cols, int rank, Scalar noise_level, int seed = -1);

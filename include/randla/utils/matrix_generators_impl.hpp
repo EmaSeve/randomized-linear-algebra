@@ -11,29 +11,37 @@
 namespace randla::utils {
 
 template<typename FloatType>
-typename MatrixGenerators<FloatType>::Matrix
+typename MatrixGenerators<FloatType>::SparseMatrix
 MatrixGenerators<FloatType>::randomSparseMatrix(int rows, int cols, Scalar density, int seed) {
     if (density <= 0.0 || density > 1.0) {
         throw std::invalid_argument("Density must be in range (0, 1]");
     }
-    Matrix result = Matrix::Zero(rows, cols);
+
     std::mt19937 gen;
-    if (seed >= 0) {
-        gen.seed(seed);
-    } else {
-        gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
-    }
+    if (seed >= 0) gen.seed(seed);
+    else           gen.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+
     std::uniform_real_distribution<FloatType> uniform(0.0, 1.0);
     std::normal_distribution<FloatType> normal(0.0, 1.0);
+
+    using Triplet = Eigen::Triplet<Scalar, int>;
+    std::vector<Triplet> triplets;
+    triplets.reserve(static_cast<size_t>(rows * cols * density * 1.1)); 
+
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             if (uniform(gen) < density) {
-                result(i, j) = normal(gen);
+                triplets.emplace_back(i, j, normal(gen));
             }
         }
     }
-    return result;
+
+    SparseMatrix S(rows, cols);
+    S.setFromTriplets(triplets.begin(), triplets.end());
+    S.makeCompressed(); // compatto in CSC
+    return S;
 }
+
 
 template<typename FloatType>
 typename MatrixGenerators<FloatType>::Matrix
