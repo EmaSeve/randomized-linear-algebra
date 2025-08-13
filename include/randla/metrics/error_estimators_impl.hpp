@@ -4,7 +4,7 @@
 #include <chrono>
 #include <numbers>
 
-namespace randla::algorithms {
+namespace randla::metrics {
 
 // helper to create generator
 namespace detail {

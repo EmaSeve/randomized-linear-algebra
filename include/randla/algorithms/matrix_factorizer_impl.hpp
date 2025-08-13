@@ -9,8 +9,8 @@ namespace randla::algorithms {
 template<typename FloatType>
 typename MatrixFactorizer<FloatType>::DirectSVDResult
 MatrixFactorizer<FloatType>::directSVD(const Matrix & A, const Matrix & Q, double tol) {
-	// reuse error computation from RandomizedRangeFinder (static dispatch)
-	double error = ErrorEstimators<FloatType>::realError(A, Q);
+
+	double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
 	if (error > tol) {
 		throw std::runtime_error("MatrixFactorizer::directSVD: residual norm exceeds tolerance");
 	}

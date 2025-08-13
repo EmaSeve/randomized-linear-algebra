@@ -366,7 +366,7 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
     while (true) {
         Qc = fastRandomizedRangeFinder(A, l, ws);
 
-        double err_abs = ErrorEstimators<FloatType>::realError(A, Qc);
+        double err_abs = randla::metrics::ErrorEstimators<FloatType>::realError(A, Qc);
 
         if (err_abs <= tol || l >= lmax) {
             break;

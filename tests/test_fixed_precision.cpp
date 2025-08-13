@@ -9,7 +9,7 @@ using namespace randla::utils;
 
 using RLA       = randla::RandomizedRangeFinderD;
 using TestMat   = randla::MatrixGeneratorsD;
-using Err       = randla::algorithms::ErrorEstimators<double>;
+using Err       = randla::metrics::ErrorEstimators<double>;
 
 
 int main() {

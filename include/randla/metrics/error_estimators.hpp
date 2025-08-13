@@ -5,7 +5,7 @@
 #include <cmath>
 #include <randla/types.hpp>
 
-namespace randla::algorithms {
+namespace randla::metrics {
 
 /**
  * @brief Error estimation utilities (moved from RandomizedRangeFinder Stage A)

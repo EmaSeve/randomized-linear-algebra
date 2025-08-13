@@ -9,7 +9,7 @@
 
 using RLA     = randla::RandomizedRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
-using Err     = randla::algorithms::ErrorEstimators<double>;
+using Err     = randla::metrics::ErrorEstimators<double>;
 
 // ===== DENSE =====
 static void runAlgorithmsDense(const std::string& label,
