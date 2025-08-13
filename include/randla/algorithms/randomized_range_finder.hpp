@@ -7,6 +7,9 @@
 
 namespace randla::algorithms {
 
+// Forward declaration of workspace used by fast randomized range finder (defined in impl)
+struct FRRWorkspace;
+
 /**
  * @brief Main class implementing randomized linear algebra algorithms
  * 
@@ -18,7 +21,6 @@ template<typename FloatType = double>
 class RandomizedRangeFinder : public randla::Types<FloatType> {
     static_assert(std::is_floating_point_v<FloatType>, 
                   "FloatType must be a floating point type");
-
 public:
     // Inherit type aliases from base class
     using typename randla::Types<FloatType>::Scalar;
@@ -112,14 +114,12 @@ public:
     static Matrix randomizedSubspaceIteration(const Matrix& A, int l, int q, int seed = -1);
     
     
-    /**
-     * @brief Algorithm 4.5: Fast Randomized Range Finder (SRFT-based, complex)
-     * @param A Input real matrix
-     * @param l Target subspace dimension
-     * @param seed Random seed
-     * @return Orthonormal complex matrix Q approximating the range of A
-     */
+    // Versione con seed (crea internamente il workspace)
     static CMatrix fastRandomizedRangeFinder(const Matrix& A, int l, int seed = -1);
+
+    // Versione con workspace già pronto (per adaptive)
+    static CMatrix fastRandomizedRangeFinder(const Matrix& A, int l, FRRWorkspace& ws);
+
 
     /**
      * @brief Fixed-precision variant of the structured randomized range finder (Algorithm 4.5, complex).

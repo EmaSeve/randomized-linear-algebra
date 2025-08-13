@@ -239,67 +239,81 @@ RandomizedRangeFinder<FloatType>::randomizedSubspaceIteration(const Matrix& A, i
     return thinQ;
 }
 
+struct FRRWorkspace {
+    std::vector<std::complex<double>> phase; // fasi casuali
+    std::vector<fftw_complex> row;           // buffer riga FFT
+    fftw_plan plan;                          // piano FFTW
+    std::mt19937 gen;                        // RNG
+    int n;                                   // numero colonne
+
+    FRRWorkspace(int n_, int seed)
+        : phase(n_), row(n_), gen(make_generator(seed)), n(n_)
+    {
+        plan = fftw_plan_dft_1d(
+            n,
+            row.data(),
+            row.data(),
+            FFTW_FORWARD,
+            FFTW_MEASURE
+        );
+    }
+
+    ~FRRWorkspace() {
+        fftw_destroy_plan(plan);
+    }
+};
+
+
 template<typename FloatType>
 typename RandomizedRangeFinder<FloatType>::CMatrix
-RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int l, int seed) {
-
-    static_assert(std::is_same_v<FloatType,double>,
-                  "This implementation uses FFTW double-precision");
-
+RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
+    const Matrix& A, int l, FRRWorkspace& ws)
+{
     using Complex = std::complex<double>;
 
-    auto gen = make_generator(seed);
     const int m = A.rows();
     const int n = A.cols();
 
-    // 1. Random permutation (R)
-    std::vector<int> indices(n);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::shuffle(indices.begin(), indices.end(), gen);
-    indices.resize(l);
+    // 1. Estrai indici random (R) con std::sample (C++17 friendly)
+    std::vector<int> all(n);
+    std::iota(all.begin(), all.end(), 0);
 
-    // 2. Precompute random unit phases (D)
+    std::vector<int> indices;
+    indices.reserve(l);
+    std::sample(all.begin(), all.end(),
+                std::back_inserter(indices),
+                l,
+                ws.gen);
+
+    // 2. Rigenera fasi casuali (D) in-place
     std::uniform_real_distribution<FloatType> dist_phase(0.0, 2.0 * M_PI);
-    std::vector<Complex> phase(n);
     for (int j = 0; j < n; ++j) {
-        double ang = dist_phase(gen);
-        phase[j] = Complex(std::cos(ang), std::sin(ang));
+        double ang = dist_phase(ws.gen);
+        ws.phase[j] = Complex(std::cos(ang), std::sin(ang));
     }
 
-    // 3. FFT plan for a reusable row buffer
-    std::vector<fftw_complex> row(n);
-    fftw_plan plan = fftw_plan_dft_1d(
-        n,
-        row.data(),
-        row.data(),
-        FFTW_FORWARD,
-        FFTW_MEASURE // FFTW_ESTIMATE if you prefer faster planning
-    );
-
-    // 4. Allocate Y and set correct scaling
-    // FFTW's DFT is unnormalized -> scaling = 1 / sqrt(l)
+    // 3. Scala corretto: FFTW non normalizza → 1/sqrt(l)
     const FloatType scale = FloatType(1) / std::sqrt(FloatType(l));
     CMatrix Y(m, l);
 
+    // 4. Loop sulle righe
     for (int i = 0; i < m; ++i) {
-        // Load row of A, apply D (phases)
+        // Carica e applica D
         for (int j = 0; j < n; ++j) {
             double aij = A(i, j);
-            row[j][0] = aij * phase[j].real();
-            row[j][1] = aij * phase[j].imag();
+            ws.row[j][0] = aij * ws.phase[j].real();
+            ws.row[j][1] = aij * ws.phase[j].imag();
         }
 
-        // Apply FFT (F)
-        fftw_execute(plan);
+        // FFT in-place
+        fftw_execute(ws.plan);
 
-        // Subsample R and scale
+        // Subsampling + scaling
         for (int t = 0; t < l; ++t) {
             int col_idx = indices[t];
-            Y(i, t) = scale * Complex(row[col_idx][0], row[col_idx][1]);
+            Y(i, t) = scale * Complex(ws.row[col_idx][0], ws.row[col_idx][1]);
         }
     }
-
-    fftw_destroy_plan(plan);
 
     // 5. Complex QR
     Eigen::HouseholderQR<CMatrix> qr(Y);
@@ -309,27 +323,38 @@ RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int
     return Q;
 }
 
+template<typename FloatType>
+typename RandomizedRangeFinder<FloatType>::CMatrix
+RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
+    const Matrix& A, int l, int seed)
+{
+    FRRWorkspace ws(A.cols(), seed);
+    return fastRandomizedRangeFinder(A, l, ws);
+}
+
 
 template<typename FloatType>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
     const Matrix& A,
-    double tol,   // tolleranza assoluta
-    int l0,       // campioni iniziali
-    int seed      // seed RNG (negativo per time-based)
+    double tol,
+    int l0,
+    int seed
 ) {
     const int m = A.rows();
     const int n = A.cols();
-
     const int lmax = std::min(m, n);
+
+    // Workspace persistente per tutto l’adaptive
+    FRRWorkspace ws(n, seed);
 
     int l = l0;
     CMatrix Qc;
 
     while (true) {
-        Qc = fastRandomizedRangeFinder(A, l, seed);
+        Qc = fastRandomizedRangeFinder(A, l, ws);
 
-    double err_abs = ErrorEstimators<FloatType>::realError(A, Qc);
+        double err_abs = ErrorEstimators<FloatType>::realError(A, Qc);
 
         if (err_abs <= tol || l >= lmax) {
             break;
@@ -340,6 +365,7 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
 
     return Qc;
 }
+
 
 
 // (Error and factorization related implementations moved to ErrorEstimators / MatrixFactorizer.)
