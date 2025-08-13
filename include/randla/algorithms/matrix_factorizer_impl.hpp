@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 #include <Eigen/Dense>
-#include "error_estimators.hpp" // for residual check
+#include <randla/metrics/error_estimators.hpp>
 
 namespace randla::algorithms {
 

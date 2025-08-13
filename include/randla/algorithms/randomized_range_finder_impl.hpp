@@ -11,7 +11,7 @@
 #include <complex>
 #include <fftw3.h>
 
-#include "error_estimators.hpp"
+#include <randla/metrics/error_estimators.hpp>
 
 namespace randla::algorithms {
 
