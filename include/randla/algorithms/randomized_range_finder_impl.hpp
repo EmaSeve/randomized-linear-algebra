@@ -243,77 +243,72 @@ template<typename FloatType>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(const Matrix& A, int l, int seed) {
 
-    static_assert(std::is_same_v<FloatType,double>, 
+    static_assert(std::is_same_v<FloatType,double>,
                   "This implementation uses FFTW double-precision");
+
+    using Complex = std::complex<double>;
 
     auto gen = make_generator(seed);
     const int m = A.rows();
     const int n = A.cols();
 
-    // 1. Random permutation of column indices (R)
+    // 1. Random permutation (R)
     std::vector<int> indices(n);
     std::iota(indices.begin(), indices.end(), 0);
     std::shuffle(indices.begin(), indices.end(), gen);
     indices.resize(l);
 
-    // 2. D: random unit phases
+    // 2. Precompute random unit phases (D)
     std::uniform_real_distribution<FloatType> dist_phase(0.0, 2.0 * M_PI);
-    CMatrix AD(m, n);
+    std::vector<Complex> phase(n);
     for (int j = 0; j < n; ++j) {
-        Complex phase(std::cos(dist_phase(gen)), std::sin(dist_phase(gen)));
-        for (int i = 0; i < m; ++i) {
-            AD(i, j) = Complex(A(i, j), 0.0) * phase;
-        }
+        double ang = dist_phase(gen);
+        phase[j] = Complex(std::cos(ang), std::sin(ang));
     }
 
-    // 3. FFT along the rows using FFTW
-    fftw_complex* in  = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * n));
-    fftw_complex* out = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * n));
-
+    // 3. FFT plan for a reusable row buffer
+    std::vector<fftw_complex> row(n);
     fftw_plan plan = fftw_plan_dft_1d(
         n,
-        in,
-        out,
+        row.data(),
+        row.data(),
         FFTW_FORWARD,
-        FFTW_ESTIMATE
+        FFTW_MEASURE // FFTW_ESTIMATE if you prefer faster planning
     );
 
+    // 4. Allocate Y and set correct scaling
+    // FFTW's DFT is unnormalized -> scaling = 1 / sqrt(l)
+    const FloatType scale = FloatType(1) / std::sqrt(FloatType(l));
+    CMatrix Y(m, l);
+
     for (int i = 0; i < m; ++i) {
-        // Load the i-th row of matrix AD into buffer 'in'
+        // Load row of A, apply D (phases)
         for (int j = 0; j < n; ++j) {
-            in[j][0] = AD(i, j).real();
-            in[j][1] = AD(i, j).imag();
+            double aij = A(i, j);
+            row[j][0] = aij * phase[j].real();
+            row[j][1] = aij * phase[j].imag();
         }
 
-        // Execute the discrete Fourier transform of the row
+        // Apply FFT (F)
         fftw_execute(plan);
 
-        // Copy the result from the transform back into the same row of matrix AD
-        for (int j = 0; j < n; ++j) {
-            AD(i, j) = Complex(out[j][0], out[j][1]);
+        // Subsample R and scale
+        for (int t = 0; t < l; ++t) {
+            int col_idx = indices[t];
+            Y(i, t) = scale * Complex(row[col_idx][0], row[col_idx][1]);
         }
     }
 
     fftw_destroy_plan(plan);
-    fftw_free(in);
-    fftw_free(out);
 
-    // 4. Subsample and scale
-    const FloatType scale = std::sqrt(FloatType(n) / FloatType(l));
-    CMatrix Y(m, l);
-    for (int j = 0; j < l; ++j) {
-        for (int i = 0; i < m; ++i) {
-            Y(i, j) = scale * AD(i, indices[j]);
-        }
-    }
-
-    // 5. Complex QR to orthonormalize
+    // 5. Complex QR
     Eigen::HouseholderQR<CMatrix> qr(Y);
     CMatrix Q = CMatrix::Identity(m, l);
     qr.householderQ().applyThisOnTheLeft(Q);
 
     return Q;
 }
+
 
 template<typename FloatType>
 typename RandomizedRangeFinder<FloatType>::CMatrix
