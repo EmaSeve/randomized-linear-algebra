@@ -63,11 +63,11 @@ template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix 
 RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const MatLike & A, int l, int seed){
     auto gen = make_generator(seed);
-    // step 1: draw test matrix
+
     Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
-    // step 2.
+
     Matrix Y = A * omega;
-    // step 3.
+
     Eigen::HouseholderQR<Matrix> qr(Y);
     Matrix Q(Y.rows(), l);
     Q.setIdentity();
@@ -270,12 +270,16 @@ struct FRRWorkspace {
 
 
 template<typename FloatType>
-template<class MatLike>
+template<typename Derived>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
-    const MatLike& A, int l, FRRWorkspace& ws)
+    const Eigen::MatrixBase<Derived>& A, int l, FRRWorkspace& ws)
 {
     using Complex = std::complex<double>;
+
+    // Ensure the matrix is dense (exclude sparse types)
+    static_assert(!std::is_base_of_v<Eigen::SparseMatrixBase<Derived>, Derived>,
+                  "fastRandomizedRangeFinder supports only dense matrices");
 
     const int m = A.rows();
     const int n = A.cols();
@@ -330,10 +334,10 @@ RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
 }
 
 template<typename FloatType>
-template<class MatLike>
+template<typename Derived>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
-    const MatLike& A, int l, int seed)
+    const Eigen::MatrixBase<Derived>& A, int l, int seed)
 {
     FRRWorkspace ws(A.cols(), seed);
     return fastRandomizedRangeFinder(A, l, ws);
@@ -341,10 +345,10 @@ RandomizedRangeFinder<FloatType>::fastRandomizedRangeFinder(
 
 
 template<typename FloatType>
-template<class MatLike>
+template<typename Derived>
 typename RandomizedRangeFinder<FloatType>::CMatrix
 RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
-    const MatLike& A,
+    const Eigen::MatrixBase<Derived>& A,
     double tol,
     int l0,
     int seed
@@ -373,9 +377,5 @@ RandomizedRangeFinder<FloatType>::adaptiveFastRandomizedRangeFinder(
 
     return Qc;
 }
-
-
-
-// (Error and factorization related implementations moved to ErrorEstimators / MatrixFactorizer.)
 
 } // namespace randla::algorithms

@@ -118,15 +118,12 @@ public:
     template<class MatLike>
     static Matrix randomizedSubspaceIteration(const MatLike& A, int l, int q, int seed = -1);
     
-    
-    // Versione con seed (crea internamente il workspace)
-    template<class MatLike>
-    static CMatrix fastRandomizedRangeFinder(const MatLike& A, int l, int seed = -1);
+    // Fast algorithms: restricted to dense Eigen matrices (MatrixBase).
+    template<typename Derived>
+    static CMatrix fastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, int l, int seed = -1);
 
-    // Versione con workspace già pronto (per adaptive)
-    template<class MatLike>
-    static CMatrix fastRandomizedRangeFinder(const MatLike& A, int l, FRRWorkspace& ws);
-
+    template<typename Derived>
+    static CMatrix fastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, int l, FRRWorkspace& ws);
 
     /**
      * @brief Fixed-precision variant of the structured randomized range finder (Algorithm 4.5, complex).
@@ -138,11 +135,9 @@ public:
      * @param seed    RNG seed (if <0, uses time-based seed).
      * @return CMatrix Qc (m x l_final), complex orthonormal basis for the approximate range of A.
      */
-    template<class MatLike>
-    static CMatrix adaptiveFastRandomizedRangeFinder(const MatLike& A, double tol, int l0, int seed = -1);
+    template<typename Derived>
+    static CMatrix adaptiveFastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, double tol, int l0, int seed = -1);
 
-    // Error computation and factorization routines moved to dedicated classes
-    // (ErrorEstimators, MatrixFactorizer).
 };
 
 } // namespace randla::algorithms
