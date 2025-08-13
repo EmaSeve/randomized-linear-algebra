@@ -79,7 +79,13 @@ int main() {
         run_test("Exponential decay (rate=" + std::to_string(decay_rate) + ")", A_decay);
     }
 
-    // Test 3: low-rank + noise
+    // Test 3: low-rank
+    {
+        Matrix A_noise = GM::lowRankPlusNoise(rows, cols, rank, 0, seed);
+        run_test("Low-rank (rank=" + std::to_string(rank) + ")", A_noise);
+    }
+
+    // Test 4: low-rank + noise
     {
         double noise_level = 0.001;
         Matrix A_noise = GM::lowRankPlusNoise(rows, cols, rank, noise_level, seed);
@@ -87,7 +93,7 @@ int main() {
                  ", sigma=" + std::to_string(noise_level) + ")", A_noise);
     }
 
-    // Test 4: real matrix
+    // Test 5: real matrix
     // try {
     //     const std::string path = "data/well1850.mtx";
     //     Matrix A_real = loadMatrixMarket(path);
