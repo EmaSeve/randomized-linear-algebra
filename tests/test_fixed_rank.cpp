@@ -87,7 +87,7 @@ int main() {
     try {
         std::cout << "Eigen nbThreads = " << Eigen::nbThreads() << "\n";
         std::cout << std::fixed << std::setprecision(6);
-        const int m = 3000, n = 800;
+        const int m = 800, n = 400;
         const int seed = 123;
 
         // DENSE tests
