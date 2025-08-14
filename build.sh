@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
             GENERATOR_THREADS="$2"; shift 2 ;;
         -h|--help)
             echo "Usage: $0 [-t|--threads N] [--no-openmp] [-j|--jobs N]";
-            echo "  -t, --threads N   Numero di thread OMP a runtime (export OMP_NUM_THREADS)";
+            echo "  -t, --threads N   Imposta OMP_NUM_THREADS in modo uniforme per build ed esecuzione test";
             echo "      --no-openmp   Disabilita OpenMP in compilazione (CMake ENABLE_OPENMP=OFF)";
             echo "  -j, --jobs N      Numero di job per make (default: nproc)";
             exit 0 ;;
@@ -41,7 +41,7 @@ cd build
 
 # Configure with CMake
 echo -e "${YELLOW}Configuring with CMake...${NC}"
-cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=$ENABLE_OPENMP ${THREADS:+-DTEST_OMP_NUM_THREADS=$THREADS}
+cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=$ENABLE_OPENMP
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}CMake configuration failed!${NC}"
@@ -57,10 +57,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Run tests
+# Run tests (and optionally set uniform OMP threads for everything)
 if [[ -n "$THREADS" ]]; then
     export OMP_NUM_THREADS="$THREADS"
-    echo -e "${YELLOW}Using OMP_NUM_THREADS=$OMP_NUM_THREADS for tests...${NC}"
+    echo -e "${YELLOW}Using OMP_NUM_THREADS=$OMP_NUM_THREADS for build and tests...${NC}"
 fi
 
 echo -e "${YELLOW}Running tests...${NC}"
