@@ -7,42 +7,54 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ========================
 # Eigen3 (header-only)
 # ========================
-find_path(EIGEN3_INCLUDE_DIR
-    NAMES Eigen/Core
-    HINTS ENV CPATH
-    PATH_SUFFIXES Eigen eigen3
-)
-if(NOT EIGEN3_INCLUDE_DIR)
-    message(FATAL_ERROR "Eigen3 headers not found. Carica il modulo eigen/3.4.0 o imposta EIGEN3_INCLUDE_DIR.")
+# Prefer the modern CMake package (provided by Eigen installation)
+find_package(Eigen3 QUIET NO_MODULE)
+if(NOT TARGET Eigen3::Eigen)
+    # Fallback: header-only discovery via include path
+    find_path(EIGEN3_INCLUDE_DIR
+        NAMES Eigen/Core
+        HINTS ENV CPATH
+        PATH_SUFFIXES Eigen eigen3
+    )
+    if(NOT EIGEN3_INCLUDE_DIR)
+        message(FATAL_ERROR "Impossibile trovare le intestazioni Eigen3. Imposta EIGEN3_INCLUDE_DIR o installa Eigen (es. libeigen3-dev).")
+    endif()
+    add_library(Eigen3::Eigen INTERFACE IMPORTED)
+    target_include_directories(Eigen3::Eigen INTERFACE ${EIGEN3_INCLUDE_DIR})
 endif()
-
-add_library(Eigen3::Eigen INTERFACE IMPORTED)
-target_include_directories(Eigen3::Eigen INTERFACE ${EIGEN3_INCLUDE_DIR})
 
 # ========================
 # FFTW (double precision)
 # ========================
-find_path(FFTW3_INCLUDE_DIR
-    NAMES fftw3.h
-    HINTS ENV CPATH
-          /u/sw/toolchains/gcc-glibc/11.2.0/pkgs/fftw/3.3.9/include
-)
-if(NOT FFTW3_INCLUDE_DIR)
-    message(FATAL_ERROR "FFTW headers not found. Carica il modulo fftw/3.3.9 o imposta FFTW3_INCLUDE_DIR.")
+# Try pkg-config first (common on Linux)
+find_package(PkgConfig QUIET)
+set(_have_fftw_target OFF)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(FFTW3 QUIET IMPORTED_TARGET fftw3)
+    if(TARGET PkgConfig::FFTW3)
+        add_library(FFTW::Double INTERFACE IMPORTED)
+        target_link_libraries(FFTW::Double INTERFACE PkgConfig::FFTW3)
+        set(_have_fftw_target ON)
+    endif()
 endif()
 
-find_library(FFTW3_LIB
-    NAMES fftw3
-    HINTS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH
-          /u/sw/toolchains/gcc-glibc/11.2.0/pkgs/fftw/3.3.9/lib
-)
-if(NOT FFTW3_LIB)
-    message(FATAL_ERROR "FFTW library not found. Carica il modulo fftw/3.3.9 o imposta FFTW3_LIB.")
+if(NOT _have_fftw_target)
+    # Fallback: manual discovery via include/library paths (double precision)
+    find_path(FFTW3_INCLUDE_DIR
+        NAMES fftw3.h
+        HINTS ENV CPATH
+    )
+    find_library(FFTW3_LIB
+        NAMES fftw3
+        HINTS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH
+    )
+    if(NOT FFTW3_INCLUDE_DIR OR NOT FFTW3_LIB)
+        message(FATAL_ERROR "Impossibile trovare FFTW3 (double). Installa libfftw3-dev oppure imposta FFTW3_INCLUDE_DIR e FFTW3_LIB.")
+    endif()
+    add_library(FFTW::Double INTERFACE IMPORTED)
+    target_include_directories(FFTW::Double INTERFACE ${FFTW3_INCLUDE_DIR})
+    target_link_libraries(FFTW::Double INTERFACE ${FFTW3_LIB})
 endif()
-
-add_library(FFTW::Double INTERFACE IMPORTED)
-target_include_directories(FFTW::Double INTERFACE ${FFTW3_INCLUDE_DIR})
-target_link_libraries(FFTW::Double INTERFACE ${FFTW3_LIB})
 
 # ========================
 # OPENMP
