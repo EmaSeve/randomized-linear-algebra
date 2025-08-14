@@ -98,3 +98,11 @@ add_test(NAME FixedRankTest COMMAND test_fixed_rank)
 add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
 target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
 add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
+
+# ========================
+# Benchmark
+# ========================
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cpp)
+    add_executable(rla_benchmark benchmark/benchmark.cpp)
+    target_link_libraries(rla_benchmark PRIVATE randomized-linear-algebra)
+endif()

@@ -6,7 +6,7 @@
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
 #include <randla/randla.hpp>
-#include <randla/threading.hpp
+#include <randla/threading/threading.hpp>
 
 using RLA     = randla::RandomizedRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
@@ -34,15 +34,26 @@ static void runAlgorithmsDense(const std::string& label,
 
 int main() {
     try {
-        randla::threading::setThreads(8);
-        std::cout << "Eigen nbThreads = " << Eigen::nbThreads() << "\n";
+    std::cout << std::fixed << std::setprecision(6);
+    // Thread counts to test (edit here as needed)
+    std::vector<int> threadCounts = {1, 2, 4, 8};
+
         std::cout << std::fixed << std::setprecision(6);
-        const int m = 5000, n = 800, rank = 400;
+        const int m = 1000, n = 800, rank = 400, l = 400, q = 2;
         const int seed = 123;
 
-        runAlgorithmsDense("Low-rank (rank=" + std::to_string(rank) + ")",
-            TestMat::lowRankPlusNoise(m, n, rank, 0, seed),
-            10, 2, seed);
+        // Build matrix once to keep work comparable across thread counts
+        auto A = TestMat::lowRankPlusNoise(m, n, rank, 0, seed);
+
+    for (int t : threadCounts) {
+            randla::threading::setThreads(t);
+            std::cout << "\n--- Threads = " << t
+                      << " (Eigen nbThreads=" << Eigen::nbThreads() << ") ---\n";
+
+            runAlgorithmsDense("Low-rank (rank=" + std::to_string(rank) + ")",
+                A,
+                l, q, seed + t);
+        }
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

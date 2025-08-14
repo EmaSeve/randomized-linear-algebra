@@ -1,47 +1,37 @@
 #!/bin/bash
 
-# Build script for StochasticLA library
-
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo -e "${YELLOW}Building randomized-linear-algebra library...${NC}"
+# Flags
+RUN_BENCHMARK=false
+ENABLE_OPENMP=ON
 
-# Create build directory if it doesn't exist
-if [ ! -d "build" ]; then
-    mkdir build
-fi
+# Parse args
+for arg in "$@"; do
+    case "$arg" in
+        --benchmark) RUN_BENCHMARK=true ;;
+        --no-openmp) ENABLE_OPENMP=OFF ;;
+    esac
+done
 
-cd build
+echo -e "${YELLOW}Configuring build (OpenMP=${ENABLE_OPENMP})...${NC}"
 
-# Configure with CMake
-echo -e "${YELLOW}Configuring with CMake...${NC}"
-cmake .. -DCMAKE_BUILD_TYPE=Release
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=${ENABLE_OPENMP} || exit 1
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}CMake configuration failed!${NC}"
-    exit 1
-fi
+echo -e "${YELLOW}Compiling...${NC}"
+make -j$(nproc) || exit 1
 
-# Build
-echo -e "${YELLOW}Building...${NC}"
-make -j$(nproc)
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Build failed!${NC}"
-    exit 1
-fi
-
-# Run tests
-echo -e "${YELLOW}Running tests...${NC}"
-ctest --output-on-failure
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Build and tests completed successfully!${NC}"
+if [ "$RUN_BENCHMARK" = true ]; then
+    echo -e "${YELLOW}Running benchmark...${NC}"
+    ./rla_benchmark || exit 1
 else
-    echo -e "${RED}Some tests failed!${NC}"
-    exit 1
+    echo -e "${YELLOW}Running tests...${NC}"
+    ctest --output-on-failure || exit 1
 fi
+
+echo -e "${GREEN}Done!${NC}"
