@@ -57,9 +57,18 @@ if(NOT _have_fftw_target)
 endif()
 
 # ========================
-# OPENMP
+# OpenMP (optional)
 # ========================
-find_package(OpenMP REQUIRED)
+option(ENABLE_OPENMP "Enable OpenMP parallelism" ON)
+set(HAVE_OPENMP OFF)
+if(ENABLE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        set(HAVE_OPENMP ON)
+    else()
+        message(STATUS "OpenMP non trovato: compilazione senza parallelismo OpenMP")
+    endif()
+endif()
 
 # ========================
 # randomized-linear-algebra (header-only)
@@ -70,8 +79,11 @@ target_link_libraries(randomized-linear-algebra
     INTERFACE
         Eigen3::Eigen
         FFTW::Double
-        OpenMP::OpenMP_CXX
 )
+if(HAVE_OPENMP)
+    target_link_libraries(randomized-linear-algebra INTERFACE OpenMP::OpenMP_CXX)
+    target_compile_definitions(randomized-linear-algebra INTERFACE RLA_USE_OPENMP=1)
+endif()
 target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 
 # ========================
@@ -86,3 +98,11 @@ add_test(NAME FixedRankTest COMMAND test_fixed_rank)
 add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
 target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
 add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
+
+# Imposta il numero di thread OpenMP per i test (se fornito)
+set(TEST_OMP_NUM_THREADS "" CACHE STRING "Numero di thread da usare per OMP durante ctest")
+if(TEST_OMP_NUM_THREADS)
+    foreach(_t FixedRankTest FixedPrecisionTest)
+        set_property(TEST ${_t} PROPERTY ENVIRONMENT "OMP_NUM_THREADS=${TEST_OMP_NUM_THREADS}")
+    endforeach()
+endif()
