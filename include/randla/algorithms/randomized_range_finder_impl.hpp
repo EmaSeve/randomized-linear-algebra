@@ -10,6 +10,7 @@
 #include <numeric>
 #include <complex>
 #include <fftw3.h>
+#include <iostream>
 
 #include <randla/metrics/error_estimators.hpp>
 
@@ -64,10 +65,13 @@ typename RandomizedRangeFinder<FloatType>::Matrix
 RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const MatLike & A, int l, int seed){
     auto gen = make_generator(seed);
 
+    // Step 1: random test matrix generation
     Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
 
+    // Step 2: sample the range Y = A * Omega
     Matrix Y = A * omega;
 
+    // Step 3: thin QR to obtain Q
     Eigen::HouseholderQR<Matrix> qr(Y);
     Matrix Q(Y.rows(), l);
     Q.setIdentity();

@@ -16,6 +16,8 @@ int main() {
     using FloatType = double;
     using Matrix = Eigen::MatrixXd;
 
+    std::cout << "Eigen nbThreads = " << Eigen::nbThreads() << "\n";
+
     const int rows = 800;
     const int cols = 400;
     const int rank = 20;
