@@ -6,6 +6,7 @@
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
 #include <randla/randla.hpp>
+#include <randla/threading.hpp
 
 using RLA     = randla::RandomizedRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
@@ -33,6 +34,7 @@ static void runAlgorithmsDense(const std::string& label,
 
 int main() {
     try {
+        randla::threading::setThreads(8);
         std::cout << "Eigen nbThreads = " << Eigen::nbThreads() << "\n";
         std::cout << std::fixed << std::setprecision(6);
         const int m = 5000, n = 800, rank = 400;
