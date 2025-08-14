@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(randomized-linear-algebra VERSION 1.0.0 LANGUAGES CXX)
 
-# C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -23,7 +22,6 @@ target_include_directories(Eigen3::Eigen INTERFACE ${EIGEN3_INCLUDE_DIR})
 # ========================
 # FFTW (double precision)
 # ========================
-# ===== FFTW (double precision) =====
 find_path(FFTW3_INCLUDE_DIR
     NAMES fftw3.h
     HINTS ENV CPATH
@@ -46,13 +44,22 @@ add_library(FFTW::Double INTERFACE IMPORTED)
 target_include_directories(FFTW::Double INTERFACE ${FFTW3_INCLUDE_DIR})
 target_link_libraries(FFTW::Double INTERFACE ${FFTW3_LIB})
 
+# ========================
+# OPENMP
+# ========================
+find_package(OpenMP REQUIRED)
 
 # ========================
-# randomized-linear-algebra library
+# randomized-linear-algebra (header-only)
 # ========================
 add_library(randomized-linear-algebra INTERFACE)
 target_include_directories(randomized-linear-algebra INTERFACE include)
-target_link_libraries(randomized-linear-algebra INTERFACE Eigen3::Eigen FFTW::Double)
+target_link_libraries(randomized-linear-algebra
+    INTERFACE
+        Eigen3::Eigen
+        FFTW::Double
+        OpenMP::OpenMP_CXX
+)
 target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 
 # ========================
@@ -60,12 +67,9 @@ target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 # ========================
 enable_testing()
 
-# file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
 target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra)
 add_test(NAME FixedRankTest COMMAND test_fixed_rank)
-
 
 add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
 target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
