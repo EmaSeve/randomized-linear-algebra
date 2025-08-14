@@ -10,6 +10,7 @@
 #include <numeric>
 #include <complex>
 #include <fftw3.h>
+#include <iostream>
 
 #include <randla/metrics/error_estimators.hpp>
 
@@ -64,14 +65,34 @@ typename RandomizedRangeFinder<FloatType>::Matrix
 RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const MatLike & A, int l, int seed){
     auto gen = make_generator(seed);
 
+    using Clock = std::chrono::high_resolution_clock;
+    const auto t0 = Clock::now();
+
+    // Step 1: random test matrix generation
     Matrix omega = randomGaussianMatrix(A.cols(), l, gen);
+    const auto t1 = Clock::now();
 
+    // Step 2: sample the range Y = A * Omega
     Matrix Y = A * omega;
+    const auto t2 = Clock::now();
 
+    // Step 3: thin QR to obtain Q
     Eigen::HouseholderQR<Matrix> qr(Y);
     Matrix Q(Y.rows(), l);
     Q.setIdentity();
     qr.householderQ().applyThisOnTheLeft(Q);
+    const auto t3 = Clock::now();
+
+    // Report timings in milliseconds
+    const double t_gen_ms  = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    const double t_mult_ms = std::chrono::duration<double, std::milli>(t2 - t1).count();
+    const double t_qr_ms   = std::chrono::duration<double, std::milli>(t3 - t2).count();
+    std::cout << "[randomizedRangeFinder] timings (ms): "
+              << "omega=" << t_gen_ms
+              << ", mult=" << t_mult_ms
+              << ", qr=" << t_qr_ms
+              << ", total=" << (t_gen_ms + t_mult_ms + t_qr_ms)
+              << std::endl;
 
     return Q;
 }
