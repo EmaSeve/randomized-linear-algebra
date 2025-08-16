@@ -99,6 +99,10 @@ add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
 target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
 add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
 
+add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
+target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
+add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
+
 # ========================
 # Benchmark
 # ========================

@@ -27,10 +27,21 @@ struct Types {
     /**
      * @brief Result structure for SVD decomposition A ≈ U S V^*
      */
-    struct DirectSVDResult {
+    struct SVDResult {
         Matrix U;  ///< Left singular vectors
         Vector S;  ///< Singular values
         Matrix V;  ///< Right singular vectors
+    };
+
+    struct IDResult {
+        CMatrix B;
+        CMatrix P;
+        std::vector<int> indices; // columns of A used to construct B
+    };
+
+    struct EigenvalueDecomposition {
+        Matrix U;
+        Matrix Lambda;
     };
 };
 

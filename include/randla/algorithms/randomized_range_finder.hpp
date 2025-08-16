@@ -47,6 +47,24 @@ public:
     static Matrix randomGaussianMatrix(int rows, int cols, std::mt19937 & gen);
     
     /**
+     * @brief Generate a random complex matrix with standard Gaussian entries
+     * @param rows Number of rows
+     * @param cols Number of columns
+     * @param seed Random seed (if negative, uses current time)
+     * @return Random complex matrix
+     */
+    static CMatrix randomComplexGaussianMatrix(int rows, int cols, int seed = -1);
+
+    /**
+     * @brief Generate a random complex matrix with standard Gaussian entries using an existing generator
+     * @param rows Number of rows
+     * @param cols Number of columns
+     * @param gen  Pseudo-random number engine (state is advanced)
+     * @return Random complex matrix
+     */
+    static CMatrix randomComplexGaussianMatrix(int rows, int cols, std::mt19937& gen);
+
+    /**
      * @brief Generate a standard Gaussian random vector
      * @param size Vector size
      * @param seed Random seed (if negative, uses current time)

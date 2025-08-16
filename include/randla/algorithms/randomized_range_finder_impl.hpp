@@ -42,6 +42,30 @@ RandomizedRangeFinder<FloatType>::randomGaussianMatrix(int rows, int cols, int s
 }
 
 template<typename FloatType>
+typename RandomizedRangeFinder<FloatType>::CMatrix 
+RandomizedRangeFinder<FloatType>::randomComplexGaussianMatrix(int rows, int cols, std::mt19937& gen) {
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+    CMatrix result(rows, cols);
+    
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            FloatType re = dist(gen);
+            FloatType im = dist(gen);
+            result(i, j) = Complex(re, im);
+        }
+    }
+    return result;
+}
+
+template<typename FloatType>
+typename RandomizedRangeFinder<FloatType>::CMatrix 
+RandomizedRangeFinder<FloatType>::randomComplexGaussianMatrix(int rows, int cols, int seed) {
+    auto gen = make_generator(seed);
+    return randomComplexGaussianMatrix(rows, cols, gen);
+}
+
+
+template<typename FloatType>
 typename RandomizedRangeFinder<FloatType>::Vector 
 RandomizedRangeFinder<FloatType>::randomGaussianVector(int size, std::mt19937 & gen) {
     Vector result(size);

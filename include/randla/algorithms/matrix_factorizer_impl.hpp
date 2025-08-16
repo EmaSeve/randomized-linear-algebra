@@ -3,17 +3,18 @@
 #include <stdexcept>
 #include <Eigen/Dense>
 #include <randla/metrics/error_estimators.hpp>
+#include <randla/algorithms/randomized_range_finder.hpp>
+
 
 namespace randla::algorithms {
 
 template<typename FloatType>
-typename MatrixFactorizer<FloatType>::DirectSVDResult
+typename MatrixFactorizer<FloatType>::SVDResult
 MatrixFactorizer<FloatType>::directSVD(const Matrix & A, const Matrix & Q, double tol) {
 
 	double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
-	if (error > tol) {
-		throw std::runtime_error("MatrixFactorizer::directSVD: residual norm exceeds tolerance");
-	}
+	if (error > tol)
+		throw std::runtime_error("MatrixFactorizer - direct SVD: residual norm exceeds tolerance");
 
 	Matrix B = Q.transpose() * A; // k x n
 
@@ -24,7 +25,210 @@ MatrixFactorizer<FloatType>::directSVD(const Matrix & A, const Matrix & Q, doubl
 
 	Matrix U = Q * U_tilde; // m x k
 
-	return DirectSVDResult{std::move(U), std::move(S), std::move(V)};
+	return SVDResult{std::move(U), std::move(S), std::move(V)};
 }
+
+
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::IDResult
+MatrixFactorizer<FloatType>::IDFactorizationI(const CMatrix & A, int k, int seed){
+
+    const size_t m = A.rows();
+    const size_t n = A.cols();
+    const size_t l = k + 10;
+
+    if (k < 1 || k > std::min(m, n))
+        throw std::runtime_error("MatrixFactorizer - IDFactorizationI: wrong rank value");
+
+    // Step 1:
+    auto gen = make_generator(seed);
+    CMatrix R = RandomizedRangeFinder<FloatType>::randomComplexGaussianMatrix(l, m, gen); 
+    CMatrix Y = R * A;                                   
+
+    // Step 2:
+    Eigen::ColPivHouseholderQR<CMatrix> qr(Y.transpose());
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = qr.colsPermutation();
+
+    Eigen::VectorXi indices = perm.indices();
+    std::vector<int> selectedCols(k);
+    for (size_t i = 0; i < k; ++i)
+        selectedCols[i] = indices(i);
+
+    CMatrix B(m, k);
+    for (size_t i = 0; i < k; ++i)
+        B.col(i) = A.col(selectedCols[i]);
+
+    // Step 3:
+    CMatrix P;
+    Eigen::BDCSVD<CMatrix> svd(B, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    P = svd.solve(A);
+
+    return IDResult{std::move(B), std::move(P), std::move(selectedCols)};
+}
+
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::SVDResult
+MatrixFactorizer<FloatType>::SVDViaRowExtraction(const Matrix & A, const Matrix & Q, double tol){
+    
+    double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
+	if (error > tol) 
+        throw std::runtime_error("MatrixFactorizer - SVD via row extraction: residual norm exceeds tolerance");
+
+// TODO: change the IDFactorizationI such that rank will not be a parameter anymore, the function need to become 'adaptive'
+
+    // Step 1: ID of Q's rows, performing and ID on Q^T
+    int id_rank = 100;
+    int seed = 123;
+    IDResult ID = IDFactorizationI(Q.transpose(), id_rank, seed);
+
+    // Q ≈ X * Q(J, :)  ->  X = ID.P^T, Q_J = ID.B^T
+    Matrix Q_J = ID.B.transpose();      // (k x n)
+    Matrix X   = ID.P.transpose();      // (m x k)
+
+    // Step 2: extract the corresponding rows of A
+    const IndexVector& row_indices = ID.indices;
+    const int k = static_cast<int>(row_indices.size());
+    Matrix A_J(k, n); 
+    for (size_t i = 0; i < k; ++i)
+        A_J.row(i) = A.row(row_indices[i]);
+
+    // QR of A(J, :) = R * W^*
+    Eigen::HouseholderQR<Matrix> qr(A_J);
+    Matrix R = qr.matrixQR().triangularView<Eigen::Upper>(); 
+    Matrix W = qr.householderQ();                            
+
+    // Step 3: Z = X * R^*
+    Matrix Z = X * R.adjoint();
+
+    // Step 4: SVD of Z
+    Eigen::BDCSVD<Matrix> svd(Z, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Matrix U = svd.matrixU();                       
+    Vector S = svd.singularValues();                 
+    Matrix Vhat = svd.matrixV();                     
+
+    // Step 5: V = W * V̂
+    Matrix V = W * Vhat;
+
+    return SVDResult{std::move(U), std::move(S), std::move(V)};
+}
+
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::EigenvalueDecomposition
+MatrixFactorizer<FloatType>::directEigenvalueDecomposition(const Matrix & A, const Matrix & Q, double tol){
+
+    double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
+	if (error > tol) 
+        throw std::runtime_error("MatrixFactorizer - direct eigenvalue decomposition: residual norm exceeds tolerance");
+
+    bool isHermitian = A.isApprox(A.adjoint());
+    if(!isHermitian)
+        throw std::runtime_error("MatrixFactorizer - direct eigenvalue decomposition: matrix A is NOT Hermitian");
+
+    // Step 1: B = Q^* A Q
+    Matrix B = Q.adjoint() * A * Q;
+
+    // Step 2: eigenvalue decomposition of B
+    Eigen::SelfAdjointEigenSolver<Matrix> eigensolver(B);
+    if (eigensolver.info() != Eigen::Success)
+        throw std::runtime_error("MatrixFactorizer - direct Eigenvalue decomposition: eigen decomposition failed");
+
+    Vector eigenvalues = eigensolver.eigenvalues();
+    Matrix V = eigensolver.eigenvectors();            
+
+    // Step 3: U = Q V
+    Matrix U = Q * V;
+
+    return EigenvalueDecomposition{std::move(U), std::move(eigenvalues)};
+}
+
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::EigenvalueDecomposition
+MatrixFactorizer<FloatType>::EigenvalueDecompositionViaRowExtraction(const Matrix & A, const Matrix & Q, double tol){
+
+    bool isHermitian = A.isApprox(A.adjoint());
+    if(!isHermitian)
+        throw std::runtime_error("MatrixFactorizer - direct eigenvalue decomposition: matrix A is NOT Hermitian");
+
+    double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
+	if (error > tol) 
+        throw std::runtime_error("MatrixFactorizer - direct eigenvalue decomposition: residual norm exceeds tolerance");
+
+    // Step 1: Interpolative Decomposition over Q's rows
+    int id_rank = 100;
+    int seed = 42;
+    IDResult ID = IDFactorizationI(Q.transpose(), id_rank, seed);
+
+    Matrix Q_J = ID.B.transpose();  
+    Matrix X = ID.P.transpose();   
+
+    const IndexVector& row_indices = ID.indices;
+    const int k = static_cast<int>(row_indices.size());
+
+    // Step 2: QR of X = V R
+    Eigen::HouseholderQR<Matrix> qr_X(X);
+    Matrix R = qr_X.matrixQR().topLeftCorner(k, k).triangularView<Eigen::Upper>(); 
+    Matrix V = qr_X.householderQ(); 
+
+    // Step 3: Z = R A(J,J) R^*
+    Matrix A_JJ(k, k);
+    for (size_t i = 0; i < k; ++i)
+        for (size_t j = 0; j < k; ++j)
+            A_JJ(i, j) = A(row_indices[i], row_indices[j]);
+
+    Matrix Z = R * A_JJ * R.adjoint();
+
+    // Step 4: eigenvalue decomposition of Z
+    Eigen::SelfAdjointEigenSolver<Matrix> eig(Z);
+    if (eig.info() != Eigen::Success)
+        throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaRowExtraction: eigen decomposition failed");
+
+    Vector eigenvalues = eig.eigenvalues(); 
+    Matrix W = eig.eigenvectors();           
+
+    // Step 5: U = V W
+    Matrix U = V.leftCols(k) * W;
+
+    return EigenvalueDecomposition{std::move(U), std::move(eigenvalues)};
+}
+
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::EigenvalueDecomposition
+MatrixFactorizer<FloatType>::EigenvalueDecompositionViaNystromMethod(const Matrix & A, const Matrix & Q, double tol){
+    const size_t m = A.rows();
+    const size_t k = Q.cols();
+
+    double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
+    if (error > tol)
+        throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaNystromMethod: residual error exceeds tolerance");
+
+    Eigen::SelfAdjointEigenSolver<Matrix> eig(A);
+    if (eig.eigenvalues().minCoeff() < -1e-10)
+        throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaNystromMethod: matrix A is not positive semidefinite");
+
+    // Step 1: B₁ = A Q ; B₂ = Q* A Q
+    Matrix B1 = A * Q;
+    Matrix B2 = Q.adjoint() * B1;
+
+    // Step 2: Compute Cholesky factorization B₂ = C C*
+    Eigen::LLT<Matrix> chol(B2);
+    if (chol.info() != Eigen::Success)
+        throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaNystromMethod: Cholesky decomposition failed");
+    Matrix C = chol.matrixL();
+
+    // Step 3: Solve triangular system F = B₁ * C^{-1}
+    Matrix F = C.template triangularView<Eigen::Lower>().solve(B1.transpose()).transpose();
+
+    // Step 4: Compute SVD F = U Σ V* and set Λ = Σ²
+    Eigen::BDCSVD<Matrix> svd(F, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Matrix U = svd.matrixU();
+    Vector Sigma = svd.singularValues();
+    Vector Lambda = Sigma.array().square();
+
+    return EigenvalueDecomposition{std::move(U), std::move(Lambda)};
+}
+
+
+
+
 
 } // namespace randla::algorithms
