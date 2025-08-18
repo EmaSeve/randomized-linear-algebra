@@ -27,8 +27,11 @@ echo -e "${YELLOW}Compiling...${NC}"
 make -j$(nproc) || exit 1
 
 if [ "$RUN_BENCHMARK" = true ]; then
-    echo -e "${YELLOW}Running benchmark...${NC}"
+    echo -e "${YELLOW}Running fixed rank benchmark...${NC}"
     ./benchmark_fixed_rank || exit 1
+    
+    echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
+    ./benchmark_fixed_precision || exit 1
 else
     echo -e "${YELLOW}Running tests...${NC}"
     ctest --output-on-failure || exit 1

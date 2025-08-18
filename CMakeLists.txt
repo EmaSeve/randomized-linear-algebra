@@ -110,3 +110,8 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_rank.cpp)
     add_executable(benchmark_fixed_rank benchmark/benchmark_fixed_rank.cpp)
     target_link_libraries(benchmark_fixed_rank PRIVATE randomized-linear-algebra)
 endif()
+
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_precision.cpp)
+    add_executable(benchmark_fixed_precision benchmark/benchmark_fixed_precision.cpp)
+    target_link_libraries(benchmark_fixed_precision PRIVATE randomized-linear-algebra)
+endif()
