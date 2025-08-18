@@ -53,9 +53,8 @@ static void runAlgorithmsDense(const std::string& label,
 
     // runOne("RRF", 0, [&](int s){ return RLA::randomizedRangeFinder(A, l, s); });
     // runOne("RPI", 1, [&](int s){ return RLA::randomizedPowerIteration(A, l, q, s); });
-    // runOne("RSI", 2, [&](int s){ return RLA::randomizedSubspaceIteration(A, l, q, s); });
-    runOne("FRR", 3, [&](int s){ return RLA::fastRandomizedRangeFinder(A, l, s); });
-    runOne("FRR-parllel", 3, [&](int s){ return RLA::fastRandomizedRangeFinder_parallel(A, l, s); });
+    runOne("RSI", 2, [&](int s){ return RLA::randomizedSubspaceIteration(A, l, q, s); });
+    // runOne("FRF", 3, [&](int s){ return RLA::fastRandomizedRangeFinder(A, l, s); });
 }
 
 int main() {
@@ -63,7 +62,7 @@ int main() {
         std::cout << std::fixed << std::setprecision(6);
         std::vector<int> threadCounts = {1, 2, 4, 8, 16};
 
-        const int m = 1000, n = 800, rank = 400, l = 400, q = 2;
+        const int m = 5000, n = 2000, rank = 1000, l = 400, q = 2;
         const int seed = 123;
 
         std::ofstream csv("benchmark_results.csv", std::ios::trunc);
