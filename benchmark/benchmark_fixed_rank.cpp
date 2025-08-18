@@ -13,24 +13,19 @@ using RLA     = randla::RandomizedRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 
-// Light warmup function to prepare the system before actual benchmarks
 static void performLightWarmup(int seed) {
     std::cout << "Performing light warmup...\n";
-    // Create a small matrix for warmup
     const int warmup_m = 200;
     const int warmup_n = 150;
     const int warmup_rank = 20;
     const int warmup_l = 30;
     const int warmup_q = 1;
     
-    // Generate a small low-rank matrix
     auto warmupMatrix = TestMat::lowRankPlusNoise(warmup_m, warmup_n, warmup_rank, 0.0, seed);
     
-    // Run a few light operations to warm up CPU and memory
     auto Q1 = RLA::randomizedRangeFinder(warmupMatrix, warmup_l, seed);
     auto Q2 = RLA::fastRandomizedRangeFinder(warmupMatrix, warmup_l, seed+1);
     
-    // Prevent compiler from optimizing away the operations
     volatile double dummy = Q1.norm() + Q2.norm();
     std::cout << "Warmup complete. Matrix size: " << warmup_m << "x" << warmup_n << "\n";
 }
