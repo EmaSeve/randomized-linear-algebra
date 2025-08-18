@@ -11,8 +11,7 @@ namespace threading {
 inline void setThreads(int n) {
 #ifdef _OPENMP
     omp_set_num_threads(n);
-    // Disable nested parallelism to avoid oversubscription
-    omp_set_nested(0);
+    // omp_set_nested(0);
 #endif
     Eigen::setNbThreads(n);
 }
