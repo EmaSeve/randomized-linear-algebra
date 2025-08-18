@@ -74,6 +74,9 @@ MatrixFactorizer<FloatType>::SVDViaRowExtraction(const Matrix & A, const Matrix 
 	if (error > tol) 
         throw std::runtime_error("MatrixFactorizer - SVD via row extraction: residual norm exceeds tolerance");
 
+    const int m = A.rows();
+    const int n = A.cols();
+
 // TODO: change the IDFactorizationI such that rank will not be a parameter anymore, the function need to become 'adaptive'
 
     // Step 1: ID of Q's rows, performing and ID on Q^T
@@ -86,7 +89,7 @@ MatrixFactorizer<FloatType>::SVDViaRowExtraction(const Matrix & A, const Matrix 
     Matrix X   = ID.P.transpose();      // (m x k)
 
     // Step 2: extract the corresponding rows of A
-    const IndexVector& row_indices = ID.indices;
+    const auto& row_indices = ID.indices;
     const int k = static_cast<int>(row_indices.size());
     Matrix A_J(k, n); 
     for (size_t i = 0; i < k; ++i)
@@ -94,7 +97,7 @@ MatrixFactorizer<FloatType>::SVDViaRowExtraction(const Matrix & A, const Matrix 
 
     // QR of A(J, :) = R * W^*
     Eigen::HouseholderQR<Matrix> qr(A_J);
-    Matrix R = qr.matrixQR().triangularView<Eigen::Upper>(); 
+    Matrix R = qr.matrixQR().topLeftCorner(k, k).template triangularView<Eigen::Upper>(); 
     Matrix W = qr.householderQ();                            
 
     // Step 3: Z = X * R^*
@@ -153,6 +156,9 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaRowExtraction(const Matri
 	if (error > tol) 
         throw std::runtime_error("MatrixFactorizer - direct eigenvalue decomposition: residual norm exceeds tolerance");
 
+    const int m = A.rows();
+    const int n = A.cols();
+
     // Step 1: Interpolative Decomposition over Q's rows
     int id_rank = 100;
     int seed = 42;
@@ -161,12 +167,12 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaRowExtraction(const Matri
     Matrix Q_J = ID.B.transpose();  
     Matrix X = ID.P.transpose();   
 
-    const IndexVector& row_indices = ID.indices;
+    const auto& row_indices = ID.indices;
     const int k = static_cast<int>(row_indices.size());
 
     // Step 2: QR of X = V R
     Eigen::HouseholderQR<Matrix> qr_X(X);
-    Matrix R = qr_X.matrixQR().topLeftCorner(k, k).triangularView<Eigen::Upper>(); 
+    Matrix R = qr_X.matrixQR().topLeftCorner(k, k).template triangularView<Eigen::Upper>();
     Matrix V = qr_X.householderQ(); 
 
     // Step 3: Z = R A(J,J) R^*

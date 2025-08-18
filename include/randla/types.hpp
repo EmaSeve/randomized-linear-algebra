@@ -22,7 +22,6 @@ struct Types {
     using Complex  = std::complex<Scalar>;
     using CMatrix  = Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic>;
     using CVector  = Eigen::Matrix<Complex, Eigen::Dynamic, 1>;
-
     
     /**
      * @brief Result structure for SVD decomposition A ≈ U S V^*

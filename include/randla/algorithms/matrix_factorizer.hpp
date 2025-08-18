@@ -21,6 +21,7 @@ public:
 	using typename randla::Types<FloatType>::Vector;
 	using typename randla::Types<FloatType>::SVDResult;
 	using typename randla::Types<FloatType>::IDResult;
+	using typename randla::Types<FloatType>::EigenvalueDecomposition;
 
 	/**
 	 * @brief Direct SVD factorization (Algorithm: project then SVD) A ≈ U S V^T
@@ -96,7 +97,7 @@ public:
 
 	static EigenvalueDecomposition EigenvalueDecompositionViaNystromMethod(const Matrix & PSD_A, const Matrix & Q, double tol);
 
-	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const Matrix & Hermitian_A, const Matrix & Q, const Matrix & Random_test_omega, double tol)
+	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const Matrix & Hermitian_A, const Matrix & Q, const Matrix & Random_test_omega, double tol);
 };
 
 
