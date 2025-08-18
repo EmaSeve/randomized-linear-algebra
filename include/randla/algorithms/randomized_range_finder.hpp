@@ -7,9 +7,6 @@
 
 namespace randla::algorithms {
 
-// Forward declaration of workspace used by fast randomized range finder (defined in impl)
-struct FRRWorkspace;
-
 /**
  * @brief Main class implementing randomized linear algebra algorithms
  * 
@@ -155,8 +152,9 @@ public:
     template<typename Derived>
     static CMatrix fastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, int l, int seed = -1);
 
+    // Fast algorithms: restricted to dense Eigen matrices (MatrixBase).
     template<typename Derived>
-    static CMatrix fastRandomizedRangeFinder(const Eigen::MatrixBase<Derived>& A, int l, FRRWorkspace& ws);
+    static CMatrix fastRandomizedRangeFinder_parallel(const Eigen::MatrixBase<Derived>& A, int l, int seed = -1);
 
     /**
      * @brief Fixed-precision variant of the structured randomized range finder (Algorithm 4.5, complex).

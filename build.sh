@@ -28,7 +28,7 @@ make -j$(nproc) || exit 1
 
 if [ "$RUN_BENCHMARK" = true ]; then
     echo -e "${YELLOW}Running benchmark...${NC}"
-    ./rla_benchmark || exit 1
+    ./benchmark_fixed_rank || exit 1
 else
     echo -e "${YELLOW}Running tests...${NC}"
     ctest --output-on-failure || exit 1

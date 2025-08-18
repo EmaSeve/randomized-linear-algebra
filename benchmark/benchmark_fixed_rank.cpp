@@ -55,6 +55,7 @@ static void runAlgorithmsDense(const std::string& label,
     // runOne("RPI", 1, [&](int s){ return RLA::randomizedPowerIteration(A, l, q, s); });
     // runOne("RSI", 2, [&](int s){ return RLA::randomizedSubspaceIteration(A, l, q, s); });
     runOne("FRR", 3, [&](int s){ return RLA::fastRandomizedRangeFinder(A, l, s); });
+    runOne("FRR-parllel", 3, [&](int s){ return RLA::fastRandomizedRangeFinder_parallel(A, l, s); });
 }
 
 int main() {
@@ -94,6 +95,7 @@ int main() {
             randla::threading::setThreads(t);
             std::cout << "\n--- Threads = " << t
                       << " (Eigen nbThreads=" << Eigen::nbThreads() << ") ---\n";
+            std::cout << "OpenMP threads: " << omp_get_max_threads() << "\n";
 
             for (const auto& [label, A] : cases) {
                 runAlgorithmsDense(label, A, l, q, seed + t, t, csv);
