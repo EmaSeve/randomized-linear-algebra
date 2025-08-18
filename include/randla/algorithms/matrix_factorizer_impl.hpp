@@ -74,8 +74,8 @@ MatrixFactorizer<FloatType>::SVDViaRowExtraction(const Matrix & A, const Matrix 
 	if (error > tol) 
         throw std::runtime_error("MatrixFactorizer - SVD via row extraction: residual norm exceeds tolerance");
 
-    const int m = A.rows();
-    const int n = A.cols();
+    const size_t m = A.rows();
+    const size_t n = A.cols();
 
 // TODO: change the IDFactorizationI such that rank will not be a parameter anymore, the function need to become 'adaptive'
 
@@ -156,10 +156,10 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaRowExtraction(const Matri
 	if (error > tol) 
         throw std::runtime_error("MatrixFactorizer - direct eigenvalue decomposition: residual norm exceeds tolerance");
 
-    const int m = A.rows();
-    const int n = A.cols();
+    const size_t m = A.rows();
+    const size_t n = A.cols();
 
-    // Step 1: Interpolative Decomposition over Q's rows
+    // Step 1: Interpolative Decomposition over Q rows
     int id_rank = 100;
     int seed = 42;
     IDResult ID = IDFactorizationI(Q.transpose(), id_rank, seed);
@@ -211,20 +211,20 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaNystromMethod(const Matri
     if (eig.eigenvalues().minCoeff() < -1e-10)
         throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaNystromMethod: matrix A is not positive semidefinite");
 
-    // Step 1: B₁ = A Q ; B₂ = Q* A Q
+    // Step 1: B_1 = A Q ; B_2 = Q* A Q
     Matrix B1 = A * Q;
     Matrix B2 = Q.adjoint() * B1;
 
-    // Step 2: Compute Cholesky factorization B₂ = C C*
+    // Step 2: Compute Cholesky factorization B_2 = C C*
     Eigen::LLT<Matrix> chol(B2);
     if (chol.info() != Eigen::Success)
         throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaNystromMethod: Cholesky decomposition failed");
     Matrix C = chol.matrixL();
 
-    // Step 3: Solve triangular system F = B₁ * C^{-1}
+    // Step 3: Solve triangular system F = B_1 * C^{-1}
     Matrix F = C.template triangularView<Eigen::Lower>().solve(B1.transpose()).transpose();
 
-    // Step 4: Compute SVD F = U Σ V* and set Λ = Σ²
+    // Step 4: Compute SVD F = U Σ V* and set Λ = Σ^2
     Eigen::BDCSVD<Matrix> svd(F, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Matrix U = svd.matrixU();
     Vector Sigma = svd.singularValues();
@@ -233,8 +233,42 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaNystromMethod(const Matri
     return EigenvalueDecomposition{std::move(U), std::move(Lambda)};
 }
 
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::EigenvalueDecomposition
+MatrixFactorizer<FloatType>::EigenvalueDecompositionInOnePass(const Matrix & A, const Matrix & Q, const Matrix & Omega, double tol){
 
+    bool isHermitian = A.isApprox(A.adjoint());
+    if(!isHermitian)
+        throw std::runtime_error("MatrixFactorizer - eigenvalue decomposition in one pass: matrix A is NOT Hermitian");
 
+    double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
+	if (error > tol) 
+        throw std::runtime_error("MatrixFactorizer - eigenvalue decomposition in one pass: residual norm exceeds tolerance");
 
+    // Step 1: Form the sample matrix Y = A * Omega
+    Matrix Y = A * Omega;
+
+    // Step 2: Solve least squares: Bapprox * (Q^* * Omega) ≈ Q^* * Y
+    Matrix Q_omega = Q.adjoint() * Omega;
+    Matrix Q_Y     = Q.adjoint() * Y;
+
+    // Solve Bapprox from: B Q_omega ≈ Q_Y
+    // This is an overdetermined system if Omega has more columns than Q has rows
+    Matrix Bapprox;
+    Bapprox = Q_Y * Q_omega.completeOrthogonalDecomposition().solve(Matrix::Identity(Q_omega.cols(), Q_omega.cols()));
+
+    // Step 3: Eigendecomposition of Bapprox
+    Eigen::SelfAdjointEigenSolver<Matrix> eigensolver(Bapprox);
+    if (eigensolver.info() != Eigen::Success)
+        throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionInOnePass: eigen decomposition failed");
+
+    Vector Lambda = eigensolver.eigenvalues();
+    Matrix V = eigensolver.eigenvectors();
+
+    // Step 4: Form U = Q * V
+    Matrix U = Q * V;
+
+    return EigenvalueDecomposition{std::move(U), std::move(Lambda)};
+}
 
 } // namespace randla::algorithms
