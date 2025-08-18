@@ -8,6 +8,7 @@ NC='\033[0m'
 
 # Flags
 RUN_BENCHMARK=false
+RUN_TESTS=true
 ENABLE_OPENMP=ON
 
 # Parse args
@@ -15,6 +16,7 @@ for arg in "$@"; do
     case "$arg" in
         --benchmark) RUN_BENCHMARK=true ;;
         --no-openmp) ENABLE_OPENMP=OFF ;;
+        --no-test) RUN_TESTS=false ;;
     esac
 done
 
@@ -32,9 +34,11 @@ if [ "$RUN_BENCHMARK" = true ]; then
     
     echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
     ./benchmark_fixed_precision || exit 1
-else
+elif [ "$RUN_TESTS" = true ]; then
     echo -e "${YELLOW}Running tests...${NC}"
     ctest --output-on-failure || exit 1
+else
+    echo -e "${GREEN}Skipping tests and benchmarks.${NC}"
 fi
 
 echo -e "${GREEN}Done!${NC}"
