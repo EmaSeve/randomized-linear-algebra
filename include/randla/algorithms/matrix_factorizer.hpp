@@ -141,7 +141,7 @@ public:
 	 *   - This method is accurate when Q well approximates both the row and column space of A.
 	 *   - The spectral error is bounded by ||A - U Λ U^*|| ≤ 2ε, with ε = ||A - QQ^*A||.
 	 * 
-	 * @param A   - Hermitian input matrix (n x n)
+	 * @param Hermitian_A   - Hermitian input matrix (n x n)
 	 * @param Q   - Orthonormal basis matrix (n x k)
 	 * @param tol - Tolerance for validating the quality of Q
 	 * @return EigenvalueDecomposition structure
@@ -177,7 +177,7 @@ public:
 	 *   - This method avoids computing Q^* A Q explicitly, and is significantly faster than Algorithm 5.3.
 	 *   - The trade-off is reduced accuracy, especially when the ID step does not capture the dominant structure well.
 	 *
-	 * @param A   - Hermitian input matrix (n x n)
+	 * @param Hermitian_A   - Hermitian input matrix (n x n)
 	 * @param Q   - Orthonormal basis matrix (n x k)
 	 * @param tol - Tolerance for validating the quality of Q
 	 * @return EigenvalueDecomposition structure 
@@ -213,7 +213,7 @@ public:
 	 *     especially when A is PSD, and requires only one pass over A.
 	 *   - The approximation preserves the symmetric structure of A via a factorization A ≈ FF^*.
 	 *
-	 * @param A   - Positive semidefinite input matrix (n x n)
+	 * @param PSD_A   - Positive semidefinite input matrix (n x n)
 	 * @param Q   - Orthonormal basis matrix (n x k)
 	 * @param tol - Tolerance for validating the quality of Q
 	 * @return EigenvalueDecomposition structure
@@ -251,13 +251,13 @@ public:
 	 *   - It is well suited for very large matrices, but may suffer from numerical instability if Q^* Ω is ill-conditioned.
 	 *   - Oversampling (l > k) is recommended to improve stability.
 	 *
-	 * @param A       - Hermitian input matrix (n x n)
+	 * @param Hermitian_A       - Hermitian input matrix (n x n)
 	 * @param Q       - Orthonormal basis matrix (n x k)
 	 * @param Omega   - Random test matrix used to build the sketch Y = A Ω
 	 * @param tol     - Tolerance for validating the residual ||A - QQ^*A||
 	 * @return EigenvalueDecomposition structure
 	 */
-	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const Matrix & Hermitian_A, const Matrix & Q, const Matrix & Random_test_omega, double tol);
+	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const Matrix & Hermitian_A, const Matrix & Q, const Matrix & Omega, double tol);
 };
 
 
