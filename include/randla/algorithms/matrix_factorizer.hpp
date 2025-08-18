@@ -16,9 +16,10 @@ class MatrixFactorizer : public randla::Types<FloatType> {
 	static_assert(std::is_floating_point_v<FloatType>, "FloatType must be a floating point type");
 public:
 	using typename randla::Types<FloatType>::Scalar;
+	using typename randla::Types<FloatType>::Vector;
+	using typename randla::Types<FloatType>::CVector;
 	using typename randla::Types<FloatType>::Matrix;
 	using typename randla::Types<FloatType>::CMatrix;
-	using typename randla::Types<FloatType>::Vector;
 	using typename randla::Types<FloatType>::SVDResult;
 	using typename randla::Types<FloatType>::IDResult;
 	using typename randla::Types<FloatType>::EigenvalueDecomposition;
@@ -72,6 +73,36 @@ public:
 	 *     	- indices: vector of selected column indices
 	 */
 	static IDResult IDFactorizationI(const CMatrix & A, int rank, int seed);
+
+	/**
+	 * @brief 
+	 * Computes an approximate Interpolative Decomposition (ID) of a complex matrix A using
+	 * an adaptive rank selection strategy based on spectral norm error estimation.
+	 *
+	 * This method performs multiple calls to the standard ID (Algorithm I), starting from a small
+	 * target rank k and doubling it until the approximation error ||A - B P||_2 / ||A||_2 
+	 * falls below a user-specified relative tolerance.
+	 *
+	 * At each iteration:
+	 *   1. A rank-k interpolative decomposition A ≈ B * P is computed.
+	 *   2. The residual E = A - B * P is formed.
+	 *   3. The spectral norm of the residual is estimated via power iteration.
+	 *   4. If the relative error (||E||_2 / ||A||_2) is below tol, the current approximation is returned.
+	 *
+	 * The method guarantees a good approximation without requiring the rank a priori,
+	 * but it does not reuse intermediate computations across iterations (e.g., R*A),
+	 * which can make it more expensive than necessary in practice. !!
+	 *
+	 * Note:
+	 *   - The stopping criterion is based on the estimated relative spectral norm error.
+	 *   - If no acceptable approximation is found within rank ≤ min(m, n), the function throws.
+	 * 
+	 * @param A    - Input complex matrix (m x n)
+	 * @param tol  - Relative spectral error tolerance (e.g., 1e-1 for 10%)
+	 * @param seed - Seed for random vector generation (used in power iteration)
+	 * @return  IDResult
+	 */
+	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed);
 
 	/**
 	 * @brief 

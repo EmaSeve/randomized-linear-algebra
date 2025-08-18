@@ -12,27 +12,42 @@ using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 using MF      = randla::algorithms::MatrixFactorizer<double>;
 
+void print_approximation_error(const RLA::Matrix & A, const randla::Types<double>::IDResult & id, double r_t){
+        
+   auto B = id.B;
+   auto P = id.P;
 
-void test_IDfactorizationI(const RLA::Matrix & A,const std::vector<int> & rank, int seed){
+   auto residual = (A - B * P);
+   double frobenius_error = residual.norm() / A.norm();
+
+   Eigen::BDCSVD<RLA::CMatrix> svdA(A);
+   Eigen::BDCSVD<RLA::CMatrix> svdR(residual);
+   double spec_error = svdR.singularValues()(0) / svdA.singularValues()(0);  
+        
+   double energy_ratio = 1.0 - residual.squaredNorm() / A.squaredNorm();
+
+   std::cout<< "rank/tol: "<<r_t<<std::endl;
+   std::cout << "Relative Frobenius error: " << frobenius_error << "\n";
+   std::cout << "Relative Spectral error  : " << spec_error << "\n";
+   std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n\n";
+
+}
+void test_IDfactorizationI(const RLA::Matrix & A, const std::vector<int> & rank, int seed){
      for(auto r : rank){
         auto id = MF::IDFactorizationI(A, r, seed);
-        auto B = id.B;
-        auto P = id.P;
 
-        auto residual = (A - B * P);
-        double frobenius_error = residual.norm() / A.norm();
-
-        Eigen::BDCSVD<RLA::CMatrix> svdA(A);
-        Eigen::BDCSVD<RLA::CMatrix> svdR(residual);
-        double spec_error = svdR.singularValues()(0) / svdA.singularValues()(0);  
-        
-        double energy_ratio = 1.0 - residual.squaredNorm() / A.squaredNorm();
-
-        std::cout<< "rank: "<<r<<std::endl;
-        std::cout << "Relative Frobenius error: " << frobenius_error << "\n";
-        std::cout << "Relative Spectral error  : " << spec_error << "\n";
-        std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n\n";
+        print_approximation_error(A, id, r);
    }
+}
+
+void test_adaptiveIDFactorization(const RLA::Matrix & A, const std::vector<double> & tols, int seed){
+
+   for(auto tol : tols){
+      auto id = MF::adaptiveIDFactorization(A, tol, seed);
+
+      print_approximation_error(A, id, tol);
+   }
+
 }
 
 int main(void){
@@ -50,13 +65,21 @@ int main(void){
    std::cout<< "- random sparse matrix -" <<std::endl;
    test_IDfactorizationI(A, ranks, seed);
 
-   RLA::Matrix X = TestMat::matrixWithExponentialDecay(m ,n, decay_rate, rank, seed);
+/*    RLA::Matrix X = TestMat::matrixWithExponentialDecay(m ,n, decay_rate, rank, seed);
    std::cout<< "- exponential decay matrix (rank = 110, decay = 0.5) -" <<std::endl;
    test_IDfactorizationI(X, ranks, seed);
    
    RLA::Matrix Y = TestMat::lowRankPlusNoise(m ,n, rank, noise, seed);
    std::cout<< "- low rank noise matrix (rank = 110, noise = 0.5) -" <<std::endl;
-   test_IDfactorizationI(Y, ranks, seed);
+   test_IDfactorizationI(Y, ranks, seed); */
+
+   // Adaptive version, specify a tolerance
+   std::cout<< "-- Adaptive ID factorization --"<<std::endl;
+
+   std::vector<double> tols = {10, 1, 0.5, 0.2, 0.15, 0.1};
+
+   std::cout<< "- random sparse matrix -" <<std::endl;
+   test_adaptiveIDFactorization(A, tols, seed);
 
    return 0;
 }

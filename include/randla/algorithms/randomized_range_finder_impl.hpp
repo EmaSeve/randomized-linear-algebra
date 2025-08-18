@@ -84,6 +84,28 @@ RandomizedRangeFinder<FloatType>::randomGaussianVector(int size, int seed){
 }
 
 template<typename FloatType>
+typename RandomizedRangeFinder<FloatType>::CVector 
+RandomizedRangeFinder<FloatType>::randomComplexGaussianVector(int size, std::mt19937 & gen) {
+    CVector result(size);
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+    for (int i = 0; i < size; ++i) {
+        FloatType re = dist(gen);
+        FloatType im = dist(gen);
+        result(i) = Complex(re, im);
+    }
+    return result;
+}
+
+template<typename FloatType>
+typename RandomizedRangeFinder<FloatType>::CVector 
+RandomizedRangeFinder<FloatType>::randomComplexGaussianVector(int size, int seed){
+    auto gen = make_generator(seed);
+    return randomGaussianVector(size, gen);
+}
+
+
+
+template<typename FloatType>
 template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix 
 RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const MatLike & A, int l, int seed){

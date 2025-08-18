@@ -49,7 +49,7 @@ MatrixFactorizer<FloatType>::IDFactorizationI(const CMatrix & A, int k, int seed
     Eigen::ColPivHouseholderQR<CMatrix> qr(Y.transpose());
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = qr.colsPermutation();
 
-    Eigen::VectorXi indices = perm.indices();
+    Vector indices = perm.indices().template cast<Scalar>();
     std::vector<int> selectedCols(k);
     for (size_t i = 0; i < k; ++i)
         selectedCols[i] = indices(i);
@@ -64,6 +64,40 @@ MatrixFactorizer<FloatType>::IDFactorizationI(const CMatrix & A, int k, int seed
     P = svd.solve(A);
 
     return IDResult{std::move(B), std::move(P), std::move(selectedCols)};
+}
+
+template<typename FloatType>
+typename MatrixFactorizer<FloatType>::IDResult
+MatrixFactorizer<FloatType>::adaptiveIDFactorization(const CMatrix & A, double tol, int seed){
+
+    const size_t m = A.rows();
+    const size_t n = A.cols();
+    int k = 10;
+    const int k_max = std::min(m, n);
+
+    FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
+
+    while(true){
+        // Run standard ID with current k
+        IDResult result = IDFactorizationI(A, k, seed);
+
+        // Compute residual matrix: E = A - B * P
+        CMatrix A_approx = result.B * result.P;
+        CMatrix E = A - A_approx;
+
+        FloatType spectral_norm = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(E, seed);
+
+        FloatType relative_error = spectral_norm / norm_A;
+        if(relative_error < tol)
+            return result;
+
+        // Double the rank for next iteration
+        k *= 2;
+        if(k > k_max)
+            break;
+    }
+
+    throw std::runtime_error("MatrixFactorizer::adaptiveIDFactorization: failed to reach tolerance within allowed rank.");
 }
 
 template<typename FloatType>

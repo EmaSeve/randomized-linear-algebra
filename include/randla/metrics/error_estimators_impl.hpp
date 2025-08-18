@@ -3,6 +3,7 @@
 #include <random>
 #include <chrono>
 #include <numbers>
+#include <randla/algorithms/randomized_range_finder.hpp>
 
 namespace randla::metrics {
 
@@ -50,5 +51,23 @@ ErrorEstimators<FloatType>::realError(const Matrix& A, const CMatrix& Qc) {
     CMatrix R = Ac - Qc * (Qc.adjoint() * Ac);
     return R.norm();
 }
+
+template<typename FloatType>
+typename ErrorEstimators<FloatType>::Scalar
+ErrorEstimators<FloatType>::estimateSpectralNorm(const CMatrix & E, int seed, int power_steps) {
+    const int n = E.cols();
+
+    CVector z = randla::algorithms::RandomizedRangeFinder<FloatType>::randomComplexGaussianVector(n, seed);
+    z.normalize();
+
+    for (int i = 0; i < power_steps; ++i) {
+        z = E.adjoint() * (E * z);
+        z.normalize();
+    }
+
+    return (E * z).norm();
+}
+
+
 
 } // namespace randla::algorithms

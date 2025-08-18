@@ -28,6 +28,7 @@ public:
     using typename randla::Types<FloatType>::Vector;
     using typename randla::Types<FloatType>::Complex;
     using typename randla::Types<FloatType>::CMatrix;
+    using typename randla::Types<FloatType>::CVector;
 
     /**
      * @brief Generate a random matrix with standard Gaussian entries
@@ -79,6 +80,20 @@ public:
      */
     static Vector randomGaussianVector(int size, std::mt19937 & gen);
     
+    /**
+     * @brief Generate a complex standard Gaussian random vector
+     * @param size Vector size
+     * @param seed Random seed (if negative, uses current time)
+     * @return Random complex vector
+     */
+    static CVector randomComplexGaussianVector(int size, int seed = -1);
+    /**
+     * @brief Generate a complex standard Gaussian random vector using an existing generator
+     * @param size Vector size
+     * @param gen  Pseudo-random number engine (state is advanced)
+     * @return Random complex vector
+     */
+    static CVector randomComplexGaussianVector(int size, std::mt19937 & gen);
 
     // Stage A:
     // This section outlines algorithms for constructing a subspace that captures most of the action

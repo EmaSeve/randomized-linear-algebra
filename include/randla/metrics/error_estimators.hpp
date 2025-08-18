@@ -19,6 +19,7 @@ public:
     using typename randla::Types<FloatType>::Vector;
     using typename randla::Types<FloatType>::Complex;
     using typename randla::Types<FloatType>::CMatrix;
+    using typename randla::Types<FloatType>::CVector;
 
     /**
      * @brief Posterior error estimation using Equation (4.3)
@@ -30,6 +31,8 @@ public:
 
     /** Overload for complex Q (||A - Q Q^* A||) */
     static Scalar realError(const Matrix& A, const CMatrix& Qc);
+
+    static Scalar estimateSpectralNorm(const CMatrix & E, int seed, int power_steps = 6);
 };
 
 } // namespace randla::algorithms
