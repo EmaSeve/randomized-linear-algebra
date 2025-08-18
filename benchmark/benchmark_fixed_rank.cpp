@@ -65,7 +65,7 @@ int main() {
         const int m = 1000, n = 800, rank = 400, l = 400, q = 2;
         const int seed = 123;
 
-        std::ofstream csv("benchmark_results_parallel.csv", std::ios::trunc);
+        std::ofstream csv("benchmark_results.csv", std::ios::trunc);
         if (!csv) {
             std::cerr << "Error: cannot open benchmark_results.csv for writing\n";
             return 1;
