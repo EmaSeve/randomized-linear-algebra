@@ -28,17 +28,16 @@ static void runAlgorithmsDense(const std::string& label,
     auto ms  = [](auto start, auto end){return std::chrono::duration<double, std::milli>(end-start).count();};
 
     int used_seed = seed + 1;
+
+    // RRF
     auto t0 = tic();
     auto Q_range = RLA::randomizedRangeFinder(A, l, used_seed);
     auto t1 = tic();
-
     double err = Err::realError(A, Q_range);
     double time_ms = ms(t0,t1);
-
     std::cout << "[RRF]  cols=" << Q_range.cols()
               << " err=" << err
               << " time_ms=" << time_ms << "\n";
-
     csv << label << ','
         << A.rows() << ','
         << A.cols() << ','
@@ -49,6 +48,75 @@ static void runAlgorithmsDense(const std::string& label,
         << used_seed << ','
         << threads << ','
         << Q_range.cols() << ','
+        << err << ','
+        << time_ms << '\n';
+    csv.flush();
+
+    // RPI (randomized power iteration)
+    t0 = tic();
+    auto Q_rpi = RLA::randomizedPowerIteration(A, l, q, used_seed + 1);
+    t1 = tic();
+    err = Err::realError(A, Q_rpi);
+    time_ms = ms(t0,t1);
+    std::cout << "[RPI]  cols=" << Q_rpi.cols()
+              << " err=" << err
+              << " time_ms=" << time_ms << "\n";
+    csv << label << ','
+        << A.rows() << ','
+        << A.cols() << ','
+        << normA << ','
+        << "RPI" << ','
+        << l << ','
+        << q << ','
+        << used_seed + 1 << ','
+        << threads << ','
+        << Q_rpi.cols() << ','
+        << err << ','
+        << time_ms << '\n';
+    csv.flush();
+
+    // RSI (randomized subspace iteration)
+    t0 = tic();
+    auto Q_rsi = RLA::randomizedSubspaceIteration(A, l, q, used_seed + 2);
+    t1 = tic();
+    err = Err::realError(A, Q_rsi);
+    time_ms = ms(t0,t1);
+    std::cout << "[RSI]  cols=" << Q_rsi.cols()
+              << " err=" << err
+              << " time_ms=" << time_ms << "\n";
+    csv << label << ','
+        << A.rows() << ','
+        << A.cols() << ','
+        << normA << ','
+        << "RSI" << ','
+        << l << ','
+        << q << ','
+        << used_seed + 2 << ','
+        << threads << ','
+        << Q_rsi.cols() << ','
+        << err << ','
+        << time_ms << '\n';
+    csv.flush();
+
+    // FRR (fast randomized range finder, complesso, fixed-rank)
+    t0 = tic();
+    auto Q_frr = RLA::fastRandomizedRangeFinder(A, l, used_seed + 3);
+    t1 = tic();
+    err = Err::realError(A, Q_frr);
+    time_ms = ms(t0,t1);
+    std::cout << "[FRR]  cols=" << Q_frr.cols()
+              << " err=" << err
+              << " time_ms=" << time_ms << "\n";
+    csv << label << ','
+        << A.rows() << ','
+        << A.cols() << ','
+        << normA << ','
+        << "FRR" << ','
+        << l << ','
+        << q << ','
+        << used_seed + 3 << ','
+        << threads << ','
+        << Q_frr.cols() << ','
         << err << ','
         << time_ms << '\n';
     csv.flush();
@@ -70,18 +138,45 @@ int main() {
         }
         csv << "label,m,n,norm,method,l,q,seed,threads,cols,err,time_ms\n";
 
-        auto A = TestMat::lowRankPlusNoise(m, n, rank, 0, seed);
+        // Crea più matrici di test dense
+        std::vector<std::pair<std::string, Eigen::MatrixXd>> cases;
+        cases.emplace_back(
+            "Low-rank (rank=400, noise=0.00)",
+            TestMat::lowRankPlusNoise(m, n, rank, 0.0, seed)
+        );
+        cases.emplace_back(
+            "Low-rank (rank=400, noise=0.05)",
+            TestMat::lowRankPlusNoise(m, n, rank, 0.05, seed + 1)
+        );
+        cases.emplace_back(
+            "ExpDecay(rate=0.01)",
+            TestMat::matrixWithExponentialDecay(m, n, 0.01, std::min(m, n), seed + 2)
+        );
+        cases.emplace_back(
+            "Gaussian N(0,1)",
+            RLA::randomGaussianMatrix(m, n, seed + 3)
+        );
+        {
+            // Spettro custom: step (1 per i<rank) + decadimento
+            TestMat::Vector sv(std::min(m, n));
+            for (int i = 0; i < sv.size(); ++i) {
+                if (i < rank) sv(i) = 1.0;
+                else           sv(i) = 0.1 * std::exp(-0.005 * double(i - rank));
+            }
+            cases.emplace_back(
+                "Custom spectrum (step+decay)",
+                TestMat::matrixWithSingularValues(m, n, sv, seed + 4)
+            );
+        }
 
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
             std::cout << "\n--- Threads = " << t
                       << " (Eigen nbThreads=" << Eigen::nbThreads() << ") ---\n";
 
-            runAlgorithmsDense("Low-rank (rank=" + std::to_string(rank) + ")",
-                A,
-                l, q, seed + t,
-                t,
-                csv);
+            for (const auto& [label, A] : cases) {
+                runAlgorithmsDense(label, A, l, q, seed + t, t, csv);
+            }
         }
 
     } catch (const std::exception& e) {
