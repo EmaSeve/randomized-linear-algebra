@@ -142,7 +142,7 @@ RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(
 
     auto gen = make_generator(seed);
 
-    // --- blocco "b" dedotto dai thread di Eigen, con clamp e round a multipli di 8
+    // --- calcolo della dimensioned del blocco in base al numero di thread
     auto ceil_div = [](int a, int b){ return (a + b - 1) / b; };
     int threads = std::max(1, Eigen::nbThreads());
     int b = ceil_div(r, threads);
@@ -172,7 +172,7 @@ RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(
         }
     };
 
-    // Estrai nb colonne di Y a partire da "start", con wrapping
+    // Estrai nb colonne di Y a partire da "start"
     auto take_block_cyclic = [&](const Matrix& Src, Matrix& Dst, int start, int nb){
         const int end = start + nb;
         if (end <= r) {
@@ -184,7 +184,7 @@ RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(
         }
     };
 
-    // Scrivi nb colonne in Y a partire da "start", con wrapping
+    // Scrivi nb colonne in Y a partire da "start"
     auto write_block_cyclic = [&](Matrix& Dst, const Matrix& Src, int start, int nb){
         const int end = start + nb;
         if (end <= r) {
@@ -233,7 +233,7 @@ RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(
         start = (start + nb) % r;
     }
 
-    // --- Concatena una sola volta alla fine
+    // --- Concatena alla fine
     int qcols = 0;
     for (const auto& Bi : Q_blocks) qcols += static_cast<int>(Bi.cols());
     Matrix Qfinal(m, qcols);
@@ -256,11 +256,11 @@ RandomizedRangeFinder<FloatType>::randomizedPowerIteration(const MatLike& A, int
     auto gen = make_generator(seed);
     Matrix Omega = randomGaussianMatrix(A.cols(), l, gen);
 
-    Matrix Y = A * Omega;  // First application: A * Ω
+    Matrix Y = A * Omega; 
     
     for (int i = 0; i < q; ++i) {
-        Y = A.transpose() * Y;  // Apply A*
-        Y = A * Y;              // Apply A
+        Y = A.transpose() * Y;  
+        Y = A * Y;            
     }
     
     Eigen::HouseholderQR<Matrix> qr(Y);
