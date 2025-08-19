@@ -130,60 +130,126 @@ RandomizedRangeFinder<FloatType>::randomizedRangeFinder(const MatLike & A, int l
 template<typename FloatType>
 template<class MatLike>
 typename RandomizedRangeFinder<FloatType>::Matrix
-RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(const MatLike & A, double tol, int r, int seed){
-    
-    const size_t rows = A.rows();
-    const size_t cols = A.cols();
+RandomizedRangeFinder<FloatType>::adaptiveRangeFinder(
+    const MatLike& A, double tol, int r, int seed)
+{
+    using Matrix = typename RandomizedRangeFinder<FloatType>::Matrix;
+    using Vector = typename RandomizedRangeFinder<FloatType>::Vector;
+
+    const int m = static_cast<int>(A.rows());
+    const int n = static_cast<int>(A.cols());
+    if (r <= 0) return Matrix(m, 0);
 
     auto gen = make_generator(seed);
-    // draw 'r' standard gaussian vectors: Matrix omega
-    Matrix omega = randomGaussianMatrix(cols, r, gen);
-    // compute the vector y_i: Matrix Y
-    Matrix Y(rows, r);
-    Y = A * omega;
 
-    int iteration = -1;
+    // === dimensione di blocco dedotta dai thread Eigen ===
+    int threads = Eigen::nbThreads();                 // usa i thread impostati dall'utente
+    if (threads < 1) threads = 1;
+    auto ceil_div = [](int a, int b){ return (a + b - 1) / b; };
 
-    // start with empty Q
-    Matrix Q(rows, 0);
+    int b = ceil_div(r, threads);                     // un blocco per thread
+    // clamp in [8,64] per efficienza BLAS3; ma non superare r
+    if (b < 8)  b = std::min(8,  r);
+    if (b > 64) b = std::min(64, r);
+    // arrotonda al multiplo di 8, senza superare r
+    if (b < r) b = std::min(((b + 7) / 8) * 8, r);
+
+    // === inizializzazioni ===
+    Matrix W  = randomGaussianMatrix(n, r, gen);
+    Matrix Y  = A * W; // BLAS3
 
     const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
-    size_t index;
 
-    while(Y.colwise().norm().maxCoeff() >  threshold){
-        iteration++;
-        index = iteration % r;
+    std::vector<Matrix> Q_blocks;
+    Q_blocks.reserve((r + b - 1) / b);
 
-        Vector y_i = Y.col(index);
-        y_i -= Q * (Q.transpose() * y_i);
+    Matrix Yb(m, b), QtY, Qb, Tb, QtTb, QtAll;
 
-        // normalize and compute the new column q_i
-        const double norm = y_i.norm();
-        if(norm > 0) y_i.normalize();
+    auto max_col_norm = [&]() {
+        return Y.colwise().norm().maxCoeff();
+    };
 
-        // add new column to Q
-        Q.conservativeResize(Eigen::NoChange, Q.cols() + 1);
-        Q.col(Q.cols() - 1) = y_i;
-        const auto q_i = Q.col(Q.cols() - 1); 
+    int start = 0;
+    while (max_col_norm() > threshold) {
+        const int nb = std::min(b, r);
 
-        // draw standard gaussian vector w_i 
-        Vector w_i = randomGaussianVector(cols, gen);
-        
-        // replace the vector y_j with y_j+r 
-        Vector temp = A * w_i;                       
-        temp -= Q * (Q.transpose() * temp);          
-        Y.col(index) = temp;
-
-        // update all the other vector except the new one
-        for(size_t j = 0; j < r; j++){
-            if(j == index) continue;
-            // overwrite y_j = y_j - q_it * <q_it, y_j>
-            Y.col(j) -= q_i * q_i.dot(Y.col(j));  
+        // Estrai blocco ciclico
+        if (start + nb <= r) {
+            Yb = Y.middleCols(start, nb);
+        } else {
+            const int k1 = r - start, k2 = nb - k1;
+            Yb.leftCols(k1)  = Y.middleCols(start, k1);
+            Yb.rightCols(k2) = Y.leftCols(k2);
         }
+
+        // Ricostruisci Q corrente (concatenando i blocchi) solo se esiste qualcosa
+        Matrix Q(m, 0);
+        if (!Q_blocks.empty()) {
+            int qcols = 0;
+            for (const auto& B : Q_blocks) qcols += static_cast<int>(B.cols());
+            Q.resize(m, qcols);
+            int off = 0;
+            for (const auto& B : Q_blocks) {
+                Q.middleCols(off, B.cols()) = B;
+                off += static_cast<int>(B.cols());
+            }
+        }
+
+        // Re-ortho bloccata: Yb -= Q * (Q^T * Yb)
+        if (Q.cols() > 0) {
+            QtY.noalias() = Q.transpose() * Yb; // GEMM
+            Yb.noalias()  -= Q * QtY;           // GEMM
+        }
+
+        // QR tall-skinny sul blocco -> Qb
+        Eigen::HouseholderQR<Matrix> qr(Yb);
+        Qb = qr.householderQ() * Matrix::Identity(m, nb);
+
+        // Accumula nuovo blocco
+        Q_blocks.push_back(Qb);
+
+        // Rinfresca le stesse nb colonne con nuove gaussiane e proietta su Q ∪ Qb
+        Matrix Wb_new = randomGaussianMatrix(n, nb, gen);
+        Tb.noalias() = A * Wb_new;               // GEMM
+        if (Q.cols() > 0) {
+            QtTb.noalias() = Q.transpose() * Tb; // GEMM
+            Tb.noalias()  -= Q * QtTb;           // GEMM
+        }
+        {
+            Matrix QbT_Tb = Qb.transpose() * Tb;
+            Tb.noalias() -= Qb * QbT_Tb;
+        }
+
+        // Scrivi Tb nelle posizioni cicliche
+        if (start + nb <= r) {
+            Y.middleCols(start, nb) = Tb.leftCols(nb);
+        } else {
+            const int k1 = r - start, k2 = nb - k1;
+            Y.middleCols(start, k1) = Tb.leftCols(k1);
+            Y.leftCols(k2)          = Tb.middleCols(k1, k2);
+        }
+
+        // Aggiorna tutte le colonne rimanenti in un colpo: Y -= Qb * (Qb^T * Y)
+        QtAll.noalias() = Qb.transpose() * Y; // GEMM
+        Y.noalias()     -= Qb * QtAll;        // GEMM
+
+        start = (start + nb) % r;
     }
 
-    return Q;
+    // Concatena i blocchi in Q finale
+    int qcols = 0;
+    for (const auto& B : Q_blocks) qcols += static_cast<int>(B.cols());
+    Matrix Qfinal(m, qcols);
+    {
+        int off = 0;
+        for (const auto& B : Q_blocks) {
+            Qfinal.middleCols(off, B.cols()) = B;
+            off += static_cast<int>(B.cols());
+        }
+    }
+    return Qfinal;
 }
+
 
 template<typename FloatType>
 template<class MatLike>

@@ -72,16 +72,16 @@ static void runAlgorithmsDense(const std::string& label,
     };
 
     runOne("ARF", 0, [&](int s){ return RLA::adaptiveRangeFinder(A, tol, r, s); });
-    runOne("API", 1, [&](int s){ return RLA::adaptivePowerIteration(A, tol, r, q, s); });
-    runOne("AFRF", 3, [&](int s){ return RLA::adaptiveFastRandomizedRangeFinder(A, tol, r, s); });
+    // runOne("API", 1, [&](int s){ return RLA::adaptivePowerIteration(A, tol, r, q, s); });
+    // runOne("AFRF", 3, [&](int s){ return RLA::adaptiveFastRandomizedRangeFinder(A, tol, r, s); });
 }
 
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
-        std::vector<int> threadCounts = {1, 2, 4, 8, 16};
+        std::vector<int> threadCounts = {1, 2, 4, 8};
 
-        const int m = 1000, n = 800, rank = 100, r = 10, q = 2;
+        const int m = 2000, n = 1000, rank = 100, r = 10, q = 2;
         const double tol = 1e-2;
         const int seed = 123;
 
@@ -100,18 +100,18 @@ int main() {
             "Low-rank (rank=400)",
             TestMat::lowRankPlusNoise(m, n, rank, 0.0, seed)
         );
-        cases.emplace_back(
-            "Low-rank + Noise (rank=400 - noise=0.01)",
-            TestMat::lowRankPlusNoise(m, n, rank, 0.01, seed + 1)
-        );
-        cases.emplace_back(
-            "ExpDecay(rate=0.1)",
-            TestMat::matrixWithExponentialDecay(m, n, 0.1, std::min(m, n), seed + 2)
-        );
-        cases.emplace_back(
-            "Gaussian",
-            RLA::randomGaussianMatrix(m, n, seed + 3)
-        );
+        // cases.emplace_back(
+        //     "Low-rank + Noise (rank=400 - noise=0.01)",
+        //     TestMat::lowRankPlusNoise(m, n, rank, 0.01, seed + 1)
+        // );
+        // cases.emplace_back(
+        //     "ExpDecay(rate=0.1)",
+        //     TestMat::matrixWithExponentialDecay(m, n, 0.1, std::min(m, n), seed + 2)
+        // );
+        // cases.emplace_back(
+        //     "Gaussian",
+        //     RLA::randomGaussianMatrix(m, n, seed + 3)
+        // );
 
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
