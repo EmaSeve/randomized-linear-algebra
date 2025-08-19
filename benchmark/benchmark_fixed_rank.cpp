@@ -87,7 +87,7 @@ int main() {
             std::cerr << "Error: cannot open benchmark_results.csv for writing\n";
             return 1;
         }
-        csv << "label,m,n,norm,method,l,q,seed,threads,cols,err,time_ms\n";
+        csv << "label,m,n,norm,method,l,threads,cols,err,time_ms\n";
 
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);
