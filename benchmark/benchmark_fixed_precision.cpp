@@ -102,18 +102,18 @@ int main() {
             "Low-rank (rank=400)",
             TestMat::lowRankPlusNoise(m, n, rank, 0.0, seed)
         );
-        // cases.emplace_back(
-        //     "Low-rank + Noise (rank=400 - noise=0.01)",
-        //     TestMat::lowRankPlusNoise(m, n, rank, 0.01, seed + 1)
-        // );
-        // cases.emplace_back(
-        //     "ExpDecay(rate=0.1)",
-        //     TestMat::matrixWithExponentialDecay(m, n, 0.1, std::min(m, n), seed + 2)
-        // );
-        // cases.emplace_back(
-        //     "Gaussian",
-        //     RLA::randomGaussianMatrix(m, n, seed + 3)
-        // );
+        cases.emplace_back(
+            "Low-rank + Noise (rank=400 - noise=0.01)",
+            TestMat::lowRankPlusNoise(m, n, rank, 0.01, seed + 1)
+        );
+        cases.emplace_back(
+            "ExpDecay(rate=0.1)",
+            TestMat::matrixWithExponentialDecay(m, n, 0.1, std::min(m, n), seed + 2)
+        );
+        cases.emplace_back(
+            "Gaussian",
+            RLA::randomGaussianMatrix(m, n, seed + 3)
+        );
 
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
