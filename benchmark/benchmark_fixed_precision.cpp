@@ -72,6 +72,8 @@ static void runAlgorithmsDense(const std::string& label,
     };
 
     runOne("ARF", 0, [&](int s){ return RLA::adaptiveRangeFinder(A, tol, r, s); });
+    
+    // not yet parallelized
     // runOne("API", 1, [&](int s){ return RLA::adaptivePowerIteration(A, tol, r, q, s); });
     // runOne("AFRF", 3, [&](int s){ return RLA::adaptiveFastRandomizedRangeFinder(A, tol, r, s); });
 }
@@ -79,9 +81,9 @@ static void runAlgorithmsDense(const std::string& label,
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
-        std::vector<int> threadCounts = {1, 2, 4, 8};
+        std::vector<int> threadCounts = {1, 2 , 4, 8};
 
-        const int m = 2000, n = 1000, rank = 100, r = 10, q = 2;
+        const int m = 2000, n = 1000, rank = 300, r = 10, q = 2;
         const double tol = 1e-2;
         const int seed = 123;
 
