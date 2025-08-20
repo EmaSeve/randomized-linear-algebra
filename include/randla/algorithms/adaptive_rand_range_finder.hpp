@@ -12,6 +12,7 @@
 #include <randla/types.hpp>
 #include <randla/metrics/error_estimators.hpp>
 #include <randla/random/random_generator.hpp>
+#include <randla/algorithms/rand_range_finder.hpp>
 
 
 namespace randla::algorithms {
@@ -223,7 +224,7 @@ static CMatrix adaptiveFastRandRangeFinder(
     CMatrix Qc;
 
     while (true) {
-        Qc = fastRandRangeFinder(A, l, seed);
+        Qc = randla::algorithms::RandRangeFinder<FloatType>::fastRandRangeFinder(A, l, seed);
 
         double err_abs = randla::metrics::ErrorEstimators<FloatType>::realError(A, Qc);
 
@@ -251,5 +252,5 @@ static CMatrix adaptiveFastRandRangeFinder(
     return Qc;
 }
 
-}
+};
 }

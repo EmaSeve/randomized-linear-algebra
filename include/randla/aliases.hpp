@@ -1,5 +1,6 @@
 #pragma once
 #include <randla/algorithms/rand_range_finder.hpp>
+#include <randla/algorithms/adaptive_rand_range_finder.hpp>
 #include <randla/utils/matrix_generators.hpp>
 
 namespace randla {

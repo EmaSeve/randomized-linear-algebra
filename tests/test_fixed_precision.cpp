@@ -7,7 +7,7 @@
 using namespace randla::algorithms;
 using namespace randla::utils;
 
-using ARRF       = randla::AdaptiveRandRangeFinderD;
+using ARRF      = randla::AdaptiveRandRangeFinderD;
 using TestMat   = randla::MatrixGeneratorsD;
 using Err       = randla::metrics::ErrorEstimators<double>;
 
