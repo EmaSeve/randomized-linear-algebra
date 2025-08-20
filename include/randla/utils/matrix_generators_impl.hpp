@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <Eigen/QR>
-#include <randla/algorithms/randomized_range_finder.hpp>
+#include <randla/random/random_generator.hpp>
 
 namespace randla::utils {
 
@@ -51,8 +51,8 @@ MatrixGenerators<FloatType>::matrixWithExponentialDecay(int rows, int cols, Scal
     }
     int min_dim = std::min(rows, cols);
     int effective_rank = (rank <= 0) ? min_dim : std::min(rank, min_dim);
-    Matrix U_full = randla::algorithms::RandomizedRangeFinder<FloatType>::randomGaussianMatrix(rows, rows, seed);
-    Matrix V_full = randla::algorithms::RandomizedRangeFinder<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
+    Matrix U_full = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
     Eigen::HouseholderQR<Matrix> qr_v(V_full);
@@ -84,8 +84,8 @@ MatrixGenerators<FloatType>::matrixWithSingularValues(int rows, int cols, const 
             throw std::invalid_argument("Singular values must be in non-increasing order");
         }
     }
-    Matrix U_full = randla::algorithms::RandomizedRangeFinder<FloatType>::randomGaussianMatrix(rows, rows, seed);
-    Matrix V_full = randla::algorithms::RandomizedRangeFinder<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
+    Matrix U_full = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(rows, rows, seed);
+    Matrix V_full = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(cols, cols, seed + 1);
     Eigen::HouseholderQR<Matrix> qr_u(U_full);
     Matrix U = qr_u.householderQ();
     Eigen::HouseholderQR<Matrix> qr_v(V_full);
@@ -114,7 +114,7 @@ MatrixGenerators<FloatType>::lowRankPlusNoise(int rows, int cols, int rank, Scal
     Matrix A_lowrank = matrixWithSingularValues(rows, cols, sv, seed);
 
     // Genera rumore gaussiano N(0,1)
-    Matrix noise = randla::algorithms::RandomizedRangeFinder<FloatType>::randomGaussianMatrix(rows, cols, seed + 123);
+    Matrix noise = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(rows, cols, seed + 123);
 
     // Scala il rumore alla percentuale della norma Frobenius del segnale
     Scalar norm_signal = A_lowrank.norm(); // Frobenius norm

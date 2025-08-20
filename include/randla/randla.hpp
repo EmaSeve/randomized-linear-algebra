@@ -13,6 +13,8 @@
 
 #include <randla/metrics/error_estimators.hpp>
 
+#include <randla/random/random_generator.hpp>
+
 #include <randla/utils/matrix_generators.hpp>
 
 

@@ -3,20 +3,9 @@
 #include <random>
 #include <chrono>
 #include <numbers>
-#include <randla/algorithms/randomized_range_finder.hpp>
+#include <randla/random/random_generator.hpp>
 
 namespace randla::metrics {
-
-// helper to create generator
-namespace detail {
-inline std::mt19937 make_generator(int seed) {
-    if (seed < 0) {
-        auto now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        return std::mt19937(static_cast<unsigned int>(now));
-    }
-    return std::mt19937(static_cast<unsigned int>(seed));
-}
-} // namespace detail
 
 template<typename FloatType>
 typename ErrorEstimators<FloatType>::Scalar
@@ -24,7 +13,7 @@ ErrorEstimators<FloatType>::posteriorErrorEstimation(const Matrix& A, const Matr
     const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
     FloatType max_norm = 0.0;
 
-    auto gen = detail::make_generator(seed);
+    auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
 
     std::normal_distribution<FloatType> dist(0.0, 1.0);
     for (int i = 0; i < r; ++i) {
@@ -57,7 +46,7 @@ typename ErrorEstimators<FloatType>::Scalar
 ErrorEstimators<FloatType>::estimateSpectralNorm(const CMatrix & E, int seed, int power_steps) {
     const int n = E.cols();
 
-    CVector z = randla::algorithms::RandomizedRangeFinder<FloatType>::randomComplexGaussianVector(n, seed);
+    CVector z = randla::random::RandomGenerator<FloatType>::randomComplexGaussianVector(n, seed);
     z.normalize();
 
     for (int i = 0; i < power_steps; ++i) {

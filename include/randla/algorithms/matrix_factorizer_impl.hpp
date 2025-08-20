@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <randla/metrics/error_estimators.hpp>
 #include <randla/algorithms/randomized_range_finder.hpp>
+#include <randla/random/random_generator.hpp>
 
 
 namespace randla::algorithms {
@@ -41,8 +42,8 @@ MatrixFactorizer<FloatType>::IDFactorizationI(const CMatrix & A, int k, int seed
         throw std::runtime_error("MatrixFactorizer - IDFactorizationI: wrong rank value");
 
     // Step 1:
-    auto gen = make_generator(seed);
-    CMatrix R = RandomizedRangeFinder<FloatType>::randomComplexGaussianMatrix(l, m, gen); 
+    auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
+    CMatrix R = randla::random::RandomGenerator<FloatType>::randomComplexGaussianMatrix(l, m, gen); 
     CMatrix Y = R * A;                                   
 
     // Step 2:
