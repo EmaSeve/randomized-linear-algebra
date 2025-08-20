@@ -106,12 +106,12 @@ add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
 # ========================
 # Benchmark
 # ========================
-if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_rank.cpp)
-    add_executable(benchmark_fixed_rank benchmark/benchmark_fixed_rank.cpp)
-    target_link_libraries(benchmark_fixed_rank PRIVATE randomized-linear-algebra)
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_rank_A.cpp)
+    add_executable(benchmark_fixed_rank_A benchmark/benchmark_fixed_rank_A.cpp)
+    target_link_libraries(benchmark_fixed_rank_A PRIVATE randomized-linear-algebra)
 endif()
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_precision.cpp)
-    add_executable(benchmark_fixed_precision benchmark/benchmark_fixed_precision.cpp)
-    target_link_libraries(benchmark_fixed_precision PRIVATE randomized-linear-algebra)
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_precision_A.cpp)
+    add_executable(benchmark_fixed_precision_A benchmark/benchmark_fixed_precision_A.cpp)
+    target_link_libraries(benchmark_fixed_precision_A PRIVATE randomized-linear-algebra)
 endif()
