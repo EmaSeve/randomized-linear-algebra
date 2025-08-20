@@ -58,12 +58,12 @@ make -j$(nproc) || exit 1
 if [ "$RUN_BENCHMARK" = true ]; then
     if [ "$RUN_FIXED_RANK" = true ]; then
         echo -e "${YELLOW}Running fixed rank benchmark...${NC}"
-        ./benchmark_fixed_rank || exit 1
+        ./benchmark_fixed_rank_A || exit 1
     fi
     
     if [ "$RUN_FIXED_PRECISION" = true ]; then
         echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
-        ./benchmark_fixed_precision || exit 1
+        ./benchmark_fixed_precision_A || exit 1
     fi
 elif [ "$RUN_TESTS" = true ]; then
     echo -e "${YELLOW}Running tests...${NC}"
