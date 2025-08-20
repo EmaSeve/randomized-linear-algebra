@@ -37,7 +37,7 @@ using typename randla::Types<FloatType>::CMatrix;
 using typename randla::Types<FloatType>::CVector;
 
 template<class MatLike>
-static Matrix RandRangeFinder(const MatLike & A, int l, int seed){
+static Matrix randomizedRangeFinder(const MatLike & A, int l, int seed){
     auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
 
     // Step 1: random test matrix generation

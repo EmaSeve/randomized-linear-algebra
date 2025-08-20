@@ -23,7 +23,7 @@ static void runAlgorithmsDense(const std::string& label,
     auto ms  = [](auto start, auto end){return std::chrono::duration<double, std::milli>(end-start).count();};
 
     auto t0 = tic();
-    auto Q_range = RRF::RandRangeFinder(A, l, seed + 1);
+    auto Q_range = RRF::randomizedRangeFinder(A, l, seed + 1);
     auto t1 = tic();
     auto Q_power = RRF::randomizedPowerIteration(A, l, q, seed + 2);
     auto t2 = tic();
@@ -61,7 +61,7 @@ static void runAlgorithmsSparse(const std::string& label,
     auto ms  = [](auto start, auto end){return std::chrono::duration<double, std::milli>(end-start).count();};
 
     auto t0 = tic();
-    auto Q_range = RRF::RandRangeFinder(A, l, seed + 1);
+    auto Q_range = RRF::randomizedRangeFinder(A, l, seed + 1);
     auto t1 = tic();
     auto Q_power = RRF::randomizedPowerIteration(A, l, q, seed + 2);
     auto t2 = tic();
