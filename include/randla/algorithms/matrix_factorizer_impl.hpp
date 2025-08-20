@@ -110,14 +110,20 @@ MatrixFactorizer<FloatType>::SVDViaRowExtraction(const Matrix & A, const Matrix 
 
 // TODO: change the IDFactorizationI such that rank will not be a parameter anymore, the function need to become 'adaptive'
 
-    // Step 1: ID of Q's rows, performing and ID on Q^T
-    int id_rank = 100;
-    int seed = 123;
-    IDResult ID = IDFactorizationI(Q.transpose(), id_rank, seed);
+   // Step 1: ID of Q's rows, performing and ID on Q^T
+    double id_tol = 0.5 * tol;
+    int seed = 42;
+    IDResult ID;
+    try{
+        ID = adaptiveIDFactorization(Q.transpose(), id_tol, seed);
+    } catch(const std::runtime_error& err){
+        std::cerr << "Adaptive ID failed: " << err.what() << std::endl;
+        throw;
+    }
 
     // Q ≈ X * Q(J, :)  ->  X = ID.P^T, Q_J = ID.B^T
-    Matrix Q_J = ID.B.transpose();      // (k x n)
-    Matrix X   = ID.P.transpose();      // (m x k)
+    Matrix Q_J = ID.B.transpose().real();      // (k x n)
+    Matrix X   = ID.P.transpose().real();      // (m x k)
 
     // Step 2: extract the corresponding rows of A
     const auto& row_indices = ID.indices;
@@ -167,12 +173,13 @@ MatrixFactorizer<FloatType>::directEigenvalueDecomposition(const Matrix & A, con
         throw std::runtime_error("MatrixFactorizer - direct Eigenvalue decomposition: eigen decomposition failed");
 
     Vector eigenvalues = eigensolver.eigenvalues();
+    Matrix Lambda = eigenvalues.asDiagonal();
     Matrix V = eigensolver.eigenvectors();            
 
     // Step 3: U = Q V
     Matrix U = Q * V;
 
-    return EigenvalueDecomposition{std::move(U), std::move(eigenvalues)};
+    return EigenvalueDecomposition{std::move(U), std::move(Lambda)};
 }
 
 template<typename FloatType>
@@ -191,12 +198,18 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaRowExtraction(const Matri
     const size_t n = A.cols();
 
     // Step 1: Interpolative Decomposition over Q rows
-    int id_rank = 100;
+    double id_tol = 0.5 * tol;
     int seed = 42;
-    IDResult ID = IDFactorizationI(Q.transpose(), id_rank, seed);
+    IDResult ID;
+    try{
+        ID = adaptiveIDFactorization(Q.transpose(), id_tol, seed);
+    } catch(const std::runtime_error& err){
+        std::cerr << "Adaptive ID failed: " << err.what() << std::endl;
+        throw;
+    }
 
-    Matrix Q_J = ID.B.transpose();  
-    Matrix X = ID.P.transpose();   
+    Matrix Q_J = ID.B.transpose().real();  
+    Matrix X = ID.P.transpose().real();   
 
     const auto& row_indices = ID.indices;
     const int k = static_cast<int>(row_indices.size());
@@ -220,12 +233,13 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaRowExtraction(const Matri
         throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionViaRowExtraction: eigen decomposition failed");
 
     Vector eigenvalues = eig.eigenvalues(); 
+    Matrix Lambda = eigenvalues.asDiagonal();
     Matrix W = eig.eigenvectors();           
 
     // Step 5: U = V W
     Matrix U = V.leftCols(k) * W;
 
-    return EigenvalueDecomposition{std::move(U), std::move(eigenvalues)};
+    return EigenvalueDecomposition{std::move(U), std::move(Lambda)};
 }
 
 template<typename FloatType>
@@ -259,7 +273,8 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionViaNystromMethod(const Matri
     Eigen::BDCSVD<Matrix> svd(F, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Matrix U = svd.matrixU();
     Vector Sigma = svd.singularValues();
-    Vector Lambda = Sigma.array().square();
+    Vector eigenvalues_square = Sigma.array().square();
+    Matrix Lambda = eigenvalues_square.asDiagonal();
 
     return EigenvalueDecomposition{std::move(U), std::move(Lambda)};
 }
@@ -293,7 +308,8 @@ MatrixFactorizer<FloatType>::EigenvalueDecompositionInOnePass(const Matrix & A, 
     if (eigensolver.info() != Eigen::Success)
         throw std::runtime_error("MatrixFactorizer::EigenvalueDecompositionInOnePass: eigen decomposition failed");
 
-    Vector Lambda = eigensolver.eigenvalues();
+    Vector eigenvalues = eigensolver.eigenvalues();
+    Matrix Lambda = eigenvalues.asDiagonal();
     Matrix V = eigensolver.eigenvectors();
 
     // Step 4: Form U = Q * V

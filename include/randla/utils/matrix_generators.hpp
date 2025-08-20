@@ -142,6 +142,50 @@ static Matrix lowRankPlusNoise(int rows, int cols, int rank, Scalar noise_level,
     return A_lowrank + noise;
 }
 
+// Generates a random sparse Hermitian matrix of given size and density.
+// The matrix is square and real-valued.
+static SparseMatrix randomHermitianSparseMatrix(int size, Scalar density, int seed = -1) {
+    if (density <= 0.0 || density > 1.0) {
+        throw std::invalid_argument("Density must be in range (0, 1]");
+    }
+
+    std::mt19937 gen(seed >= 0 ? seed : std::chrono::steady_clock::now().time_since_epoch().count());
+    std::uniform_real_distribution<FloatType> prob(0.0, 1.0);
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+
+    using Triplet = Eigen::Triplet<Scalar, int>;
+    std::vector<Triplet> triplets;
+    triplets.reserve(static_cast<size_t>(size * size * density * 1.1)); 
+
+    for (int i = 0; i < size; ++i) {
+        triplets.emplace_back(i, i, dist(gen)); // real diagonal
+        for (int j = i + 1; j < size; ++j) {
+            if (prob(gen) < density) {
+                Scalar value = dist(gen);
+                triplets.emplace_back(i, j, value);
+                triplets.emplace_back(j, i, value); 
+            }
+        }
+    }
+
+    SparseMatrix H(size, size);
+    H.setFromTriplets(triplets.begin(), triplets.end());
+    H.makeCompressed();
+    return H;
+}
+
+// Generates a dense positive semidefinite (PSD) matrix as A = B * B^T.
+// The result is symmetric and PSD by construction.
+static Matrix randomPositiveSemidefiniteMatrix(int size, int rank = -1, int seed = -1) {
+    if (rank < 0 || rank > size) {
+        rank = size; 
+    }
+
+    Matrix B = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(size, rank, seed);
+    return B * B.transpose();  
+}
+
+
 };
 
 } // namespace randla::utils
