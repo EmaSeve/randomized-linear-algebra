@@ -9,7 +9,7 @@
 #include <randla/threading/threading.hpp>
 #include <fstream>
 
-using RLA     = randla::RandomizedRangeFinderD;
+using RRF     = randla::RandRangeFinderD;
 using RandGen = randla::random::RandomGenerator<double>;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
@@ -24,8 +24,8 @@ static void performLightWarmup(int seed) {
     
     auto warmupMatrix = TestMat::lowRankPlusNoise(warmup_m, warmup_n, warmup_rank, 0.0, seed);
     
-    auto Q1 = RLA::randomizedRangeFinder(warmupMatrix, warmup_l, seed);
-    auto Q2 = RLA::fastRandomizedRangeFinder(warmupMatrix, warmup_l, seed+1);
+    auto Q1 = RRF::RandRangeFinder(warmupMatrix, warmup_l, seed);
+    auto Q2 = RRF::fastRandRangeFinder(warmupMatrix, warmup_l, seed+1);
     
     volatile double dummy = Q1.norm() + Q2.norm();
     std::cout << "Warmup complete. Matrix size: " << warmup_m << "x" << warmup_n << "\n";
@@ -69,10 +69,10 @@ static void runAlgorithmsDense(const std::string& label,
         csv.flush();
     };
 
-    runOne("RRF", 0, [&](int s){ return RLA::randomizedRangeFinder(A, l, s); });
-    runOne("RPI", 1, [&](int s){ return RLA::randomizedPowerIteration(A, l, q, s); });
-    runOne("RSI", 2, [&](int s){ return RLA::randomizedSubspaceIteration(A, l, q, s); });
-    runOne("FRF", 3, [&](int s){ return RLA::fastRandomizedRangeFinder(A, l, s); });
+    runOne("RRF", 0, [&](int s){ return RRF::RandRangeFinder(A, l, s); });
+    runOne("RPI", 1, [&](int s){ return RRF::randomizedPowerIteration(A, l, q, s); });
+    runOne("RSI", 2, [&](int s){ return RRF::randomizedSubspaceIteration(A, l, q, s); });
+    runOne("FRF", 3, [&](int s){ return RRF::fastRandRangeFinder(A, l, s); });
 }
 
 int main() {

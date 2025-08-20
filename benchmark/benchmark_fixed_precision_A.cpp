@@ -9,7 +9,7 @@
 #include <randla/threading/threading.hpp>
 #include <fstream>
 
-using RLA     = randla::RandomizedRangeFinderD;
+using RRF     = randla::RandRangeFinderD;
 using RandGen = randla::random::RandomGenerator<double>;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
@@ -25,8 +25,8 @@ static void performLightWarmup(int seed) {
     
     auto warmupMatrix = TestMat::lowRankPlusNoise(warmup_m, warmup_n, warmup_rank, 0.0, seed);
     
-    auto Q1 = RLA::adaptiveRangeFinder(warmupMatrix, warmup_tol, warmup_r, seed);
-    auto Q2 = RLA::adaptiveFastRandomizedRangeFinder(warmupMatrix, warmup_tol, warmup_r, seed+1);
+    auto Q1 = RRF::adaptiveRangeFinder(warmupMatrix, warmup_tol, warmup_r, seed);
+    auto Q2 = RRF::adaptiveFastRandRangeFinder(warmupMatrix, warmup_tol, warmup_r, seed+1);
     
     volatile double dummy = Q1.norm() + Q2.norm();
     std::cout << "Warmup complete. Matrix size: " << warmup_m << "x" << warmup_n << "\n";
@@ -72,11 +72,11 @@ static void runAlgorithmsDense(const std::string& label,
         csv.flush();
     };
 
-    runOne("ARF", 0, [&](int s){ return RLA::adaptiveRangeFinder(A, tol, r, s); });
+    runOne("ARF", 0, [&](int s){ return RRF::adaptiveRangeFinder(A, tol, r, s); });
     
     // not yet parallelized
-    // runOne("API", 1, [&](int s){ return RLA::adaptivePowerIteration(A, tol, r, q, s); });
-    // runOne("AFRF", 3, [&](int s){ return RLA::adaptiveFastRandomizedRangeFinder(A, tol, r, s); });
+    // runOne("API", 1, [&](int s){ return RRF::adaptivePowerIteration(A, tol, r, q, s); });
+    // runOne("AFRF", 3, [&](int s){ return RRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
 }
 
 int main() {

@@ -7,12 +7,12 @@
 #include <Eigen/Dense>
 #include <randla/randla.hpp>
 
-using RLA     = randla::RandomizedRangeFinderD;
+using RRF     = randla::RandRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 using MF      = randla::algorithms::MatrixFactorizer<double>;
 
-void print_approximation_error(const RLA::Matrix & A, const randla::Types<double>::IDResult & id, double r_t){
+void print_approximation_error(const RRF::Matrix & A, const randla::Types<double>::IDResult & id, double r_t){
         
    auto B = id.B;
    auto P = id.P;
@@ -20,8 +20,8 @@ void print_approximation_error(const RLA::Matrix & A, const randla::Types<double
    auto residual = (A - B * P);
    double frobenius_error = residual.norm() / A.norm();
 
-   Eigen::BDCSVD<RLA::CMatrix> svdA(A);
-   Eigen::BDCSVD<RLA::CMatrix> svdR(residual);
+   Eigen::BDCSVD<RRF::CMatrix> svdA(A);
+   Eigen::BDCSVD<RRF::CMatrix> svdR(residual);
    double spec_error = svdR.singularValues()(0) / svdA.singularValues()(0);  
         
    double energy_ratio = 1.0 - residual.squaredNorm() / A.squaredNorm();
@@ -32,7 +32,7 @@ void print_approximation_error(const RLA::Matrix & A, const randla::Types<double
    std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n\n";
 
 }
-void test_IDfactorizationI(const RLA::Matrix & A, const std::vector<int> & rank, int seed){
+void test_IDfactorizationI(const RRF::Matrix & A, const std::vector<int> & rank, int seed){
      for(auto r : rank){
         auto id = MF::IDFactorizationI(A, r, seed);
 
@@ -40,7 +40,7 @@ void test_IDfactorizationI(const RLA::Matrix & A, const std::vector<int> & rank,
    }
 }
 
-void test_adaptiveIDFactorization(const RLA::Matrix & A, const std::vector<double> & tols, int seed){
+void test_adaptiveIDFactorization(const RRF::Matrix & A, const std::vector<double> & tols, int seed){
 
    for(auto tol : tols){
       auto id = MF::adaptiveIDFactorization(A, tol, seed);
@@ -61,15 +61,15 @@ int main(void){
 
    std::vector<int> ranks {10, 30, 50, 70, 90};
 
-   RLA::Matrix A = TestMat::randomSparseMatrix(m ,n, density, seed);
+   RRF::Matrix A = TestMat::randomSparseMatrix(m ,n, density, seed);
    std::cout<< "- random sparse matrix -" <<std::endl;
    test_IDfactorizationI(A, ranks, seed);
 
-/*    RLA::Matrix X = TestMat::matrixWithExponentialDecay(m ,n, decay_rate, rank, seed);
+/*    RRF::Matrix X = TestMat::matrixWithExponentialDecay(m ,n, decay_rate, rank, seed);
    std::cout<< "- exponential decay matrix (rank = 110, decay = 0.5) -" <<std::endl;
    test_IDfactorizationI(X, ranks, seed);
    
-   RLA::Matrix Y = TestMat::lowRankPlusNoise(m ,n, rank, noise, seed);
+   RRF::Matrix Y = TestMat::lowRankPlusNoise(m ,n, rank, noise, seed);
    std::cout<< "- low rank noise matrix (rank = 110, noise = 0.5) -" <<std::endl;
    test_IDfactorizationI(Y, ranks, seed); */
 

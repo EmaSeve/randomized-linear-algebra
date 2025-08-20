@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 #include <randla/randla.hpp>
 
-using RLA     = randla::RandomizedRangeFinderD;
+using RRF     = randla::RandRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 
@@ -23,13 +23,13 @@ static void runAlgorithmsDense(const std::string& label,
     auto ms  = [](auto start, auto end){return std::chrono::duration<double, std::milli>(end-start).count();};
 
     auto t0 = tic();
-    auto Q_range = RLA::randomizedRangeFinder(A, l, seed + 1);
+    auto Q_range = RRF::RandRangeFinder(A, l, seed + 1);
     auto t1 = tic();
-    auto Q_power = RLA::randomizedPowerIteration(A, l, q, seed + 2);
+    auto Q_power = RRF::randomizedPowerIteration(A, l, q, seed + 2);
     auto t2 = tic();
-    auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q, seed + 3);
+    auto Q_subspace = RRF::randomizedSubspaceIteration(A, l, q, seed + 3);
     auto t3 = tic();
-    auto Q_fast = RLA::fastRandomizedRangeFinder(A, l, seed + 4);
+    auto Q_fast = RRF::fastRandRangeFinder(A, l, seed + 4);
     auto t4 = tic();
 
     std::cout << "[RRF]  cols=" << Q_range.cols()
@@ -61,11 +61,11 @@ static void runAlgorithmsSparse(const std::string& label,
     auto ms  = [](auto start, auto end){return std::chrono::duration<double, std::milli>(end-start).count();};
 
     auto t0 = tic();
-    auto Q_range = RLA::randomizedRangeFinder(A, l, seed + 1);
+    auto Q_range = RRF::RandRangeFinder(A, l, seed + 1);
     auto t1 = tic();
-    auto Q_power = RLA::randomizedPowerIteration(A, l, q, seed + 2);
+    auto Q_power = RRF::randomizedPowerIteration(A, l, q, seed + 2);
     auto t2 = tic();
-    auto Q_subspace = RLA::randomizedSubspaceIteration(A, l, q, seed + 3);
+    auto Q_subspace = RRF::randomizedSubspaceIteration(A, l, q, seed + 3);
     auto t3 = tic();
 
     std::cout << "[RRF]  cols=" << Q_range.cols()

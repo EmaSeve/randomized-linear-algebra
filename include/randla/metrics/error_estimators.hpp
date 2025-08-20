@@ -12,7 +12,7 @@
 namespace randla::metrics {
 
 /**
- * @brief Error estimation utilities (moved from RandomizedRangeFinder Stage A)
+ * @brief Error estimation utilities (moved from RandRangeFinder Stage A)
  */
 template<typename FloatType = double>
 class ErrorEstimators : public randla::Types<FloatType> {

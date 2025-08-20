@@ -67,7 +67,7 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 After building, in `build/` you will find:
 - `test_fixed_rank`
 - `test_fixed_precision`
-- `rla_benchmark` (if `benchmark/benchmark.cpp` exists)
+- `RRF_benchmark` (if `benchmark/benchmark.cpp` exists)
 
 Examples:
 
@@ -75,5 +75,5 @@ Examples:
 # from the build/ folder
 ./test_fixed_rank
 ./test_fixed_precision
-./rla_benchmark
+./RRF_benchmark
 ```

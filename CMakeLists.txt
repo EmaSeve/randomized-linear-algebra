@@ -82,7 +82,7 @@ target_link_libraries(randomized-linear-algebra
 )
 if(HAVE_OPENMP)
     target_link_libraries(randomized-linear-algebra INTERFACE OpenMP::OpenMP_CXX)
-    target_compile_definitions(randomized-linear-algebra INTERFACE RLA_USE_OPENMP=1)
+    target_compile_definitions(randomized-linear-algebra INTERFACE RRF_USE_OPENMP=1)
 endif()
 target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 

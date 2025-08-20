@@ -24,7 +24,7 @@ namespace randla::algorithms {
  * randomized subspace iteration, along with error estimation methods.
  */
 template<typename FloatType = double>
-class RandomizedRangeFinder : public randla::Types<FloatType> {
+class RandRangeFinder : public randla::Types<FloatType> {
     static_assert(std::is_floating_point_v<FloatType>, 
                   "FloatType must be a floating point type");
 public:
@@ -37,7 +37,7 @@ using typename randla::Types<FloatType>::CMatrix;
 using typename randla::Types<FloatType>::CVector;
 
 template<class MatLike>
-static Matrix randomizedRangeFinder(const MatLike & A, int l, int seed){
+static Matrix RandRangeFinder(const MatLike & A, int l, int seed){
     auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
 
     // Step 1: random test matrix generation
@@ -59,8 +59,8 @@ template<class MatLike>
 static Matrix adaptiveRangeFinder(
     const MatLike& A, double tol, int r, int seed)
 {
-    using Matrix = typename RandomizedRangeFinder<FloatType>::Matrix;
-    using Vector = typename RandomizedRangeFinder<FloatType>::Vector;
+    using Matrix = typename RandRangeFinder<FloatType>::Matrix;
+    using Vector = typename RandRangeFinder<FloatType>::Vector;
 
     const int m = static_cast<int>(A.rows());
     const int n = static_cast<int>(A.cols());
@@ -281,14 +281,14 @@ static Matrix randomizedSubspaceIteration(const MatLike& A, int l, int q, int se
 }
 
 template<typename Derived>
-static CMatrix fastRandomizedRangeFinder(
+static CMatrix fastRandRangeFinder(
     const Eigen::MatrixBase<Derived>& A, int l, int seed)
 {
     using Complex = std::complex<double>;
 
     // Ensure the matrix is dense (exclude sparse types)
     static_assert(!std::is_base_of_v<Eigen::SparseMatrixBase<Derived>, Derived>,
-                  "fastRandomizedRangeFinder supports only dense matrices");
+                  "fastRandRangeFinder supports only dense matrices");
 
     const int m = A.rows();
     const int n = A.cols();
@@ -353,7 +353,7 @@ static CMatrix fastRandomizedRangeFinder(
 
 
 template<typename Derived>
-static CMatrix adaptiveFastRandomizedRangeFinder(
+static CMatrix adaptiveFastRandRangeFinder(
     const Eigen::MatrixBase<Derived>& A,
     double tol,
     int l0,
@@ -368,7 +368,7 @@ static CMatrix adaptiveFastRandomizedRangeFinder(
     CMatrix Qc;
 
     while (true) {
-        Qc = fastRandomizedRangeFinder(A, l, seed);
+        Qc = fastRandRangeFinder(A, l, seed);
 
         double err_abs = randla::metrics::ErrorEstimators<FloatType>::realError(A, Qc);
 
@@ -396,6 +396,6 @@ static CMatrix adaptiveFastRandomizedRangeFinder(
     return Qc;
 }
 
-}; // class RandomizedRangeFinder
+}; // class RandRangeFinder
 
 } // namespace randla::algorithms

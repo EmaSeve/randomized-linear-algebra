@@ -8,7 +8,7 @@
 #include <randla/types.hpp>
 #include <randla/aliases.hpp>
 
-#include <randla/algorithms/randomized_range_finder.hpp>
+#include <randla/algorithms/rand_range_finder.hpp>
 #include <randla/algorithms/matrix_factorizer.hpp>
 
 #include <randla/metrics/error_estimators.hpp>
