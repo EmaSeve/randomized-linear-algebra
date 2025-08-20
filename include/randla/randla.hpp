@@ -9,6 +9,7 @@
 #include <randla/aliases.hpp>
 
 #include <randla/algorithms/rand_range_finder.hpp>
+#include <randla/algorithms/adaptive_rand_range_finder.hpp>
 #include <randla/algorithms/matrix_factorizer.hpp>
 
 #include <randla/metrics/error_estimators.hpp>
