@@ -4,6 +4,10 @@
 #include <random>
 #include <cmath>
 #include <randla/types.hpp>
+#include <random>
+#include <chrono>
+#include <numbers>
+#include <randla/random/random_generator.hpp>
 
 namespace randla::metrics {
 
@@ -21,20 +25,48 @@ public:
     using typename randla::Types<FloatType>::CMatrix;
     using typename randla::Types<FloatType>::CVector;
 
-    /**
-     * @brief Posterior error estimation using Equation (4.3)
-     */
-    static Scalar posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r = 10, int seed = -1);
 
-    /** Exact residual norm ||A - QQ^T A|| */
-    static Scalar realError(const Matrix& A, const Matrix& Q);
+static Scalar posteriorErrorEstimation(const Matrix& A, const Matrix& Q, int r = 10, int seed = -1) {
+    const FloatType coeff = static_cast<FloatType>(10.0) * std::sqrt(static_cast<FloatType>(2.0) / static_cast<FloatType>(M_PI));
+    FloatType max_norm = 0.0;
 
-    /** Overload for complex Q (||A - Q Q^* A||) */
-    static Scalar realError(const Matrix& A, const CMatrix& Qc);
+    auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
 
-    static Scalar estimateSpectralNorm(const CMatrix & E, int seed, int power_steps = 6);
+    std::normal_distribution<FloatType> dist(0.0, 1.0);
+    for (int i = 0; i < r; ++i) {
+        Vector omega(A.cols());
+        for (int j = 0; j < A.cols(); ++j) omega(j) = dist(gen);
+        Vector residual = A * omega - Q * (Q.transpose() * (A * omega));
+        FloatType norm = residual.norm();
+        if (norm > max_norm) max_norm = norm;
+    }
+    return coeff * max_norm;
+}
+
+static Scalar realError(const Matrix& A, const Matrix& Q) {
+    Matrix R = A - Q * (Q.transpose() * A);
+    return R.norm();
+}
+
+static Scalar realError(const Matrix& A, const CMatrix& Qc) {
+    CMatrix Ac = A.template cast<Complex>();
+    CMatrix R = Ac - Qc * (Qc.adjoint() * Ac);
+    return R.norm();
+}
+
+static Scalar estimateSpectralNorm(const CMatrix & E, int seed, int power_steps = 6) {
+    const int n = E.cols();
+
+    CVector z = randla::random::RandomGenerator<FloatType>::randomComplexGaussianVector(n, seed);
+    z.normalize();
+
+    for (int i = 0; i < power_steps; ++i) {
+        z = E.adjoint() * (E * z);
+        z.normalize();
+    }
+
+    return (E * z).norm();
+}
 };
 
 } // namespace randla::algorithms
-
-#include "error_estimators_impl.hpp"

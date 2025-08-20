@@ -10,6 +10,7 @@
 #include <fstream>
 
 using RLA     = randla::RandomizedRangeFinderD;
+using RandGen = randla::random::RandomGenerator<double>;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 
@@ -112,7 +113,7 @@ int main() {
         );
         cases.emplace_back(
             "Gaussian",
-            RLA::randomGaussianMatrix(m, n, seed + 3)
+            RandGen::randomGaussianMatrix(m, n, seed + 3)
         );
 
         for (int t : threadCounts) {
