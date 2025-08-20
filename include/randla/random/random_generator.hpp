@@ -1,7 +1,6 @@
 #pragma once
 
 #include <random>
-#include <chrono>
 #include <randla/types.hpp>
 
 namespace randla::random {
