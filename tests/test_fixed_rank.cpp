@@ -85,6 +85,8 @@ static void runAlgorithmsSparse(const std::string& label,
 
 int main() {
     try {
+        randla::threading::setThreads(1);
+
         std::cout << "Eigen nbThreads = " << Eigen::nbThreads() << "\n";
         std::cout << std::fixed << std::setprecision(6);
         const int m = 800, n = 400;

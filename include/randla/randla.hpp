@@ -7,6 +7,7 @@
 
 #include <randla/types.hpp>
 #include <randla/aliases.hpp>
+#include <randla/threading/threading.hpp>
 
 #include <randla/algorithms/rand_range_finder.hpp>
 #include <randla/algorithms/adaptive_rand_range_finder.hpp>

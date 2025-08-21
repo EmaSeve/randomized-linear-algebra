@@ -52,6 +52,8 @@ void test_adaptiveIDFactorization(const RRF::Matrix & A, const std::vector<doubl
 
 int main(void){
 
+   randla::threading::setThreads(1);
+
    int m = 100, n = 100;
    double density = 0.5;
    double decay_rate = 0.5; 

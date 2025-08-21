@@ -12,6 +12,8 @@ using TestMat   = randla::MatrixGeneratorsD;
 using Err       = randla::metrics::ErrorEstimators<double>;
 
 int main() {
+    randla::threading::setThreads(1);
+
     using FloatType = double;
     using Matrix = Eigen::MatrixXd;
 
