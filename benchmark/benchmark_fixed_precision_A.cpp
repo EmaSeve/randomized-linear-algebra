@@ -9,6 +9,10 @@
 #include <randla/threading/threading.hpp>
 #include <fstream>
 
+#ifdef RRF_USE_OPENMP
+#include <omp.h>
+#endif
+
 using ARRF    = randla::AdaptiveRandRangeFinderD;
 using RandGen = randla::random::RandomGenerator<double>;
 using TestMat = randla::MatrixGeneratorsD;
@@ -82,7 +86,12 @@ static void runAlgorithmsDense(const std::string& label,
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
+        
+#ifdef RRF_USE_OPENMP
         std::vector<int> threadCounts = {1, 2 , 4, 8};
+#else
+        std::vector<int> threadCounts = {1};
+#endif
 
         const int m = 2000, n = 1000, rank = 300, r = 10, q = 2;
         const double tol = 1e-2;
@@ -118,9 +127,14 @@ int main() {
 
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
+#ifdef RRF_USE_OPENMP
             std::cout << "\n--- Threads = " << t
                       << " (Eigen nbThreads=" << Eigen::nbThreads() << ") ---\n";
             std::cout << "OpenMP threads: " << omp_get_max_threads() << "\n";
+#else
+            std::cout << "\n--- Single-threaded mode (OpenMP disabled) ---\n";
+            std::cout << "Eigen nbThreads=" << Eigen::nbThreads() << "\n";
+#endif
 
             for (const auto& [label, A] : cases) {
                 runAlgorithmsDense(label, A, tol, r, q, seed + t, t, csv);
