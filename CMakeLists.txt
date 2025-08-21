@@ -7,10 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ========================
 # Eigen3 (header-only)
 # ========================
-# Prefer the modern CMake package (provided by Eigen installation)
+
 find_package(Eigen3 QUIET NO_MODULE)
 if(NOT TARGET Eigen3::Eigen)
-    # Fallback: header-only discovery via include path
     find_path(EIGEN3_INCLUDE_DIR
         NAMES Eigen/Core
         HINTS ENV CPATH
@@ -26,7 +25,7 @@ endif()
 # ========================
 # FFTW (double precision)
 # ========================
-# Try pkg-config first (common on Linux)
+
 find_package(PkgConfig QUIET)
 set(_have_fftw_target OFF)
 if(PKG_CONFIG_FOUND)
@@ -36,24 +35,6 @@ if(PKG_CONFIG_FOUND)
         target_link_libraries(FFTW::Double INTERFACE PkgConfig::FFTW3)
         set(_have_fftw_target ON)
     endif()
-endif()
-
-if(NOT _have_fftw_target)
-    # Fallback: manual discovery via include/library paths (double precision)
-    find_path(FFTW3_INCLUDE_DIR
-        NAMES fftw3.h
-        HINTS ENV CPATH
-    )
-    find_library(FFTW3_LIB
-        NAMES fftw3
-        HINTS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH
-    )
-    if(NOT FFTW3_INCLUDE_DIR OR NOT FFTW3_LIB)
-        message(FATAL_ERROR "Impossibile trovare FFTW3 (double). Installa libfftw3-dev oppure imposta FFTW3_INCLUDE_DIR e FFTW3_LIB.")
-    endif()
-    add_library(FFTW::Double INTERFACE IMPORTED)
-    target_include_directories(FFTW::Double INTERFACE ${FFTW3_INCLUDE_DIR})
-    target_link_libraries(FFTW::Double INTERFACE ${FFTW3_LIB})
 endif()
 
 # ========================
