@@ -127,13 +127,14 @@ int main() {
 
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
+            
 #ifdef RRF_USE_OPENMP
             std::cout << "\n--- Threads = " << t
-                      << " (Eigen nbThreads=" << Eigen::nbThreads() << ") ---\n";
-            std::cout << "OpenMP threads: " << omp_get_max_threads() << "\n";
+                      << " (Eigen=" << Eigen::nbThreads() 
+                      << ", OpenMP=" << omp_get_max_threads() << ") ---\n";
 #else
             std::cout << "\n--- Single-threaded mode (OpenMP disabled) ---\n";
-            std::cout << "Eigen nbThreads=" << Eigen::nbThreads() << "\n";
+            std::cout << "Eigen threads: " << Eigen::nbThreads() << "\n";
 #endif
 
             for (const auto& [label, A] : cases) {

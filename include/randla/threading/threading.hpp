@@ -1,24 +1,41 @@
 #pragma once
 
 #include <Eigen/Core>
-#ifdef _OPENMP
+
+#ifdef RRF_USE_OPENMP
 #include <omp.h>
 #endif
 
-namespace randla {
-namespace threading {
+namespace randla::threading {
 
-inline void setThreads(int n) {
-#ifdef _OPENMP
-    omp_set_num_threads(n);
-    omp_set_nested(0);
+inline void setThreads(int num_threads) {
+    // Set Eigen threads
+    Eigen::setNbThreads(num_threads);
+    
+#ifdef RRF_USE_OPENMP
+    // Set OpenMP threads
+    omp_set_num_threads(num_threads);
 #endif
-    Eigen::setNbThreads(n);
 }
 
-inline int getThreads() {
+inline int getMaxThreads() {
+#ifdef RRF_USE_OPENMP
+    return omp_get_max_threads();
+#else
+    return 1;
+#endif
+}
+
+inline int getCurrentThreads() {
     return Eigen::nbThreads();
 }
 
-} // namespace threading
-} // namespace randla
+inline bool isOpenMPEnabled() {
+#ifdef RRF_USE_OPENMP
+    return true;
+#else
+    return false;
+#endif
+}
+
+} // namespace randla::threading
