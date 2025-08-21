@@ -50,7 +50,12 @@ done
 echo -e "${YELLOW}Configuring build (OpenMP=${ENABLE_OPENMP})...${NC}"
 
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=${ENABLE_OPENMP} || exit 1
+
+if [ "$RUN_BENCHMARK" = true ]; then
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=${ENABLE_OPENMP} -DBUILD_TESTS=OFF || exit 1
+else
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=${ENABLE_OPENMP} || exit 1
+fi
 
 echo -e "${YELLOW}Compiling...${NC}"
 make -j$(nproc) || exit 1
@@ -61,10 +66,10 @@ if [ "$RUN_BENCHMARK" = true ]; then
         ./benchmark_fixed_rank_A || exit 1
     fi
     
-    if [ "$RUN_FIXED_PRECISION" = true ]; then
-        echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
-        ./benchmark_fixed_precision_A || exit 1
-    fi
+    # if [ "$RUN_FIXED_PRECISION" = true ]; then
+    #     echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
+    #     ./benchmark_fixed_precision_A || exit 1
+    # fi
 elif [ "$RUN_TESTS" = true ]; then
     echo -e "${YELLOW}Running tests...${NC}"
     ctest --output-on-failure || exit 1

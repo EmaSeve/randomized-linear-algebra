@@ -32,7 +32,7 @@ static void performLightWarmup(int seed) {
     auto Q2 = RRF::fastRandRangeFinder(warmupMatrix, warmup_l, seed+1);
     
     volatile double dummy = Q1.norm() + Q2.norm();
-    std::cout << "Warmup complete. Matrix size: " << warmup_m << "x" << warmup_n << "\n";
+    std::cout << "Warmup complete." << "\n";
 }
 
 // ===== DENSE =====
@@ -89,7 +89,7 @@ int main() {
         std::vector<int> threadCounts = {1};
 #endif
 
-        const int m = 2000, n = 1300, rank = 500, l = 100, q = 2;
+        const int m = 5000, n = 2000, rank = 1000, l = 100, q = 2;
         const int seed = 123;
 
         std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
@@ -125,10 +125,9 @@ int main() {
             
 #ifdef RRF_USE_OPENMP
             std::cout << "\n--- Threads = " << t
-                      << " (Eigen=" << Eigen::nbThreads() 
-                      << ", OpenMP=" << omp_get_max_threads() << ") ---\n";
+                      << " (Eigen=" << Eigen::nbThreads()  << ") ---\n";
 #else
-            std::cout << "\n--- Single-threaded mode (OpenMP disabled) ---\n";
+            std::cout << "\n--- Single-threaded mode---\n";
             std::cout << "Eigen threads: " << Eigen::nbThreads() << "\n";
 #endif
 

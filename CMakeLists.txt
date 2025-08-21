@@ -41,6 +41,7 @@ endif()
 # OpenMP (optional)
 # ========================
 option(ENABLE_OPENMP "Enable OpenMP parallelism" ON)
+option(BUILD_TESTS "Build tests" ON)
 set(HAVE_OPENMP OFF)
 if(ENABLE_OPENMP)
     find_package(OpenMP)
@@ -70,19 +71,21 @@ target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 # ========================
 # Tests
 # ========================
-enable_testing()
+if(BUILD_TESTS)
+    enable_testing()
 
-add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
-target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra)
-add_test(NAME FixedRankTest COMMAND test_fixed_rank)
+    add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
+    target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra)
+    add_test(NAME FixedRankTest COMMAND test_fixed_rank)
 
-add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
-target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
-add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
+    add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
+    target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
+    add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
 
-add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
-target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
-add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
+    add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
+    target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
+    add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
+endif()
 
 # ========================
 # Benchmark
