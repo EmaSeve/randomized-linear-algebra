@@ -84,15 +84,15 @@ int main() {
         std::cout << std::fixed << std::setprecision(6);
         
 #ifdef RRF_USE_OPENMP
-        std::vector<int> threadCounts = {1, 2, 4, 8, 16};
+        std::vector<int> threadCounts = {1, 2, 4, 8};
 #else
         std::vector<int> threadCounts = {1};
 #endif
 
-        const int m = 1000, n = 800, rank = 100, l = 100, q = 2;
+        const int m = 2000, n = 1300, rank = 500, l = 100, q = 2;
         const int seed = 123;
 
-        std::ofstream csv("res_benchmark_fixed_rank.csv", std::ios::trunc);
+        std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
         if (!csv) {
             std::cerr << "Error: cannot open benchmark_results.csv for writing\n";
             return 1;

@@ -97,7 +97,7 @@ int main() {
         const double tol = 1e-2;
         const int seed = 123;
 
-        std::ofstream csv("res_benchmark_fixed_precision.csv", std::ios::trunc);
+        std::ofstream csv("res_benchmark_fixed_precision_A.csv", std::ios::trunc);
         if (!csv) {
             std::cerr << "Error: cannot open res_benchmark_fixed_precision.csv for writing\n";
             return 1;
@@ -130,10 +130,9 @@ int main() {
             
 #ifdef RRF_USE_OPENMP
             std::cout << "\n--- Threads = " << t
-                      << " (Eigen=" << Eigen::nbThreads() 
-                      << ", OpenMP=" << omp_get_max_threads() << ") ---\n";
+                      << " (Eigen=" << Eigen::nbThreads() << ") ---\n";
 #else
-            std::cout << "\n--- Single-threaded mode (OpenMP disabled) ---\n";
+            std::cout << "\n--- Single-threaded mode ---\n";
             std::cout << "Eigen threads: " << Eigen::nbThreads() << "\n";
 #endif
 
