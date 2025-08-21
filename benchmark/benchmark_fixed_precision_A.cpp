@@ -78,9 +78,9 @@ static void runAlgorithmsDense(const std::string& label,
 
     runOne("ARF", 0, [&](int s){ return ARRF::adaptiveRangeFinder(A, tol, r, s); });
     
-    // not yet parallelized
-    runOne("API", 1, [&](int s){ return ARRF::adaptivePowerIteration(A, tol, r, q, s); });
-    runOne("AFRF", 3, [&](int s){ return ARRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
+    // not parallelized
+    // runOne("API", 1, [&](int s){ return ARRF::adaptivePowerIteration(A, tol, r, q, s); });
+    // runOne("AFRF", 3, [&](int s){ return ARRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
 }
 
 int main() {

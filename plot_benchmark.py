@@ -65,9 +65,9 @@ def create_speedup_table(speedup_df, benchmark_type, plot_dir):
                     # Colora le celle in base al valore dello speedup
                     try:
                         speedup_val = float(cell.get_text().get_text())
-                        if speedup_val >= 2.0:
+                        if speedup_val >= 1.8:
                             cell.set_facecolor('#d4edda')  # verde chiaro
-                        elif speedup_val >= 1.5:
+                        elif speedup_val >= 1.2:
                             cell.set_facecolor('#fff3cd')  # giallo chiaro
                         elif speedup_val < 1.0:
                             cell.set_facecolor('#f8d7da')  # rosso chiaro

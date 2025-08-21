@@ -66,10 +66,10 @@ if [ "$RUN_BENCHMARK" = true ]; then
         ./benchmark_fixed_rank_A || exit 1
     fi
     
-    # if [ "$RUN_FIXED_PRECISION" = true ]; then
-    #     echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
-    #     ./benchmark_fixed_precision_A || exit 1
-    # fi
+    if [ "$RUN_FIXED_PRECISION" = true ]; then
+        echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
+        ./benchmark_fixed_precision_A || exit 1
+    fi
 elif [ "$RUN_TESTS" = true ]; then
     echo -e "${YELLOW}Running tests...${NC}"
     ctest --output-on-failure || exit 1

@@ -3,7 +3,6 @@
 #include <Eigen/Dense>
 #include <type_traits>
 #include <stdexcept>
-#include <Eigen/Dense>
 #include <random>
 #include <chrono>
 #include <cmath>

@@ -6,7 +6,6 @@
 namespace randla::threading {
 
 inline void setThreads(int num_threads) {
-    // Control threading only via Eigen
     Eigen::setNbThreads(num_threads);
 }
 

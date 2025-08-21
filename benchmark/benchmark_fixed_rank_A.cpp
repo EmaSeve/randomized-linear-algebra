@@ -31,7 +31,6 @@ static void performLightWarmup(int seed) {
     auto Q1 = RRF::randomizedRangeFinder(warmupMatrix, warmup_l, seed);
     auto Q2 = RRF::fastRandRangeFinder(warmupMatrix, warmup_l, seed+1);
     
-    volatile double dummy = Q1.norm() + Q2.norm();
     std::cout << "Warmup complete." << "\n";
 }
 
@@ -89,7 +88,7 @@ int main() {
         std::vector<int> threadCounts = {1};
 #endif
 
-        const int m = 5000, n = 2000, rank = 1000, l = 100, q = 2;
+        const int m = 2000, n = 1000, rank = 300, l = 100, q = 2;
         const int seed = 123;
 
         std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
@@ -102,13 +101,15 @@ int main() {
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);
 
+        std::cout << "Creating benchmark matrices..." << "\n";
+
         std::vector<std::pair<std::string, Eigen::MatrixXd>> cases;
         cases.emplace_back(
-            "Low-rank (rank=400)",
+            "Low-rank (rank=" + std::to_string(rank) + ")",
             TestMat::lowRankPlusNoise(m, n, rank, 0.0, seed)
         );
         cases.emplace_back(
-            "Low-rank + Noise (rank=400 - noise=0.05)",
+            "Low-rank + Noise (rank=" + std::to_string(rank) + " - noise=0.05)",
             TestMat::lowRankPlusNoise(m, n, rank, 0.05, seed + 1)
         );
         cases.emplace_back(
@@ -130,7 +131,7 @@ int main() {
             std::cout << "\n--- Single-threaded mode---\n";
             std::cout << "Eigen threads: " << Eigen::nbThreads() << "\n";
 #endif
-
+            
             for (const auto& [label, A] : cases) {
                 runAlgorithmsDense(label, A, l, q, seed + t, t, csv);
             }
