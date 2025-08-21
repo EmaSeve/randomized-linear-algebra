@@ -27,7 +27,7 @@ namespace {
     }
 
     Eigen::MatrixXd make_decay() {
-        double decay_rate = 0.2;
+        double decay_rate = 0.5;
         return GM::matrixWithExponentialDecay(rows, cols, decay_rate, rank, seed);
     }
 
@@ -65,10 +65,15 @@ TEST(AdaptiveFP_ExpDecay, ARF) {
     auto Q = ARRF::adaptiveRangeFinder(A_decay, tol_decay, r, seed);
     EXPECT_LE(Err::realError(A_decay, Q), tol_decay);
 }
+
 TEST(AdaptiveFP_ExpDecay, API) {
-    auto Q = ARRF::adaptivePowerIteration(A_decay, tol_decay, r, pwr, seed);
+    constexpr int r_expdecay   = r; 
+    constexpr int pwr_expdecay = pwr; 
+
+    auto Q = ARRF::adaptivePowerIteration(A_decay, tol_decay, r_expdecay, pwr_expdecay, seed);
     EXPECT_LE(Err::realError(A_decay, Q), tol_decay);
 }
+
 TEST(AdaptiveFP_ExpDecay, SRFT) {
     auto Q = ARRF::adaptiveFastRandRangeFinder(A_decay, tol_decay, l_srft, seed, growth_factor);
     EXPECT_LE(Err::realError(A_decay, Q), tol_decay);

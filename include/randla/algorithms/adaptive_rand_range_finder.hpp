@@ -157,14 +157,27 @@ static Matrix adaptivePowerIteration(const MatLike& A, double tol, int r, int q,
 
     const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
 
-    auto apply_power = [&](const Vector& w) -> Vector {
+    Matrix Q(rows, 0);
+
+    auto apply_power = [&](Vector w) -> Vector {
+        // step 0
+        w.normalize();
         Vector y = A * w;
+
         for (int t = 0; t < q; ++t) {
-            y = A.transpose() * y;
-            y = A * y;
+            // opzionale: proietta su complemento di Q a ogni step:
+            if (Q.cols() > 0) y -= Q * (Q.transpose() * y);
+            y.normalize();
+
+            Vector z = A.transpose() * y;
+            if (Q.cols() > 0) z -= A.transpose() * (Q * (Q.transpose() * y)); // oppure solo normalize
+            z.normalize();
+
+            y = A * z;
         }
         return y;
     };
+
 
     auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
     Matrix Omega = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(cols, r, gen);
@@ -173,7 +186,7 @@ static Matrix adaptivePowerIteration(const MatLike& A, double tol, int r, int q,
         Y.col(j) = apply_power(Omega.col(j));
     }
 
-    Matrix Q(rows, 0);
+    
     int iteration = -1;
     size_t index;
 
