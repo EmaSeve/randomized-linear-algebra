@@ -1,111 +1,103 @@
-// tests/test_adaptive_algorithms.cpp (or whichever name you prefer)
-#include <iostream>
-#include <iomanip>
+// tests/test_adaptive_fixed_precision_simple.cpp
+#include <Eigen/Dense>
 #include <randla/randla.hpp>
-#include "load_matrix_market.hpp"
+#include <gtest/gtest.h>
 
-using namespace randla::algorithms;
-using namespace randla::utils;
+using ARRF = randla::AdaptiveRandRangeFinderD;
+using Err  = randla::metrics::ErrorEstimators<double>;
+using GM   = randla::utils::MatrixGenerators<double>;
 
-using ARRF      = randla::AdaptiveRandRangeFinderD;
-using TestMat   = randla::MatrixGeneratorsD;
-using Err       = randla::metrics::ErrorEstimators<double>;
+namespace {
+    constexpr int rows = 800, cols = 400, rank = 20;
+    constexpr int r = 10, pwr = 2, seed = 42;
+    constexpr int l_srft = 1;
+    constexpr double growth_factor = 2.0;
 
-int main() {
-    randla::threading::setThreads(1);
+    // tolleranze
+    constexpr double tol_exact          = 1e-10;
+    constexpr double tol_decay          = 1e-3;
+    constexpr double tol_lowrank0       = 1e-10;
+    constexpr double tol_lowrank_noise  = 5e-3;
 
-    using FloatType = double;
-    using Matrix = Eigen::MatrixXd;
-
-    std::cout << "Eigen nbThreads = " << Eigen::nbThreads() << "\n";
-
-    const int rows = 800;
-    const int cols = 400;
-    const int rank = 20;
-    const double tol = 0.1;   // absolute tolerance
-    const int r = 10;          // probes for adaptive algorithms
-    const int seed = 42;
-    const double growth_factor = 2.0; // for adaptive growth
-
-    // SRFT parameters
-    const int l_srft = 1;     // moderate oversampling for bulk SRFT
-
-    using GM = randla::utils::MatrixGenerators<FloatType>;
-    std::cout << std::fixed << std::setprecision(6);
-
-    auto run_test = [&](const std::string& name, const Matrix& A) {
-        std::cout << "\n--- " << name << " ---\n";
-        std::cout << "Shape: " << A.rows() << " x " << A.cols() << "\n";
-        std::cout << "Norm(A) = " << A.norm() << "\n";
-    // Timing helpers
-    auto tic = [](){return std::chrono::high_resolution_clock::now();};
-    auto ms  = [](auto s, auto e){return std::chrono::duration<double, std::milli>(e-s).count();};
-
-    // ====== Adaptive Range Finder (real error) ======
-    auto t0 = tic();
-    Matrix Q1 = ARRF::adaptiveRangeFinder(A, tol, r, seed);
-    auto t1 = tic();
-    std::cout << "[ARF]  cols=" << Q1.cols()
-          << " err=" << Err::realError(A, Q1)
-          << " time_ms=" << ms(t0,t1) << "\n";
-
-    // ====== Adaptive Power Iteration (real error) ======
-    auto t2 = tic();
-    Matrix Q2 = ARRF::adaptivePowerIteration(A, tol, r, 2, seed);
-    auto t3 = tic();
-    std::cout << "[API]  cols=" << Q2.cols()
-          << " err=" << Err::realError(A, Q2)
-          << " time_ms=" << ms(t2,t3) << "\n";
-
-    // ====== SRFT fixed-precision (Alg. 4.5) ======
-    auto t4 = tic();
-    auto Qc_fp = ARRF::adaptiveFastRandRangeFinder(A, tol, l_srft, seed, growth_factor);
-    auto t5 = tic();
-    double err_fp = Err::realError(A, Qc_fp); // real error (overload handles complex types)
-    std::cout << "[SRFT] l=" << Qc_fp.cols()
-          << " err=" << err_fp
-          << " time_ms=" << ms(t4,t5) << "\n";
-    };
-
-    // Test 1: exact rank
-    {
-        GM::Vector sv = GM::Vector::Zero(std::min(rows, cols));
+    // Precomputiamo tutte le matrici
+    Eigen::MatrixXd make_exact() {
+        Eigen::VectorXd sv = Eigen::VectorXd::Zero(std::min(rows, cols));
         for (int i = 0; i < rank; ++i) sv(i) = 1.0;
-        Matrix A_exact = GM::matrixWithSingularValues(rows, cols, sv, seed);
-        run_test("Exact rank " + std::to_string(rank), A_exact);
+        return GM::matrixWithSingularValues(rows, cols, sv, seed);
     }
 
-    // Test 2: exponential decay
-    {
+    Eigen::MatrixXd make_decay() {
         double decay_rate = 0.2;
-        Matrix A_decay = GM::matrixWithExponentialDecay(rows, cols, decay_rate, rank, seed);
-        run_test("Exponential decay (rate=" + std::to_string(decay_rate) + ")", A_decay);
+        return GM::matrixWithExponentialDecay(rows, cols, decay_rate, rank, seed);
     }
 
-    // Test 3: low-rank
-    {
-        Matrix A_noise = GM::lowRankPlusNoise(rows, cols, rank, 0, seed);
-        run_test("Low-rank (rank=" + std::to_string(rank) + ")", A_noise);
+    Eigen::MatrixXd make_lowrank0() {
+        return GM::lowRankPlusNoise(rows, cols, rank, 0.0, seed);
     }
 
-    // Test 4: low-rank + noise
-    {
-        double noise_level = 0.001;
-        Matrix A_noise = GM::lowRankPlusNoise(rows, cols, rank, noise_level, seed);
-        run_test("Low-rank + noise (rank=" + std::to_string(rank) +
-                 ", sigma=" + std::to_string(noise_level) + ")", A_noise);
+    Eigen::MatrixXd make_lowrank_noise() {
+        double sigma = 1e-3;
+        return GM::lowRankPlusNoise(rows, cols, rank, sigma, seed);
     }
 
-    // Test 5: real matrix
-    // try {
-    //     const std::string path = "data/well1850.mtx";
-    //     Matrix A_real = loadMatrixMarket(path);
-    //     run_test("Real matrix (" + path + ")", A_real);
-    // } catch (const std::exception& e) {
-    //     std::cerr << "Skipping real matrix test: " << e.what() << "\n";
-    // }
+    const Eigen::MatrixXd A_exact         = make_exact();
+    const Eigen::MatrixXd A_decay         = make_decay();
+    const Eigen::MatrixXd A_lowrank0      = make_lowrank0();
+    const Eigen::MatrixXd A_lowrank_noise = make_lowrank_noise();
+}
 
+// ===================== EXACT RANK =====================
+TEST(AdaptiveFP_Exact, ARF) {
+    auto Q = ARRF::adaptiveRangeFinder(A_exact, tol_exact, r, seed);
+    EXPECT_LE(Err::realError(A_exact, Q), tol_exact);
+}
+TEST(AdaptiveFP_Exact, API) {
+    auto Q = ARRF::adaptivePowerIteration(A_exact, tol_exact, r, pwr, seed);
+    EXPECT_LE(Err::realError(A_exact, Q), tol_exact);
+}
+TEST(AdaptiveFP_Exact, SRFT) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_exact, tol_exact, l_srft, seed, growth_factor);
+    EXPECT_LE(Err::realError(A_exact, Q), tol_exact);
+}
 
-    std::cout << "\n=== Tests completed ===\n";
-    return 0;
+// ===================== EXPONENTIAL DECAY =====================
+TEST(AdaptiveFP_ExpDecay, ARF) {
+    auto Q = ARRF::adaptiveRangeFinder(A_decay, tol_decay, r, seed);
+    EXPECT_LE(Err::realError(A_decay, Q), tol_decay);
+}
+TEST(AdaptiveFP_ExpDecay, API) {
+    auto Q = ARRF::adaptivePowerIteration(A_decay, tol_decay, r, pwr, seed);
+    EXPECT_LE(Err::realError(A_decay, Q), tol_decay);
+}
+TEST(AdaptiveFP_ExpDecay, SRFT) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_decay, tol_decay, l_srft, seed, growth_factor);
+    EXPECT_LE(Err::realError(A_decay, Q), tol_decay);
+}
+
+// ===================== LOW-RANK (NOISE 0) =====================
+TEST(AdaptiveFP_LowRank0, ARF) {
+    auto Q = ARRF::adaptiveRangeFinder(A_lowrank0, tol_lowrank0, r, seed);
+    EXPECT_LE(Err::realError(A_lowrank0, Q), tol_lowrank0);
+}
+TEST(AdaptiveFP_LowRank0, API) {
+    auto Q = ARRF::adaptivePowerIteration(A_lowrank0, tol_lowrank0, r, pwr, seed);
+    EXPECT_LE(Err::realError(A_lowrank0, Q), tol_lowrank0);
+}
+TEST(AdaptiveFP_LowRank0, SRFT) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_lowrank0, tol_lowrank0, l_srft, seed, growth_factor);
+    EXPECT_LE(Err::realError(A_lowrank0, Q), tol_lowrank0);
+}
+
+// ===================== LOW-RANK + NOISE =====================
+TEST(AdaptiveFP_LowRankNoise, ARF) {
+    auto Q = ARRF::adaptiveRangeFinder(A_lowrank_noise, tol_lowrank_noise, r, seed);
+    EXPECT_LE(Err::realError(A_lowrank_noise, Q), tol_lowrank_noise);
+}
+TEST(AdaptiveFP_LowRankNoise, API) {
+    auto Q = ARRF::adaptivePowerIteration(A_lowrank_noise, tol_lowrank_noise, r, pwr, seed);
+    EXPECT_LE(Err::realError(A_lowrank_noise, Q), tol_lowrank_noise);
+}
+TEST(AdaptiveFP_LowRankNoise, SRFT) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_lowrank_noise, tol_lowrank_noise, l_srft, seed, growth_factor);
+    EXPECT_LE(Err::realError(A_lowrank_noise, Q), tol_lowrank_noise);
 }
