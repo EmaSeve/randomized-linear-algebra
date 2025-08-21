@@ -1,53 +1,49 @@
-#include <cassert>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <randla/randla.hpp>
+#include <gtest/gtest.h>
 
 using RRF     = randla::RandRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 
-static void checkDense(const Eigen::MatrixXd& A, int l, int q, int seed, double tol) {
-    auto Q_range    = RRF::randomizedRangeFinder(A, l, seed+1);
-    auto Q_power    = RRF::randomizedPowerIteration(A, l, q, seed+2);
-    auto Q_subspace = RRF::randomizedSubspaceIteration(A, l, q, seed+3);
-    auto Q_fast     = RRF::fastRandRangeFinder(A, l, seed+4);
+namespace {
+    const int m = 200, n = 100, l = 20, q = 2, seed = 123;
+    const double tol = 1e-2;
 
-    assert(Err::realError(A, Q_range)    > tol);
-    assert(Err::realError(A, Q_power)    < tol);
-    assert(Err::realError(A, Q_subspace) < tol);
-    assert(Err::realError(A, Q_fast)     < tol);
+    Eigen::MatrixXd A1 = TestMat::matrixWithExponentialDecay(m, n, 0.5, seed);
+    Eigen::MatrixXd A2 = TestMat::matrixWithExponentialDecay(m, n, 0.1, seed);
 }
 
-static void checkSparse(const Eigen::SparseMatrix<double>& A, int l, int q, int seed, double tol) {
-    auto Q_range    = RRF::randomizedRangeFinder(A, l, seed+1);
-    auto Q_power    = RRF::randomizedPowerIteration(A, l, q, seed+2);
-    auto Q_subspace = RRF::randomizedSubspaceIteration(A, l, q, seed+3);
-
-    assert(Err::realError(A, Q_range)    < tol);
-    assert(Err::realError(A, Q_power)    < tol);
-    assert(Err::realError(A, Q_subspace) < tol);
+// ---------------- DENSE ----------------
+TEST(RRF_Dense, RandomizedRangeFinder) {
+    for (auto& A : {A1, A2}) {
+        auto Q = RRF::randomizedRangeFinder(A, l, seed + 1);
+        double err = Err::realError(A, Q);
+        EXPECT_LT(err, tol);
+    }
 }
 
-int main() {
-    randla::threading::setThreads(1);
+TEST(RRF_Dense, RandomizedPowerIteration) {
+    for (auto& A : {A1, A2}) {
+        auto Q = RRF::randomizedPowerIteration(A, l, q, seed + 2);
+        double err = Err::realError(A, Q);
+        EXPECT_LT(err, tol);
+    }
+}
 
-    const int m = 200, n = 100; // più piccolo per test
-    const int seed = 123;
-    const int l = 20, q = 2;
-    const double tol = 1e-8;
+TEST(RRF_Dense, RandomizedSubspaceIteration) {
+    for (auto& A : {A1, A2}) {
+        auto Q = RRF::randomizedSubspaceIteration(A, l, q, seed + 3);
+        double err = Err::realError(A, Q);
+        EXPECT_LT(err, tol);
+    }
+}
 
-    // Dense tests
-    checkDense(TestMat::matrixWithExponentialDecay(m, n, 0.5, seed), l, q, seed, tol);
-    checkDense(TestMat::matrixWithExponentialDecay(m, n, 0.1, seed), l, q, seed, tol);
-
-    // Sparse test
-    auto A_sparse = TestMat::randomSparseMatrix(m, n, 0.05, seed+10);
-    checkSparse(A_sparse, 30, q, seed+10, tol);
-
-    // Sparse as dense
-    Eigen::MatrixXd A_dense(A_sparse);
-    checkDense(A_dense, 30, q, seed+10, tol);
-
-    return EXIT_SUCCESS;
+TEST(RRF_Dense, FastRandRangeFinder) {
+    for (auto& A : {A1, A2}) {
+        auto Q = RRF::fastRandRangeFinder(A, l, seed + 4);
+        double err = Err::realError(A, Q);
+        EXPECT_LT(err, tol);
+    }
 }

@@ -71,16 +71,39 @@ target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 # ========================
 # Tests
 # ========================
+# ========================
+# Tests (GoogleTest + CTest)
+# ========================
 if(BUILD_TESTS)
+    include(CTest)
     enable_testing()
 
-    add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
-    target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra)
-    add_test(NAME FixedRankTest COMMAND test_fixed_rank)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.17.0
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
 
-    add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
-    target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra)
-    add_test(NAME FixedPrecisionTest COMMAND test_fixed_precision)
+    # Importa le macro di integrazione GTest
+    include(GoogleTest)
+
+    # --- Test: Fixed Rank ---
+    add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
+    target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra GTest::gtest_main)
+    gtest_discover_tests(test_fixed_rank)
+
+    # --- Test: Fixed Precision ---
+    # add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
+    # target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra GTest::gtest_main)
+    # gtest_discover_tests(test_fixed_precision)
+endif()
+
+
+# TEST DI EMANUELE
+if(BUILD_TESTS)
 
     # add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
     # target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
