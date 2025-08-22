@@ -16,6 +16,7 @@ template<typename FloatType = double>
 class MatrixFactorizer : public randla::Types<FloatType> {
 	static_assert(std::is_floating_point_v<FloatType>, "FloatType must be a floating point type");
 public:
+
 	using typename randla::Types<FloatType>::Scalar;
 	using typename randla::Types<FloatType>::Vector;
 	using typename randla::Types<FloatType>::CVector;
