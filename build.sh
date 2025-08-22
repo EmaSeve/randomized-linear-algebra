@@ -6,12 +6,14 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+
 # Flags
 RUN_BENCHMARK=false
 RUN_FIXED_RANK=false
 RUN_FIXED_PRECISION=false
 RUN_TESTS=true
-ENABLE_OPENMP=ON
+THREADING_MODE="openmp" # default
+
 
 # Parse args
 while [ $# -gt 0 ]; do
@@ -41,20 +43,33 @@ while [ $# -gt 0 ]; do
                 RUN_FIXED_PRECISION=true
             fi
             ;;
-        --no-openmp) ENABLE_OPENMP=OFF ;;
-        --no-test) RUN_TESTS=false ;;
+        --no-test)
+            RUN_TESTS=false
+            ;;
+        --threading)
+            if [ $# -gt 1 ] && [[ ! "$2" =~ ^-- ]]; then
+                THREADING_MODE="$2"
+                shift
+            else
+                echo -e "${RED}Missing argument for --threading. Use blas, openmp, or single.${NC}"
+                exit 1
+            fi
+            ;;
     esac
     shift
 done
 
-echo -e "${YELLOW}Configuring build (OpenMP=${ENABLE_OPENMP})...${NC}"
+
+echo -e "${YELLOW}Configuring build...${NC}"
 
 mkdir -p build && cd build
 
+
+# Pass threading mode to CMake
 if [ "$RUN_BENCHMARK" = true ]; then
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=${ENABLE_OPENMP} -DBUILD_TESTS=OFF || exit 1
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
 else
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=${ENABLE_OPENMP} || exit 1
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=${THREADING_MODE} || exit 1
 fi
 
 echo -e "${YELLOW}Compiling...${NC}"

@@ -81,13 +81,9 @@ static void runAlgorithmsDense(const std::string& label,
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
-        
-#ifdef RRF_USE_OPENMP
-        std::vector<int> threadCounts = {1, 2, 4, 8};
-#else
-        std::vector<int> threadCounts = {1};
-#endif
 
+        std::vector<int> threadCounts = {1, 2, 4, 8};
+        
         const int m = 2000, n = 1000, rank = 300, l = 100, q = 2;
         const int seed = 123;
 
@@ -124,16 +120,11 @@ int main() {
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
             
-#ifdef RRF_USE_OPENMP
             std::cout << "\n--- Threads = " << t
                       << " (Eigen=" << Eigen::nbThreads()  << ") ---\n";
-#else
-            std::cout << "\n--- Single-threaded mode---\n";
-            std::cout << "Eigen threads: " << Eigen::nbThreads() << "\n";
-#endif
             
             for (const auto& [label, A] : cases) {
-                runAlgorithmsDense(label, A, l, q, seed + t, t, csv);
+                runAlgorithmsDense(label, A, l, q, seed + t, Eigen::nbThreads(), csv);
             }
         }
 
