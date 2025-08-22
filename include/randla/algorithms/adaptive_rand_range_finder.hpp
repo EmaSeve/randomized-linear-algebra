@@ -34,119 +34,57 @@ template<class MatLike>
 static Matrix adaptiveRangeFinder(
     const MatLike& A, double tol, int r, int seed)
 {
-    using Matrix = typename RandRangeFinder<FloatType>::Matrix;
-    using Vector = typename RandRangeFinder<FloatType>::Vector;
-
-    const int m = static_cast<int>(A.rows());
-    const int n = static_cast<int>(A.cols());
-    if (r <= 0) return Matrix(m, 0);
+    const size_t rows = A.rows();
+    const size_t cols = A.cols();
 
     auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
+    // draw 'r' standard gaussian vectors: Matrix omega
+    Matrix omega = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(cols, r, gen);
+    // compute the vector y_i: Matrix Y
+    Matrix Y(rows, r);
+    Y = A * omega;
 
-    // --- calcolo della dimensioned del blocco in base al numero di thread
-    auto ceil_div = [](int a, int b){ return (a + b - 1) / b; };
-    int threads = std::max(1, Eigen::nbThreads());
-    int b = ceil_div(r, threads);
-    b = std::clamp(b, 8, 64);
-    if (b < r) b = std::min(((b + 7) / 8) * 8, r);
+    int iteration = -1;
 
-    // --- inizializzazioni
-    Matrix W = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(n, r, gen);
-    Matrix Y = A * W; 
+    // start with empty Q
+    Matrix Q(rows, 0);
 
     const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
+    size_t index;
 
-    std::vector<Matrix> Q_blocks;
-    Q_blocks.reserve((r + b - 1) / b);
+    while(Y.colwise().norm().maxCoeff() >  threshold){
+        iteration++;
+        index = iteration % r;
 
-    Matrix Yb(m, b), Tb(m, b);
+        Vector y_i = Y.col(index);
+        y_i -= Q * (Q.transpose() * y_i);
 
-    auto max_col_norm = [&](){
-        return Y.colwise().norm().maxCoeff();
-    };
+        // normalize and compute the new column q_i
+        const double norm = y_i.norm();
+        if(norm > 0) y_i.normalize();
 
-    // Proietta M sui blocchi correnti: M -= sum_i Qi * (Qi^T * M)
-    auto project_against_blocks = [&](Matrix& M){
-        for (const auto& Qi : Q_blocks) {
-            Matrix Ti = Qi.transpose() * M; // (bi x k)
-            M.noalias() -= Qi * Ti;         // BLAS3
-        }
-    };
+        // add new column to Q
+        Q.conservativeResize(Eigen::NoChange, Q.cols() + 1);
+        Q.col(Q.cols() - 1) = y_i;
+        const auto q_i = Q.col(Q.cols() - 1); 
 
-    // Estrai nb colonne di Y a partire da "start"
-    auto take_block_cyclic = [&](const Matrix& Src, Matrix& Dst, int start, int nb){
-        const int end = start + nb;
-        if (end <= r) {
-            Dst.leftCols(nb).noalias() = Src.middleCols(start, nb);
-        } else {
-            const int k1 = r - start, k2 = nb - k1;
-            Dst.leftCols(k1).noalias()  = Src.middleCols(start, k1);
-            Dst.middleCols(k1, k2).noalias() = Src.leftCols(k2);
-        }
-    };
+        // draw standard gaussian vector w_i 
+        Vector w_i = randla::random::RandomGenerator<FloatType>::randomGaussianVector(cols, gen);
 
-    // Scrivi nb colonne in Y a partire da "start"
-    auto write_block_cyclic = [&](Matrix& Dst, const Matrix& Src, int start, int nb){
-        const int end = start + nb;
-        if (end <= r) {
-            Dst.middleCols(start, nb).noalias() = Src.leftCols(nb);
-        } else {
-            const int k1 = r - start, k2 = nb - k1;
-            Dst.middleCols(start, k1).noalias() = Src.leftCols(k1);
-            Dst.leftCols(k2).noalias()          = Src.middleCols(k1, k2);
-        }
-    };
+        // replace the vector y_j with y_j+r 
+        Vector temp = A * w_i;                       
+        temp -= Q * (Q.transpose() * temp);          
+        Y.col(index) = temp;
 
-    int start = 0;
-    while (max_col_norm() > threshold) {
-        const int nb = std::min(b, r);
-
-        // 1) Estrai blocco ciclico corrente Yb
-        take_block_cyclic(Y, Yb, start, nb);
-
-        // 2) Re-ortho bloccata rispetto ai blocchi già trovati
-        project_against_blocks(Yb);
-
-        // 3) TSQR/Householder QR su Yb -> Qb
-        Eigen::HouseholderQR<Matrix> qr(Yb);
-        Matrix Qb = qr.householderQ() * Matrix::Identity(m, nb);
-        Q_blocks.emplace_back(std::move(Qb)); // accumula nuovo blocco
-
-        // 4) nuove gaussiane e proietta su Q_blocks
-        Matrix Wb_new = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(n, nb, gen);
-        Tb.noalias() = A * Wb_new;
-        project_against_blocks(Tb);
-        // proietta anche sul blocco appena aggiunto (Q_blocks.back())
-        {
-            const Matrix& Qlast = Q_blocks.back();
-            Matrix Tlast = Qlast.transpose() * Tb;
-            Tb.noalias() -= Qlast * Tlast;
-        }
-        write_block_cyclic(Y, Tb, start, nb); // aggiorna Y nelle posizioni cicliche
-
-        // 5) Aggiorna tutte le colonne rimanenti: Y -= Qb * (Qb^T * Y)
-        {
-            const Matrix& Qlast = Q_blocks.back();
-            Matrix QtAll = Qlast.transpose() * Y;
-            Y.noalias() -= Qlast * QtAll;
-        }
-
-        start = (start + nb) % r;
-    }
-
-    // --- Concatena alla fine
-    int qcols = 0;
-    for (const auto& Bi : Q_blocks) qcols += static_cast<int>(Bi.cols());
-    Matrix Qfinal(m, qcols);
-    {
-        int off = 0;
-        for (const auto& Bi : Q_blocks) {
-            const int c = static_cast<int>(Bi.cols());
-            Qfinal.middleCols(off, c).noalias() = Bi;
-            off += c;
+        // update all the other vector except the new one
+        for(size_t j = 0; j < r; j++){
+            if(j == index) continue;
+            // overwrite y_j = y_j - q_it * <q_it, y_j>
+            Y.col(j) -= q_i * q_i.dot(Y.col(j));  
         }
     }
-    return Qfinal;
+
+    return Q;
 }
 
 template<class MatLike>
