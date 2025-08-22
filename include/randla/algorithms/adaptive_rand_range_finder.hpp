@@ -30,62 +30,108 @@ using typename randla::Types<FloatType>::Complex;
 using typename randla::Types<FloatType>::CMatrix;
 using typename randla::Types<FloatType>::CVector;
 
-template<class MatLike> 
+template<class MatLike>
 static Matrix adaptiveRangeFinder(
     const MatLike& A, double tol, int r, int seed)
 {
-    const size_t rows = A.rows();
-    const size_t cols = A.cols();
+    using Matrix = typename Types<FloatType>::Matrix;
+    using Vector = typename Types<FloatType>::Vector;
+    int b = Eigen::nbThreads();
+
+    const int m = static_cast<int>(A.rows());
+    const int n = static_cast<int>(A.cols());
+    if (r <= 0) return Matrix(m, 0);
+    b = std::max(1, std::min(b, r)); // clamp
 
     auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
-    // draw 'r' standard gaussian vectors: Matrix omega
-    Matrix omega = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(cols, r, gen);
-    // compute the vector y_i: Matrix Y
-    Matrix Y(rows, r);
-    Y = A * omega;
 
-    int iteration = -1;
-
-    // start with empty Q
-    Matrix Q(rows, 0);
+    // --- initial random probes
+    Matrix Omega = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(n, r, gen);
+    Matrix Y = A * Omega;                      // m x r
+    Matrix Q(m, 0);                            // start empty
 
     const double threshold = tol / (10.0 * std::sqrt(2.0 / M_PI));
-    size_t index;
+    auto max_col_norm = [&](const Matrix& M){
+        // avoids temporaries: compute squared norms then sqrt once
+        Eigen::RowVectorXd s = M.colwise().squaredNorm();
+        return std::sqrt(s.maxCoeff());
+    };
 
-    while(Y.colwise().norm().maxCoeff() >  threshold){
-        iteration++;
-        index = iteration % r;
+    // For efficient appends, collect Q in blocks and concat at the end.
+    std::vector<Matrix> Q_blocks;
+    Q_blocks.reserve((r + b - 1) / b);
 
-        Vector y_i = Y.col(index);
-        y_i -= Q * (Q.transpose() * y_i);
+    int it = 0;
+    while (max_col_norm(Y) > threshold)
+    {
+        // ---- pick a cyclic block of columns
+        int start = (it * b) % r;
+        Eigen::ArrayXi idx(b);
+        for (int j = 0; j < b; ++j) idx(j) = (start + j) % r;
 
-        // normalize and compute the new column q_i
-        const double norm = y_i.norm();
-        if(norm > 0) y_i.normalize();
+        // Gather V = Y(:, idx)  [m x b]
+        Matrix V(m, b);
+        for (int j = 0; j < b; ++j) V.col(j) = Y.col(idx(j));
 
-        // add new column to Q
-        Q.conservativeResize(Eigen::NoChange, Q.cols() + 1);
-        Q.col(Q.cols() - 1) = y_i;
-        const auto q_i = Q.col(Q.cols() - 1); 
-
-        // draw standard gaussian vector w_i 
-        Vector w_i = randla::random::RandomGenerator<FloatType>::randomGaussianVector(cols, gen);
-
-        // replace the vector y_j with y_j+r 
-        Vector temp = A * w_i;                       
-        temp -= Q * (Q.transpose() * temp);          
-        Y.col(index) = temp;
-
-        // update all the other vector except the new one
-        for(size_t j = 0; j < r; j++){
-            if(j == index) continue;
-            // overwrite y_j = y_j - q_it * <q_it, y_j>
-            Y.col(j) -= q_i * q_i.dot(Y.col(j));  
+        // Re-orthogonalize V against all previously found Q:  V -= Q*(Qᵀ V)
+        if (!Q_blocks.empty()) {
+            // Stack-view of Q without materializing if desired; for clarity, materialize:
+            int qcols = 0;
+            for (auto& Bl : Q_blocks) qcols += static_cast<int>(Bl.cols());
+            Q.resize(m, qcols);
+            int off = 0;
+            for (auto& Bl : Q_blocks) { Q.block(0, off, m, Bl.cols()) = Bl; off += Bl.cols(); }
+            V.noalias() -= Q * (Q.transpose() * V);
         }
+
+        // Thin QR on V -> Qb (m x kb). Some columns may be near-zero; drop them.
+        Eigen::ColPivHouseholderQR<Matrix> qr(V);
+        qr.setThreshold(1e-12);
+        const int kb = qr.rank();
+        if (kb == 0) {
+            // All directions collapsed; refresh the picked Y-columns and continue.
+            Matrix W = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(n, b, gen);
+            Matrix T = A * W;
+            // Project off existing Q
+            if (Q.cols() > 0) T.noalias() -= Q * (Q.transpose() * T);
+            for (int j = 0; j < b; ++j) Y.col(idx(j)) = T.col(j);
+            ++it; 
+            continue;
+        }
+        Matrix Qb = qr.householderQ().setLength(kb); // m x kb, orthonormal
+
+        // Normalize just in case (should already be orthonormal)
+        // for (int j=0;j<kb;++j) Qb.col(j).normalize();
+
+        // Append new block
+        Q_blocks.push_back(std::move(Qb));
+        int qcols = 0;
+        for (auto& Bl : Q_blocks) qcols += static_cast<int>(Bl.cols());
+        Q.resize(m, qcols);
+        int off = 0;
+        for (auto& Bl : Q_blocks) { Q.block(0, off, m, Bl.cols()) = Bl; off += Bl.cols(); }
+
+        // ---- Refresh the chosen Y columns with new random directions in one shot
+        Matrix W = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(n, b, gen);  // n x b
+        Matrix T = A * W;                                                                        // m x b
+        // Remove components along the *new* Q (all of it, but doing it once is fine)
+        if (Q.cols() > 0) T.noalias() -= Q * (Q.transpose() * T);
+        for (int j = 0; j < b; ++j) Y.col(idx(j)) = T.col(j);
+
+        // ---- Update ALL Y by removing components along the newly added block only:
+        //      Y := Y - Qb * (Qbᵀ Y)
+        {
+            const Matrix& Qb_last = Q_blocks.back();
+            Y.noalias() -= Qb_last * (Qb_last.transpose() * Y);
+        }
+
+        ++it;
     }
 
+    // Concatenate blocks to final Q (already done in-loop).
     return Q;
 }
+
 
 template<class MatLike>
 static Matrix adaptivePowerIteration(const MatLike& A, double tol, int r, int q, int seed) {
