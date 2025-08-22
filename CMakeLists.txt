@@ -68,7 +68,6 @@ if(HAVE_OPENMP)
 endif()
 target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 
-#[[
 # ========================
 # Tests (GoogleTest + CTest)
 # ========================
@@ -109,7 +108,6 @@ if(BUILD_TESTS)
     # target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
     # add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
 endif()
-]]
 
 # ========================
 # Benchmark
