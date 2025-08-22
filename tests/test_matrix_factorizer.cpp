@@ -11,6 +11,8 @@ using RRF     = randla::RandRangeFinderD;
 using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 using MF      = randla::algorithms::MatrixFactorizer<double>;
+using FloatType = double;
+using Matrix = Eigen::MatrixXd;
 
 void print_approximation_error(const RRF::Matrix & A, const randla::Types<double>::IDResult & id, double r_t){
         
@@ -32,9 +34,9 @@ void print_approximation_error(const RRF::Matrix & A, const randla::Types<double
    std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n\n";
 
 }
-void test_IDfactorizationI(const RRF::Matrix & A, const std::vector<int> & rank, int seed){
+void test_IDfactorization(const RRF::Matrix & A, const std::vector<int> & rank, int seed){
      for(auto r : rank){
-        auto id = MF::IDFactorizationI(A, r, seed);
+        auto id = MF::IDFactorization(A, r, seed);
 
         print_approximation_error(A, id, r);
    }
@@ -43,16 +45,88 @@ void test_IDfactorizationI(const RRF::Matrix & A, const std::vector<int> & rank,
 void test_adaptiveIDFactorization(const RRF::Matrix & A, const std::vector<double> & tols, int seed){
 
    for(auto tol : tols){
-      auto id = MF::adaptiveIDFactorization(A, tol, seed);
+      RLA::IDResult id;
+      bool success = true;
 
-      print_approximation_error(A, id, tol);
+      try{
+         id = MF::adaptiveIDFactorization(A, tol, seed);
+      } catch(const std::runtime_error & err){
+         std::cout<< err.what() <<std::endl;
+         success = false;
+      }
+
+      if(success) print_approximation_error(A, id, tol);
    }
 
 }
 
+void test_directSVD(const Matrix& A, const Matrix& Q, double tol){
+   
+   RLA::SVDResult svd_A;
+   bool success = true;
+
+   try{
+      svd_A = MF::directSVD(A, Q, tol);
+   } catch(const std::runtime_error & err){
+      std::cerr<< err.what() <<std::endl;
+      success = false;
+   }
+
+   if(success){
+      auto A_approx = svd_A.U * svd_A.S.asDiagonal() * svd_A.V.adjoint();
+      double real_err = (A - A_approx).norm();
+      std::cout<< "Real error of SVD approx of A, given Q is: "<< real_err <<std::endl;
+   }
+
+}
+
+void test_SVDviaROwExtraction(const Matrix& A, const Matrix & Q, double tol){
+   RLA::SVDResult svd_A;
+   bool success = true;
+
+   try{
+      svd_A = MF::SVDViaRowExtraction(A, Q, tol);
+   } catch(const std::runtime_error & err){
+      std::cerr<< err.what() <<std::endl;
+      success = false;
+   }
+
+   if(success){
+      auto A_approx = svd_A.U * svd_A.S.asDiagonal() * svd_A.V.transpose();
+      double real_err = (A - A_approx).norm();
+      std::cout<< "Real error of SVD via row extracion approx of A, given Q is: "<< real_err <<std::endl;
+   }
+
+}
+
+void test_directEigDecomposition(const Matrix & Hermitian_A, const Matrix & Q, double tol){
+   RLA::EigenvalueDecomposition ed;
+   bool success = true;
+
+   try{
+      ed = MF::directEigenvalueDecomposition(Hermitian_A, Q, tol);
+   } catch(const std::runtime_error & err){
+      std::cerr<< err.what() <<std::endl;
+      success = false;
+   }
+
+   if(success){
+      auto Hermitian_A_approx = ed.U * ed.Lambda * ed.U.transpose();
+      double real_err = (Hermitian_A - Hermitian_A_approx).norm();
+      std::cout<< "Real error of direct eigenvalue decomposition approximation of A, given Q is: "<< real_err <<std::endl;
+   }
+
+}
+
+
+
 int main(void){
 
    randla::threading::setThreads(1);
+
+/*************************************
+***** Test ID factorization
+*************************************/
 
    int m = 100, n = 100;
    double density = 0.5;
@@ -65,15 +139,15 @@ int main(void){
 
    RRF::Matrix A = TestMat::randomSparseMatrix(m ,n, density, seed);
    std::cout<< "- random sparse matrix -" <<std::endl;
-   test_IDfactorizationI(A, ranks, seed);
+   test_IDfactorization(A, ranks, seed);
 
 /*    RRF::Matrix X = TestMat::matrixWithExponentialDecay(m ,n, decay_rate, rank, seed);
    std::cout<< "- exponential decay matrix (rank = 110, decay = 0.5) -" <<std::endl;
-   test_IDfactorizationI(X, ranks, seed);
+   test_IDfactorization(X, ranks, seed);
    
    RRF::Matrix Y = TestMat::lowRankPlusNoise(m ,n, rank, noise, seed);
    std::cout<< "- low rank noise matrix (rank = 110, noise = 0.5) -" <<std::endl;
-   test_IDfactorizationI(Y, ranks, seed); */
+   test_IDfactorization(Y, ranks, seed); */
 
    // Adaptive version, specify a tolerance
    std::cout<< "-- Adaptive ID factorization --"<<std::endl;
@@ -82,6 +156,33 @@ int main(void){
 
    std::cout<< "- random sparse matrix -" <<std::endl;
    test_adaptiveIDFactorization(A, tols, seed);
+
+/************************************    
+****** Test of Algorithms of Stage B 
+************************************/  
+
+   const int rows = 100;
+   const int cols = 80;
+   const int size = 100; // for square matrix (size, size)
+   density = 0.9;
+   seed = 42;
+   double tol = 0.1;
+   int r = 20;
+
+// ------------------------------------------------------------------------------------------------------
+   auto B = TestMat::randomSparseMatrix(rows,cols,density,seed);
+   Matrix Q = RLA::adaptiveRangeFinder(A, tol, r, seed);
+
+   test_directSVD(A, Q, tol);
+   test_SVDviaROwExtraction(A, Q, tol); 
+// ------------------------------------------------------------------------------------------------------
+   B = TestMat::randomHermitianSparseMatrix(size, density, seed + 1);
+   Q = RLA::adaptiveFastRandomizedRangeFinder(B, tol, 15, seed +1).real();
+
+double er = Err::realError(A, Q);
+   std::cout<< "adaptive fast randomize range finder err:"<< er<<std::endl;
+
+   test_directEigDecomposition(A, Q, tol);
 
    return 0;
 }
