@@ -8,13 +8,11 @@ using TestMat = randla::MatrixGeneratorsD;
 using Err     = randla::metrics::ErrorEstimators<double>;
 using MF      = randla::MatrixFactorizerD;
 
-using Matrix  = randla::Types<double>::Matrix;
-using CMatrix = randla::Types<double>::CMatrix;
-using Vector  = randla::Types<double>::Vector;
+using Matrix   = randla::Types<double>::Matrix;
+using CMatrix  = randla::Types<double>::CMatrix;
 using SVDResult = randla::Types<double>::SVDResult;
 using IDResult  = randla::Types<double>::IDResult;
 using EigenvalueDecomposition = randla::Types<double>::EigenvalueDecomposition;
-
 
 
 void print_approximation_error(const CMatrix & A, const IDResult & id, double r_t){

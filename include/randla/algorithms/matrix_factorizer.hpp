@@ -34,7 +34,7 @@ public:
 	 * @return 	SVDResult containing U (m x k), singular values (k), V (n x k)
 	 */
 	template<class MatLike>
-	static SVDResult directSVD(const Matrix & A, const Matrix & Q, double tol){
+	static SVDResult directSVD(const MatLike & A, const MatLike & Q, double tol){
 
 		double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
 		if (error > tol)
@@ -91,7 +91,6 @@ public:
 	 *     	- P: (k x n) coefficient matrix,
 	 *     	- indices: vector of selected column indices
 	 */
-	template<class MatLike>
 	static IDResult IDFactorization(const CMatrix & A, int rank, int seed){
 
 		const size_t m = A.rows();
@@ -155,7 +154,6 @@ public:
 	 * @param seed - Seed for random vector generation (used in power iteration)
 	 * @return  IDResult
 	 */
-	template<class MatLike>
 	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed){
 
 		const size_t m = A.rows();
@@ -227,7 +225,7 @@ public:
 	 * @return SVDResult structure
 	 */
 	template<class MatLike>
-	static SVDResult SVDViaRowExtraction(const Matrix & A, const Matrix & Q, double tol){
+	static SVDResult SVDViaRowExtraction(const MatLike & A, const MatLike & Q, double tol){
 		
 		double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
 		if (error > tol) 
@@ -312,7 +310,7 @@ public:
 	 * @return EigenvalueDecomposition structure
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition directEigenvalueDecomposition(const Matrix & Hermitian_A, const Matrix & Q, double tol){
+	static EigenvalueDecomposition directEigenvalueDecomposition(const MatLike & Hermitian_A, const MatLike & Q, double tol){
 		
 		// Alias of Hermitian_A
 		const auto& A = Hermitian_A;
@@ -378,7 +376,7 @@ public:
 	 * @return EigenvalueDecomposition structure 
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition EigenvalueDecompositionViaRowExtraction(const Matrix & Hermitian_A, const Matrix & Q, double tol){
+	static EigenvalueDecomposition EigenvalueDecompositionViaRowExtraction(const MatLike & Hermitian_A, const MatLike & Q, double tol){
 		
 		// Alias of Hermitian_A
 		const auto& A = Hermitian_A;
@@ -474,7 +472,7 @@ public:
 	 * @return EigenvalueDecomposition structure
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition EigenvalueDecompositionViaNystromMethod(const Matrix & PSD_A, const Matrix & Q, double tol){
+	static EigenvalueDecomposition EigenvalueDecompositionViaNystromMethod(const MatLike & PSD_A, const MatLike & Q, double tol){
 		
 		// Alias of PSD_A
 		const auto& A = PSD_A;
@@ -551,7 +549,7 @@ public:
 	 * @return EigenvalueDecomposition structure
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const Matrix & Hermitian_A, const Matrix & Q, const Matrix & Omega, double tol){
+	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const MatLike & Hermitian_A, const MatLike & Q, const MatLike & Omega, double tol){
 		
 		// Alias of Hermitian_A
 		const auto& A = Hermitian_A;
