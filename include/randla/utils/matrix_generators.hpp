@@ -184,6 +184,12 @@ static Matrix randomPositiveSemidefiniteMatrix(int size, int rank = -1, int seed
     return B * B.transpose();  
 }
 
+// Generates a dense random matrix with i.i.d. standard normal entries
+static Matrix randomDenseMatrix(int rows, int cols, int seed = -1) {
+    return randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(rows, cols, seed);
+}
+
+
 
 };
 

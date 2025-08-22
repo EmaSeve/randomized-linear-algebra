@@ -132,14 +132,14 @@ public:
 	 * an adaptive rank selection strategy based on spectral norm error estimation.
 	 *
 	 * This method performs multiple calls to the standard ID (Algorithm I), starting from a small
-	 * target rank k and doubling it until the approximation error ||A - B P||_2 / ||A||_2 
-	 * falls below a user-specified relative tolerance.
+	 * target rank k and doubling it until the approximation error ||A - B P||_2 
+	 * falls below a user-specified tolerance.
 	 *
 	 * At each iteration:
 	 *   1. A rank-k interpolative decomposition A ≈ B * P is computed.
 	 *   2. The residual E = A - B * P is formed.
 	 *   3. The spectral norm of the residual is estimated via power iteration.
-	 *   4. If the relative error (||E||_2 / ||A||_2) is below tol, the current approximation is returned.
+	 *   4. If the error ||E||_2 is below tol, the current approximation is returned.
 	 *
 	 * The method guarantees a good approximation without requiring the rank a priori,
 	 * but it does not reuse intermediate computations across iterations (e.g., R*A),
@@ -150,36 +150,49 @@ public:
 	 *   - If no acceptable approximation is found within rank ≤ min(m, n), the function throws.
 	 * 
 	 * @param A    - Input complex matrix (m x n)
-	 * @param tol  - Relative spectral error tolerance (e.g., 1e-1 for 10%)
+	 * @param tol  - Spectral error tolerance
 	 * @param seed - Seed for random vector generation (used in power iteration)
 	 * @return  IDResult
 	 */
-	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed){
+	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed, double growth_factor = 1.5,int k0 = 4){
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		int k = 10;
 		const int k_max = std::min(m, n);
 
-		FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
+		int k = k0;
 
-		while(true){
-			// Run standard ID with current k
+		// Estimate ||A||_2 once
+		// FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
+
+		while (true) {
 			IDResult result = IDFactorization(A, k, seed);
 
-			// Compute residual matrix: E = A - B * P
 			CMatrix A_approx = result.B * result.P;
 			CMatrix E = A - A_approx;
 
 			FloatType spectral_norm = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(E, seed);
+			// FloatType relative_error = spectral_norm / norm_A;
 
-			FloatType relative_error = spectral_norm / norm_A;
-			if(relative_error < tol)
+			if (spectral_norm < tol)
 				return result;
 
-			// Double the rank for next iteration
-			k *= 2;
-			if(k > k_max)
+			// Adaptive update of k
+			int next_k;
+			if (growth_factor > 1.0) {
+				next_k = static_cast<int>(std::ceil(k * growth_factor));
+			} else if (growth_factor > 0.0) {
+				int step = static_cast<int>(std::ceil(growth_factor * k0));
+				if (step <= 0) step = 1;
+				next_k = k + step;
+			} else {
+				next_k = k + 1;
+			}
+
+			if (next_k <= k) next_k = k + 1; 
+			k = std::min(next_k, k_max);
+
+			if (k >= k_max)
 				break;
 		}
 
@@ -235,7 +248,7 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: ID of Q's rows, performing and ID on Q^T
-		double id_tol = 0.5 * tol;
+		double id_tol = 1.25 * tol;
 		int seed = 42;
 		IDResult ID;
 		try{
@@ -376,7 +389,7 @@ public:
 	 * @return EigenvalueDecomposition structure 
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition EigenvalueDecompositionViaRowExtraction(const MatLike & Hermitian_A, const MatLike & Q, double tol){
+	static EigenvalueDecomposition eigenvalueDecompositionViaRowExtraction(const MatLike & Hermitian_A, const MatLike & Q, double tol){
 		
 		// Alias of Hermitian_A
 		const auto& A = Hermitian_A;
@@ -393,7 +406,7 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: Interpolative Decomposition over Q rows
-		double id_tol = 0.5 * tol;
+		double id_tol = 1.25 * tol;
 		int seed = 42;
 		IDResult ID;
 		try{
@@ -472,7 +485,7 @@ public:
 	 * @return EigenvalueDecomposition structure
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition EigenvalueDecompositionViaNystromMethod(const MatLike & PSD_A, const MatLike & Q, double tol){
+	static EigenvalueDecomposition eigenvalueDecompositionViaNystromMethod(const MatLike & PSD_A, const MatLike & Q, double tol){
 		
 		// Alias of PSD_A
 		const auto& A = PSD_A;
@@ -549,7 +562,7 @@ public:
 	 * @return EigenvalueDecomposition structure
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition EigenvalueDecompositionInOnePass(const MatLike & Hermitian_A, const MatLike & Q, const MatLike & Omega, double tol){
+	static EigenvalueDecomposition eigenvalueDecompositionInOnePass(const MatLike & Hermitian_A, const MatLike & Q, const MatLike & Omega, double tol){
 		
 		// Alias of Hermitian_A
 		const auto& A = Hermitian_A;
