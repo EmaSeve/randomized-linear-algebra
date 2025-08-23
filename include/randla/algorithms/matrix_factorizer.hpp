@@ -95,9 +95,12 @@ public:
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		const size_t l = rank + 10;
+		const int oversampling = 10;
+		const size_t l = rank + oversampling;
+		// oversampling control the error on approximation - oversampling=10 -> 10^-5 (in theory)
+		// from theory : l < m and l < n
 
-		if (rank < 1 || rank > std::min(m, n))
+		if (rank < 1 || rank > std::min(m, n) - oversampling)
 			throw std::runtime_error("MatrixFactorizer - IDFactorization: wrong rank value");
 
 		// Step 1:
@@ -154,18 +157,23 @@ public:
 	 * @param seed - Seed for random vector generation (used in power iteration)
 	 * @return  IDResult
 	 */
-	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed, double growth_factor = 1.5,int k0 = 4){
+	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed, double growth_factor = 1.5,int k0 = 2){
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		const int k_max = std::min(m, n);
+		const int oversampling = 10; 
+		const int k_max = std::min(m, n) - oversampling;
 
 		int k = k0;
 
 		// Estimate ||A||_2 once
 		// FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
 
+		int old_k;
+
 		while (true) {
+
+			old_k = k;
 			IDResult result = IDFactorization(A, k, seed);
 
 			CMatrix A_approx = result.B * result.P;
@@ -196,8 +204,9 @@ public:
 				break;
 		}
 
-		throw std::runtime_error("MatrixFactorizer::adaptiveIDFactorization: failed to reach tolerance within allowed rank.");
-	}
+	throw std::runtime_error( "MatrixFactorizer::adaptiveIDFactorization: failed to reach tolerance within allowed rank, last rank = " 
+    							+ std::to_string(old_k));
+}
 
 	/**
 	 * @brief 
@@ -248,7 +257,7 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: ID of Q's rows, performing and ID on Q^T
-		double id_tol = 1.25 * tol;
+		double id_tol = 10 * tol;
 		int seed = 42;
 		IDResult ID;
 		try{
@@ -406,7 +415,7 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: Interpolative Decomposition over Q rows
-		double id_tol = 1.25 * tol;
+		double id_tol = 10 * tol;
 		int seed = 42;
 		IDResult ID;
 		try{

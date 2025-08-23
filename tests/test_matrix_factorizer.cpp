@@ -66,7 +66,7 @@ void test_adaptiveIDFactorization(const CMatrix & A, double & tol, int seed){
       bool success = true;
 
       try{
-         id = MF::adaptiveIDFactorization(A, tol, seed);
+         id = MF::adaptiveIDFactorization(A, tol, seed, 0.8);
       } catch(const std::runtime_error & err){
          std::cout<< err.what() <<std::endl;
          success = false;
@@ -222,49 +222,49 @@ int main(void){
 /************************************    
 ****** Test of Algorithms of Stage B 
 ************************************/  
-   const int rows = 10;
-   const int cols = 8;
-   const int size = 10; // for square matrix (size, size)
+   const int rows = 15;
+   const int cols = 14;
+   const int size = 15; // for square matrix (size, size)
    density = 0.9;
    seed = 42;
    double tol = 0.2;
-   int r = 7;
-   rank = 8;
+   int q = 2;
+   int l = 14;
+   rank = 14;
 
 /**
  * -----------  Building all type of matrices A
  **/ 
 
    Matrix sparse_A            = TestMat::randomSparseMatrix(rows,cols,density);
-   Matrix sparse_hermitian_A  = TestMat::randomHermitianSparseMatrix(size, density);
+   Matrix hermitian_A         = TestMat::randomHermitianMatrix(size);
    Matrix psd_A               = TestMat::randomPositiveSemidefiniteMatrix(size);
-   Matrix lowRank_A           = TestMat::lowRankPlusNoise(rows, cols, rank, 0.0);
-   Matrix lowRankNoise_A      = TestMat::lowRankPlusNoise(rows, cols, rank, 0.5);
+   Matrix lowRank_A           = TestMat::lowRankPlusNoise(rows, cols, 2, 0.0);
+   Matrix lowRankNoise_A      = TestMat::lowRankPlusNoise(rows, cols, 2, 0.5);
+   Matrix dense_A             = TestMat::randomDenseMatrix(rows, cols);
    
    Eigen::VectorXd sv = Eigen::VectorXd::Zero(std::min(rows, cols));
    for (int i = 0; i < rank; ++i) sv(i) = 1.0;
 
    Matrix singularValues_A    = TestMat::matrixWithSingularValues(rows, cols, sv);
-   Matrix expDecay_A          = TestMat::matrixWithExponentialDecay(rows, cols, 0.5, rank);
+   Matrix expDecay_A          = TestMat::matrixWithExponentialDecay(rows, cols, 0.5, 2);
 /**
  * -----------  Building corrisponding matrices Q
  **/ 
 
    // Adaptive method to compute Q (NOT for sparse matrix)
-   Matrix Q_psd               = ARRF::adaptivePowerIteration(psd_A, tol, r, 2, -1);
-   Matrix Q_psd2              = ARRF::adaptiveRangeFinder(psd_A, tol, r, -1);
-   Matrix Q_lowRank           = ARRF::adaptivePowerIteration(lowRank_A, tol, r, 2, -1);
-   Matrix Q_lowRank2          = ARRF::adaptiveRangeFinder(lowRank_A, tol, r, -1);
-   Matrix Q_singularValues    = ARRF::adaptivePowerIteration(singularValues_A, tol, r, 2, -1);
-   Matrix Q_expDecay          = ARRF::adaptiveRangeFinder(expDecay_A, tol, r, -1);
+   Matrix Q_psd               = ARRF::adaptivePowerIteration(psd_A, tol, rank, q, -1);
+   Matrix Q_psd2              = ARRF::adaptiveRangeFinder(psd_A, tol, rank, -1);
+   Matrix Q_lowRank           = ARRF::adaptivePowerIteration(lowRank_A, tol, rank + 10, 2, -1);
+   Matrix Q_singularValues    = ARRF::adaptivePowerIteration(singularValues_A, tol, rank, q, -1);
+   Matrix Q_expDecay          = ARRF::adaptiveRangeFinder(expDecay_A, tol, rank, -1);
+   Matrix Q_hermitian         = ARRF::adaptivePowerIteration(hermitian_A, tol, rank, q, -1);
+   Matrix Q_dense             = ARRF::adaptiveRangeFinder(dense_A, tol, rank, -1);
 
    // Non adaptive method for sparse
-   Matrix Q_sparse = RRF::randomizedRangeFinder(sparse_A, r, -1);
-   Matrix Q_sparse2 = RRF::randomizedPowerIteration(sparse_A, r, 2, -1);
-   Matrix Q_hermitian_sparse = RRF::randomizedSubspaceIteration(sparse_hermitian_A, r, 4, -1);
-   Matrix Q_hermitian_sparse2 = RRF::fastRandRangeFinder(sparse_hermitian_A, r, -1).real();
-   
-   
+   Matrix Q_sparse            = RRF::randomizedRangeFinder(sparse_A, rank, -1);
+
+
 /**
  * Adaptive ID tested on Q
  *  */ 
@@ -272,36 +272,22 @@ int main(void){
  double id_tol = 1;
 
    std::cout<< "-- Adaptive ID factorization --"<<std::endl;
+
+   std::cout<< "- Q_dnse -" <<std::endl;
+   test_adaptiveIDFactorization(Q_dense, id_tol, seed); 
+
    std::cout<< "- Q_psd -" <<std::endl;
    test_adaptiveIDFactorization(Q_psd, id_tol, seed); 
 
    std::cout<< "- Q_psd-2 -" <<std::endl;
    test_adaptiveIDFactorization(Q_psd2, id_tol, seed);
 
-   std::cout<< "- Q_lowRank -" <<std::endl;
-   test_adaptiveIDFactorization(Q_lowRank, id_tol, seed);
-
-   std::cout<< "- Q_lowRank-2 -" <<std::endl;
-   test_adaptiveIDFactorization(Q_lowRank2, id_tol, seed);
-
-   std::cout<< "- Q_singularValue -" <<std::endl;
-   test_adaptiveIDFactorization(Q_singularValues, id_tol, seed);
-
-   std::cout<< "- Q_expDecay -" <<std::endl;
-   test_adaptiveIDFactorization(Q_expDecay, id_tol, seed);
-
    std::cout<< "- Q_sparse -" <<std::endl;
    test_adaptiveIDFactorization(Q_sparse, id_tol, seed);
 
-   std::cout<< "- Q_sparse-2 -" <<std::endl;
-   test_adaptiveIDFactorization(Q_sparse2, id_tol, seed);
+   std::cout<< "- Q_Hermitian -" <<std::endl;
+   test_adaptiveIDFactorization(Q_hermitian, id_tol, seed);
 
-
-   std::cout<< "- Q_Hermitiansparse -" <<std::endl;
-   test_adaptiveIDFactorization(Q_hermitian_sparse, id_tol, seed);
-
-   std::cout<< "- Q_Hermitiansparse-2 -" <<std::endl;
-   test_adaptiveIDFactorization(Q_hermitian_sparse2, id_tol, seed);
 
 /**
  *  Stage B methods 
@@ -313,34 +299,16 @@ int main(void){
 
    test_directSVD(sparse_A, Q_sparse, tol);
    test_SVDviaRowExtraction(sparse_A, Q_sparse, tol);
-   
 
-   std::cout << "--- Testing A = sparse_A, Q = Q_sparse2 ---" << std::endl;
-   double err_sparse_A_Q_sparse2 = Err::realError(sparse_A, Q_sparse2);
-   std::cout << "||A - QQ^T A|| = " << err_sparse_A_Q_sparse2 << std::endl;
+   std::cout << "--- Testing A = hermitian_A, Q = Q_hermitian ---" << std::endl;
+   double err_hermitian_A_Q_hermitian = Err::realError(hermitian_A, Q_hermitian);
+   std::cout << "||A - QQ^T A|| = " << err_hermitian_A_Q_hermitian << std::endl;
 
-   test_directSVD(sparse_A, Q_sparse2, tol);
-   test_SVDviaRowExtraction(sparse_A, Q_sparse2, tol);
-
-   std::cout << "--- Testing A = sparse_hermitian_A, Q = Q_hermitian_sparse ---" << std::endl;
-   double err_sparse_hermitian_A_Q_hermitian_sparse = Err::realError(sparse_hermitian_A, Q_hermitian_sparse);
-   std::cout << "||A - QQ^T A|| = " << err_sparse_hermitian_A_Q_hermitian_sparse << std::endl;
-
-   test_directSVD(sparse_hermitian_A, Q_hermitian_sparse, tol);
-   test_SVDviaRowExtraction(sparse_hermitian_A, Q_hermitian_sparse, tol);
-   test_directEigDecomposition(sparse_hermitian_A, Q_hermitian_sparse, tol);
-   test_eigenvalueDecompositionViaRowExtraction(sparse_hermitian_A, Q_hermitian_sparse, tol);
-   test_eigenvalueDecompositionInOnePass(sparse_hermitian_A, Q_hermitian_sparse, TestMat::randomDenseMatrix(cols, r), tol);
-
-   std::cout << "--- Testing A = sparse_hermitian_A, Q = Q_hermitian_sparse2 ---" << std::endl;
-   double err_sparse_hermitian_A_Q_hermitian_sparse2 = Err::realError(sparse_hermitian_A, Q_hermitian_sparse2);
-   std::cout << "||A - QQ^T A|| = " << err_sparse_hermitian_A_Q_hermitian_sparse2 << std::endl;
-
-   test_directSVD(sparse_hermitian_A, Q_hermitian_sparse2, tol);
-   test_SVDviaRowExtraction(sparse_hermitian_A, Q_hermitian_sparse2, tol);
-   test_directEigDecomposition(sparse_hermitian_A, Q_hermitian_sparse2, tol);
-   test_eigenvalueDecompositionViaRowExtraction(sparse_hermitian_A, Q_hermitian_sparse2, tol);
-   test_eigenvalueDecompositionInOnePass(sparse_hermitian_A, Q_hermitian_sparse2, TestMat::randomDenseMatrix(cols, r), tol);
+   test_directSVD(hermitian_A, Q_hermitian, tol);
+   test_SVDviaRowExtraction(hermitian_A, Q_hermitian, tol);
+   test_directEigDecomposition(hermitian_A, Q_hermitian, tol);
+   test_eigenvalueDecompositionViaRowExtraction(hermitian_A, Q_hermitian, tol);
+   test_eigenvalueDecompositionInOnePass(hermitian_A, Q_hermitian, TestMat::randomDenseMatrix(size, size), tol);
 
    std::cout << "--- Testing A = psd_A, Q = Q_psd ---" << std::endl;
    double err_psd_A_Q_psd = Err::realError(psd_A, Q_psd);
@@ -366,28 +334,12 @@ int main(void){
    test_SVDviaRowExtraction(lowRank_A, Q_lowRank, tol);
    
 
-   std::cout << "--- Testing A = lowRank_A, Q = Q_lowRank2 ---" << std::endl;
-   double err_lowRank_A_Q_lowRank2 = Err::realError(lowRank_A, Q_lowRank2);
-   std::cout << "||A - QQ^T A|| = " << err_lowRank_A_Q_lowRank2 << std::endl;
-
-   test_directSVD(lowRank_A, Q_lowRank2, tol);
-   test_SVDviaRowExtraction(lowRank_A, Q_lowRank2, tol);
-   
-
    std::cout << "--- Testing A = lowRankNoise_A, Q = Q_lowRank ---" << std::endl;
    double err_lowRankNoise_A_Q_lowRank = Err::realError(lowRankNoise_A, Q_lowRank);
    std::cout << "||A - QQ^T A|| = " << err_lowRankNoise_A_Q_lowRank << std::endl;
 
    test_directSVD(lowRankNoise_A, Q_lowRank, tol);
    test_SVDviaRowExtraction(lowRankNoise_A, Q_lowRank, tol);
-   
-
-   std::cout << "--- Testing A = lowRankNoise_A, Q = Q_lowRank2 ---" << std::endl;
-   double err_lowRankNoise_A_Q_lowRank2 = Err::realError(lowRankNoise_A, Q_lowRank2);
-   std::cout << "||A - QQ^T A|| = " << err_lowRankNoise_A_Q_lowRank2 << std::endl;
-
-   test_directSVD(lowRankNoise_A, Q_lowRank2, tol);
-   test_SVDviaRowExtraction(lowRankNoise_A, Q_lowRank2, tol);
    
 
    std::cout << "--- Testing A = singularValues_A, Q = Q_singularValues ---" << std::endl;
@@ -404,11 +356,6 @@ int main(void){
 
    test_directSVD(expDecay_A, Q_expDecay, tol);
    test_SVDviaRowExtraction(expDecay_A, Q_expDecay, tol);
-   
-
-   Matrix dense_A = TestMat::randomDenseMatrix(rows, cols);
-   Matrix Q_dense = ARRF::adaptiveRangeFinder(dense_A, tol, r, -1);
-   Matrix Q_dense2 = ARRF::adaptivePowerIteration(dense_A, tol, r, 2, -1);
 
    std::cout << "--- Testing A = dense_A, Q = Q_dense ---" << std::endl;
    double err_dense = Err::realError(dense_A, Q_dense);
@@ -417,34 +364,6 @@ int main(void){
    test_directSVD(dense_A, Q_dense, tol);
    test_SVDviaRowExtraction(dense_A, Q_dense, 5.0);
 
-   std::cout << "--- Testing A = dense_A, Q = Q_dense2 ---" << std::endl;
-   double err_dense2 = Err::realError(dense_A, Q_dense2);
-   std::cout << "||A - QQ^T A|| = " << err_dense2 << std::endl;
-
-   test_directSVD(dense_A, Q_dense2, tol);
-   test_SVDviaRowExtraction(dense_A, Q_dense2, 5.0);
-   
-
-
-/* // ------------------------------------------------------------------------------------------------------
-   Matrix A = TestMat::randomSparseMatrix(rows,cols,density,seed);
-   Matrix Q = ARRF::adaptiveRangeFinder(A, tol, r, seed); // Aggiunto punto e virgola
-
-   double er = Err::realError(A, Q);
-   std::cout<< "adaptive range finder err:"<< er<<std::endl;
-
-   test_directSVD(A, Q, tol);
-
-    
-// ------------------------------------------------------------------------------------------------------
-   Matrix B = TestMat::randomPositiveSemidefiniteMatrix(size, density, seed + 1);
-   Q = ARRF::adaptiveFastRandRangeFinder(B, tol, 15, seed +1).real();
-
-   er = Err::realError(B, Q);
-   std::cout<< "(SPD matrix A) adaptive fast range finder err:"<< er<<std::endl;
-
-   test_SVDviaRowExtraction(B, Q, tol); 
-   test_directEigDecomposition(B, Q, tol); */
 
    return 0;
 }

@@ -189,6 +189,12 @@ static Matrix randomDenseMatrix(int rows, int cols, int seed = -1) {
     return randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(rows, cols, seed);
 }
 
+// Generates a dense random real symmetric (Hermitian) matrix with i.i.d. standard normal entries
+static Matrix randomHermitianMatrix(int n, int seed = -1) {
+    Matrix A = randla::random::RandomGenerator<FloatType>::randomGaussianMatrix(n, n, seed);
+    Matrix H = 0.5 * (A + A.transpose());
+    return H;
+}
 
 
 };
