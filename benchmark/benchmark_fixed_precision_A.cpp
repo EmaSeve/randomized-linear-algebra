@@ -58,9 +58,11 @@ static void runAlgorithmsDense(const std::string& label,
         auto Q  = method(used_seed + seed_offset);
         auto t1 = tic();
         double err     = Err::realError(A, Q);
+        double rel_err = err / normA;
         double time_ms = ms(t0, t1);
         std::cout << "[" << method_name << "]  cols=" << Q.cols()
                   << " err=" << err
+                  << " rel_err=" << rel_err
                   << " time_ms=" << time_ms << "\n";
         csv << label << ','
             << A.rows() << ','
@@ -74,24 +76,23 @@ static void runAlgorithmsDense(const std::string& label,
             << tag << ','
             << Q.cols() << ','
             << err << ','
+            << rel_err << ','
             << time_ms << '\n';
         csv.flush();
     };
 
     runOne("ARF", 0, [&](int s){ return ARRF::adaptiveRangeFinder(A, tol, r, s); });
-    
-    // not parallelized
-    // runOne("API", 1, [&](int s){ return ARRF::adaptivePowerIteration(A, tol, r, q, s); });
-    // runOne("AFRF", 3, [&](int s){ return ARRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
+    runOne("API", 1, [&](int s){ return ARRF::adaptivePowerIteration(A, tol, r, q, s); });
+    runOne("AFRF", 3, [&](int s){ return ARRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
 }
 
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
         
-        std::vector<int> threadCounts = {1, 2 , 4, 8};
+        std::vector<int> threadCounts = {1};
 
-        const int m = 2000, n = 1000, rank = 300, r = 10, q = 2;
+        const int m = 3000, n = 1500, rank = 500, r = 10, q = 2;
         const double tol = 1e-2;
         const int seed = 123;
 
@@ -100,7 +101,7 @@ int main() {
             std::cerr << "Error: cannot open res_benchmark_fixed_precision.csv for writing\n";
             return 1;
         }
-    csv << "label,m,n,norm,method,tol,r,q,threads,tag,cols,err,time_ms\n";
+    csv << "label,m,n,norm,method,tol,r,q,threads,tag,cols,err,rel_err,time_ms\n";
 
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);

@@ -15,7 +15,16 @@ def create_time_table(df, benchmark_type, plot_dir):
                     row = []
                     for thread_count in threads:
                         time_val = method_data[method_data['threads'] == thread_count]['time_ms'] if 'time_ms' in method_data.columns else None
-                        if time_val is not None and len(time_val) > 0:
+                        # Preferisci rel_err se disponibile, altrimenti err
+                        if 'rel_err' in method_data.columns:
+                            err_val = method_data[method_data['threads'] == thread_count]['rel_err']
+                        elif 'err' in method_data.columns:
+                            err_val = method_data[method_data['threads'] == thread_count]['err']
+                        else:
+                            err_val = None
+                        if time_val is not None and len(time_val) > 0 and err_val is not None and len(err_val) > 0:
+                            row.append(f"{time_val.iloc[0]:.0f} ms\n(err={err_val.iloc[0]:.2e})")
+                        elif time_val is not None and len(time_val) > 0:
                             row.append(f"{time_val.iloc[0]:.0f}")
                         else:
                             row.append("-")
@@ -32,7 +41,7 @@ def create_time_table(df, benchmark_type, plot_dir):
                                cellLoc='center',
                                loc='center')
                 table.auto_set_font_size(False)
-                table.set_fontsize(10)
+                table.set_fontsize(6)
                 table.scale(1.2, 1.5)
                 for (i, j), cell in table.get_celld().items():
                     if i == 0:
