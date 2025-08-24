@@ -89,7 +89,7 @@ int main() {
 
         std::vector<int> threadCounts = {1, 2, 4, 8};
         
-        const int m = 3000, n = 1500, rank = 500, l = 500, q = 2;
+        const int m = 5000, n = 2000, rank = 1000, l = 1000, q = 2;
         const int seed = 123;
 
         std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
