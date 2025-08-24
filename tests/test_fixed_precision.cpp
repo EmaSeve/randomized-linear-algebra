@@ -10,7 +10,7 @@ using GM   = randla::utils::MatrixGenerators<double>;
 namespace {
     constexpr int rows = 800, cols = 400, rank = 20;
     constexpr int r = 10, pwr = 2, seed = 42;
-    constexpr int l_srft = 1;
+    constexpr int l_afrrf = 1;
     constexpr double growth_factor = 2.0;
 
     constexpr double tol_exact          = 1e-10;
@@ -60,8 +60,8 @@ TEST(AdaptiveFP_Exact, API) {
     auto Q = ARRF::adaptivePowerIteration(A_exact(), tol_exact, r, pwr, seed);
     EXPECT_LE(Err::realError(A_exact(), Q), tol_exact);
 }
-TEST(AdaptiveFP_Exact, SRFT) {
-    auto Q = ARRF::adaptiveFastRandRangeFinder(A_exact(), tol_exact, l_srft, seed, growth_factor);
+TEST(AdaptiveFP_Exact, AFRRF) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_exact(), tol_exact, l_afrrf, seed, growth_factor);
     EXPECT_LE(Err::realError(A_exact(), Q), tol_exact);
 }
 
@@ -79,8 +79,8 @@ TEST(AdaptiveFP_ExpDecay, API) {
     EXPECT_LE(Err::realError(A_decay(), Q), tol_decay);
 }
 
-TEST(AdaptiveFP_ExpDecay, SRFT) {
-    auto Q = ARRF::adaptiveFastRandRangeFinder(A_decay(), tol_decay, l_srft, seed, growth_factor);
+TEST(AdaptiveFP_ExpDecay, AFRRF) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_decay(), tol_decay, l_afrrf, seed, growth_factor);
     EXPECT_LE(Err::realError(A_decay(), Q), tol_decay);
 }
 
@@ -93,8 +93,8 @@ TEST(AdaptiveFP_LowRank0, API) {
     auto Q = ARRF::adaptivePowerIteration(A_lowrank0(), tol_lowrank0, r, pwr, seed);
     EXPECT_LE(Err::realError(A_lowrank0(), Q), tol_lowrank0);
 }
-TEST(AdaptiveFP_LowRank0, SRFT) {
-    auto Q = ARRF::adaptiveFastRandRangeFinder(A_lowrank0(), tol_lowrank0, l_srft, seed, growth_factor);
+TEST(AdaptiveFP_LowRank0, AFRRF) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_lowrank0(), tol_lowrank0, l_afrrf, seed, growth_factor);
     EXPECT_LE(Err::realError(A_lowrank0(), Q), tol_lowrank0);
 }
 
@@ -107,7 +107,7 @@ TEST(AdaptiveFP_LowRankNoise, API) {
     auto Q = ARRF::adaptivePowerIteration(A_lowrank_noise(), tol_lowrank_noise, r, pwr, seed);
     EXPECT_LE(Err::realError(A_lowrank_noise(), Q), tol_lowrank_noise);
 }
-TEST(AdaptiveFP_LowRankNoise, SRFT) {
-    auto Q = ARRF::adaptiveFastRandRangeFinder(A_lowrank_noise(), tol_lowrank_noise, l_srft, seed, growth_factor);
+TEST(AdaptiveFP_LowRankNoise, AFRRF) {
+    auto Q = ARRF::adaptiveFastRandRangeFinder(A_lowrank_noise(), tol_lowrank_noise, l_afrrf, seed, growth_factor);
     EXPECT_LE(Err::realError(A_lowrank_noise(), Q), tol_lowrank_noise);
 }
