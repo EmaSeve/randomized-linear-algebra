@@ -39,6 +39,7 @@ static void runAlgorithmsDense(const std::string& label,
                                 const Eigen::MatrixXd& A,
                                 int l, int q, int seed,
                                 int threads,
+                                const std::string& tag,
                                 std::ostream& csv) {
     std::cout << "\n=== " << label << " ===\n";
     std::cout << "Shape: " << A.rows() << " x " << A.cols() << "\n";
@@ -66,6 +67,7 @@ static void runAlgorithmsDense(const std::string& label,
             << method_name << ','
             << l << ','
             << threads << ','
+            << tag << ','
             << Q.cols() << ','
             << err << ','
             << time_ms << '\n';
@@ -87,7 +89,7 @@ int main() {
 
         std::vector<int> threadCounts = {1, 2, 4, 8};
         
-        const int m = 2000, n = 1000, rank = 300, l = 100, q = 2;
+        const int m = 3000, n = 1500, rank = 500, l = 500, q = 2;
         const int seed = 123;
 
         std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
@@ -95,7 +97,7 @@ int main() {
             std::cerr << "Error: cannot open benchmark_results.csv for writing\n";
             return 1;
         }
-        csv << "label,m,n,norm,method,l,threads,cols,err,time_ms\n";
+    csv << "label,m,n,norm,method,l,threads,tag,cols,err,time_ms\n";
 
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);
@@ -123,16 +125,21 @@ int main() {
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
 
+            std::string tag;
             #ifdef EIGEN_USE_OPENMP
+                tag = "openMP";
                 std::cout << "\n--- Threads = " << t
                       << " (OpenMP=" << randla::threading::getThreads()  << ") ---\n";
             #elif defined(EIGEN_USE_BLAS)
+                tag = "openBLAS";
                 std::cout << "\n--- Threads = " << t
                       << " (OpenBLAS=" << randla::threading::getThreads()  << ") ---\n";
+            #else
+                tag = "unknown";
             #endif
             
             for (const auto& [label, A] : cases) {
-                runAlgorithmsDense(label, A, l, q, seed + t, randla::threading::getThreads(), csv);
+                runAlgorithmsDense(label, A, l, q, seed + t, randla::threading::getThreads(), tag, csv);
             }
         }
 

@@ -41,6 +41,7 @@ static void runAlgorithmsDense(const std::string& label,
                                 const Eigen::MatrixXd& A,
                                 double tol, int r, int q, int seed,
                                 int threads,
+                                const std::string& tag,
                                 std::ostream& csv) {
     std::cout << "\n=== " << label << " ===\n";
     std::cout << "Shape: " << A.rows() << " x " << A.cols() << "\n";
@@ -70,6 +71,7 @@ static void runAlgorithmsDense(const std::string& label,
             << r << ','
             << q << ','
             << threads << ','
+            << tag << ','
             << Q.cols() << ','
             << err << ','
             << time_ms << '\n';
@@ -98,7 +100,7 @@ int main() {
             std::cerr << "Error: cannot open res_benchmark_fixed_precision.csv for writing\n";
             return 1;
         }
-        csv << "label,m,n,norm,method,tol,r,q,threads,cols,err,time_ms\n";
+    csv << "label,m,n,norm,method,tol,r,q,threads,tag,cols,err,time_ms\n";
 
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);
@@ -124,17 +126,22 @@ int main() {
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
 
+            std::string tag;
             #ifdef EIGEN_USE_OPENMP
+                tag = "openMP";
                 std::cout << "\n--- Threads = " << t
                       << " (OpenMP=" << randla::threading::getThreads()  << ") ---\n";
             #elif defined(EIGEN_USE_BLAS)
+                tag = "openBLAS";
                 std::cout << "\n--- Threads = " << t
                       << " (OpenBLAS=" << randla::threading::getThreads()  << ") ---\n";
+            #else
+                tag = "unknown";
             #endif
 
             for (const auto& [label, A] : cases) {
                 runAlgorithmsDense(
-                    label, A, tol, r, q, seed + t, randla::threading::getThreads(), csv);
+                    label, A, tol, r, q, seed + t, randla::threading::getThreads(), tag, csv);
             }
         }
 
