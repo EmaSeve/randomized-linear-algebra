@@ -2,9 +2,6 @@
 build/
 cmake-build-*/
 
-# Plot directories
-benchmark_plots/
-
 # IDE files
 .vscode/
 .idea/
