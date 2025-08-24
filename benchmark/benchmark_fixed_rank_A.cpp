@@ -127,11 +127,11 @@ int main() {
 
             std::string tag;
             #ifdef EIGEN_USE_OPENMP
-                tag = "openMP";
+                tag = "openmp";
                 std::cout << "\n--- Threads = " << t
                       << " (OpenMP=" << randla::threading::getThreads()  << ") ---\n";
             #elif defined(EIGEN_USE_BLAS)
-                tag = "openBLAS";
+                tag = "blas";
                 std::cout << "\n--- Threads = " << t
                       << " (OpenBLAS=" << randla::threading::getThreads()  << ") ---\n";
             #else
