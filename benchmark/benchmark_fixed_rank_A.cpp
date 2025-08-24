@@ -78,6 +78,9 @@ static void runAlgorithmsDense(const std::string& label,
     runOne("FRF", 3, [&](int s){ return RRF::fastRandRangeFinder(A, l, s); });
 }
 
+
+
+
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
@@ -119,12 +122,17 @@ int main() {
 
         for (int t : threadCounts) {
             randla::threading::setThreads(t);
-            
-            std::cout << "\n--- Threads = " << t
-                      << " (Eigen=" << Eigen::nbThreads()  << ") ---\n";
+
+            #ifdef EIGEN_USE_OPENMP
+                std::cout << "\n--- Threads = " << t
+                      << " (OpenMP=" << randla::threading::getThreads()  << ") ---\n";
+            #elif defined(EIGEN_USE_BLAS)
+                std::cout << "\n--- Threads = " << t
+                      << " (OpenBLAS=" << randla::threading::getThreads()  << ") ---\n";
+            #endif
             
             for (const auto& [label, A] : cases) {
-                runAlgorithmsDense(label, A, l, q, seed + t, Eigen::nbThreads(), csv);
+                runAlgorithmsDense(label, A, l, q, seed + t, randla::threading::getThreads(), csv);
             }
         }
 

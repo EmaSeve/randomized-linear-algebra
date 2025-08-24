@@ -100,7 +100,7 @@ target_link_libraries(randomized-linear-algebra
 
 if(HAVE_OPENMP)
     target_link_libraries(randomized-linear-algebra INTERFACE OpenMP::OpenMP_CXX)
-    target_compile_definitions(randomized-linear-algebra INTERFACE RRF_USE_OPENMP=1)
+    target_compile_definitions(randomized-linear-algebra INTERFACE EIGEN_USE_OPENMP=1)
 endif()
 
 # Abilita l'uso della BLAS in Eigen se OpenBLAS è disponibile
