@@ -131,11 +131,22 @@ if(BUILD_TESTS)
 
     include(GoogleTest)
 
+    add_executable(test_fixed_precision tests/test_fixed_precision.cpp)
+    target_link_libraries(test_fixed_precision PRIVATE randomized-linear-algebra GTest::gtest_main)
+    gtest_discover_tests(test_fixed_precision
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1"
+        DISCOVERY_TIMEOUT 60)
+
+    add_executable(test_fixed_rank tests/test_fixed_rank.cpp)
+    target_link_libraries(test_fixed_rank PRIVATE randomized-linear-algebra GTest::gtest_main)
+    gtest_discover_tests(test_fixed_rank
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1"
+        DISCOVERY_TIMEOUT 60)
+
     add_executable(test_matrix_factorizer_google tests/test_matrix_factorizer_google.cpp)
     target_link_libraries(test_matrix_factorizer_google PRIVATE randomized-linear-algebra GTest::gtest_main)
     gtest_discover_tests(test_matrix_factorizer_google
-        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1"
-        DISCOVERY_TIMEOUT 60)
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
 endif()
 
 
@@ -145,10 +156,6 @@ if(BUILD_TESTS)
     add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
     target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
     add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
-
-    add_executable(test_spectral_norm tests/test_spectral_norm.cpp)
-    target_link_libraries(test_spectral_norm PRIVATE randomized-linear-algebra)
-    add_test(NAME SpectralNormTest COMMAND test_spectral_norm)
 endif()
 
 # ========================
