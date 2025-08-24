@@ -95,13 +95,13 @@ public:
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		const int oversampling = 10;
+		const int oversampling = 4;
 		const size_t l = rank + oversampling;
 		// oversampling control the error on approximation - oversampling=10 -> 10^-5 (in theory)
 		// from theory : l < m and l < n
 
 		if (rank < 1 || rank > std::min(m, n) - oversampling)
-			throw std::runtime_error("MatrixFactorizer - IDFactorization: wrong rank value");
+			throw std::runtime_error("MatrixFactorizer - IDFactorization: error, rank value (k + oversampling) > min(rows, cols) ");
 
 		// Step 1:
 		auto gen = randla::random::RandomGenerator<FloatType>::make_generator(seed);
@@ -135,14 +135,14 @@ public:
 	 * an adaptive rank selection strategy based on spectral norm error estimation.
 	 *
 	 * This method performs multiple calls to the standard ID (Algorithm I), starting from a small
-	 * target rank k and doubling it until the approximation error ||A - B P||_2 
+	 * target rank k and doubling it until the approximation relative error ||A - B P||_2 / ||A||_2
 	 * falls below a user-specified tolerance.
 	 *
 	 * At each iteration:
 	 *   1. A rank-k interpolative decomposition A ≈ B * P is computed.
 	 *   2. The residual E = A - B * P is formed.
 	 *   3. The spectral norm of the residual is estimated via power iteration.
-	 *   4. If the error ||E||_2 is below tol, the current approximation is returned.
+	 *   4. If the error ||E||_2 / ||A||_2 is below tol, the current approximation is returned.
 	 *
 	 * The method guarantees a good approximation without requiring the rank a priori,
 	 * but it does not reuse intermediate computations across iterations (e.g., R*A),
@@ -153,21 +153,21 @@ public:
 	 *   - If no acceptable approximation is found within rank ≤ min(m, n), the function throws.
 	 * 
 	 * @param A    - Input complex matrix (m x n)
-	 * @param tol  - Spectral error tolerance
+	 * @param tol  - Spectral (relative ?) error tolerance
 	 * @param seed - Seed for random vector generation (used in power iteration)
 	 * @return  IDResult
 	 */
-	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed, double growth_factor = 1.5,int k0 = 2){
+	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed, double growth_factor = 1.0,int k0 = 2){
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		const int oversampling = 10; 
+		const int oversampling = 4; 
 		const int k_max = std::min(m, n) - oversampling;
 
 		int k = k0;
 
 		// Estimate ||A||_2 once
-		// FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
+	    FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
 
 		int old_k;
 
@@ -180,9 +180,9 @@ public:
 			CMatrix E = A - A_approx;
 
 			FloatType spectral_norm = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(E, seed);
-			// FloatType relative_error = spectral_norm / norm_A;
+			FloatType relative_error = spectral_norm / norm_A;
 
-			if (spectral_norm < tol)
+			if (relative_error < tol)
 				return result;
 
 			// Adaptive update of k
@@ -257,7 +257,7 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: ID of Q's rows, performing and ID on Q^T
-		double id_tol = 10 * tol;
+		double id_tol = 2 * tol;
 		int seed = 42;
 		IDResult ID;
 		try{
@@ -415,7 +415,7 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: Interpolative Decomposition over Q rows
-		double id_tol = 10 * tol;
+		double id_tol = 2 * tol;
 		int seed = 42;
 		IDResult ID;
 		try{

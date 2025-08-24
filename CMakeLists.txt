@@ -138,6 +138,19 @@ if(BUILD_TESTS)
         DISCOVERY_TIMEOUT 60)
 endif()
 
+
+# TEST DI EMANUELE
+if(BUILD_TESTS)
+    enable_testing()
+    add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
+    target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
+    add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
+
+    add_executable(test_spectral_norm tests/test_spectral_norm.cpp)
+    target_link_libraries(test_spectral_norm PRIVATE randomized-linear-algebra)
+    add_test(NAME SpectralNormTest COMMAND test_spectral_norm)
+endif()
+
 # ========================
 # Benchmark
 # ========================

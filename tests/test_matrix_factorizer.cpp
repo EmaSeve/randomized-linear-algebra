@@ -36,12 +36,45 @@ void print_approximation_error(const CMatrix & A, const IDResult & id, double r_
    std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n\n";
 }
 
+int numerical_rank(const Matrix& Q, double tol = -1){
+   Eigen::JacobiSVD<Matrix> svd(Q);
+   auto singularValues = svd.singularValues();
+   double threshold = tol;
+
+   if (threshold < 0) {
+      threshold = std::max(Q.rows(), Q.cols()) * singularValues.array().abs().maxCoeff() * std::numeric_limits<double>::epsilon();
+   }
+
+   return (singularValues.array() > threshold).count();
+}
+
 
 void test_IDfactorization(const CMatrix & A, const std::vector<int> & rank, int seed){
      for(auto r : rank){
-        auto id = MF::IDFactorization(A, r, seed);
-        print_approximation_error(A, id, r);
+      IDResult id;
+      bool success = true;
+      try{
+         id = MF::IDFactorization(A, r, seed);
+      } catch(std::runtime_error& err){
+         std::cout<< err.what() <<std::endl;
+         success = false;
+      }
+        
+      if(success) print_approximation_error(A, id, r);
    }
+}
+
+void test_IDfactorization(const CMatrix & A, int rank, int seed = -1){
+   bool success = true;
+   IDResult id;
+   try{
+      id = MF::IDFactorization(A, rank, seed);
+   } catch(std::runtime_error& err){
+      std::cout<< err.what() <<std::endl;
+      success = false;
+   }
+   
+   if(success) print_approximation_error(A, id, rank);   
 }
 
 
@@ -222,15 +255,15 @@ int main(void){
 /************************************    
 ****** Test of Algorithms of Stage B 
 ************************************/  
-   const int rows = 15;
-   const int cols = 14;
-   const int size = 15; // for square matrix (size, size)
+   const int rows = 150;
+   const int cols = 140;
+   const int size = 150; // for square matrix (size, size)
    density = 0.9;
    seed = 42;
    double tol = 0.2;
    int q = 2;
-   int l = 14;
-   rank = 14;
+   int l = 140;
+   rank = 140;
 
 /**
  * -----------  Building all type of matrices A
@@ -266,14 +299,33 @@ int main(void){
 
 
 /**
- * Adaptive ID tested on Q
+ * ID tested on different A, knowing previusly its rank 
  *  */ 
 
- double id_tol = 1;
+   int ID_oversampling = 4;
+
+   int rank_dense_A = numerical_rank(dense_A);
+   std::cout<< "rank of dense A : " << rank_dense_A<<std::endl;
+   test_IDfactorization(dense_A, rank_dense_A - ID_oversampling);
+
+   int rank_hermitian_A = numerical_rank(hermitian_A);
+   std::cout<< "rank of hermitian A : " << rank_hermitian_A<<std::endl;
+   test_IDfactorization(hermitian_A, rank_hermitian_A - ID_oversampling);
+
+   int rank_psd_A = numerical_rank(psd_A);
+   std::cout<< "rank of psd A : " << rank_psd_A<<std::endl;
+   test_IDfactorization(psd_A, rank_psd_A - ID_oversampling);
+
+
+/**
+ * Adaptive ID tested on different Q
+ *  */ 
+
+ double id_tol = 0.6;
 
    std::cout<< "-- Adaptive ID factorization --"<<std::endl;
 
-   std::cout<< "- Q_dnse -" <<std::endl;
+   std::cout<< "- Q_dense -" <<std::endl;
    test_adaptiveIDFactorization(Q_dense, id_tol, seed); 
 
    std::cout<< "- Q_psd -" <<std::endl;
