@@ -89,7 +89,7 @@ int main() {
 
         std::vector<int> threadCounts = {1, 2, 4, 8};
         
-        const int m = 3000, n = 1500, rank = 500, l = 500, q = 2;
+        const int m = 2000, n = 1000, rank = 300, l = 300, q = 2;
         const int seed = 123;
 
         std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
@@ -97,7 +97,7 @@ int main() {
             std::cerr << "Error: cannot open benchmark_results.csv for writing\n";
             return 1;
         }
-    csv << "label,m,n,norm,method,l,threads,tag,cols,err,time_ms\n";
+        csv << "label,m,n,norm,method,l,threads,tag,cols,err,time_ms\n";
 
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);
