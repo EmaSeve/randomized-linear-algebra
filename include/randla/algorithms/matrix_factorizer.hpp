@@ -91,11 +91,11 @@ public:
 	 *     	- P: (k x n) coefficient matrix,
 	 *     	- indices: vector of selected column indices
 	 */
-	static IDResult IDFactorization(const CMatrix & A, int rank, int seed){
+ 	static IDResult IDFactorization(const CMatrix & A, int rank, int seed = -1){
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		const int oversampling = 4;
+		const int oversampling = 5;
 		const size_t l = rank + oversampling;
 		// oversampling control the error on approximation - oversampling=10 -> 10^-5 (in theory)
 		// from theory : l < m and l < n
@@ -127,7 +127,7 @@ public:
 		P = svd.solve(A);
 
 		return IDResult{std::move(B), std::move(P), std::move(selectedCols)};
-	}
+	} 
 
 	/**
 	 * @brief 
@@ -157,56 +157,56 @@ public:
 	 * @param seed - Seed for random vector generation (used in power iteration)
 	 * @return  IDResult
 	 */
-	static IDResult adaptiveIDFactorization(const CMatrix & A, double tol, int seed, double growth_factor = 1.0,int k0 = 2){
-
+	static IDResult adaptiveIDFactorization(const CMatrix& A, int seed = -1, double energy_threshold = 0.9, double growth_factor = 1.5, int k0 = 2)
+	{
 		const size_t m = A.rows();
 		const size_t n = A.cols();
-		const int oversampling = 4; 
-		const int k_max = std::min(m, n) - oversampling;
+		const int oversampling = 5;
+		const int k_max = std::min(m, n) - oversampling - 1; // k + oversampling = l < (m,n)
 
 		int k = k0;
-
-		// Estimate ||A||_2 once
-	    FloatType norm_A = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(A, seed);
-
 		int old_k;
+
+		// Norm squared of A (Frobenius)
+		const FloatType frob_norm_A_squared = A.squaredNorm();
 
 		while (true) {
 
 			old_k = k;
+			int l = k + oversampling;
+
+			// Check boundaries
+			if (l >= std::min(m, n))
+				break;
+
 			IDResult result = IDFactorization(A, k, seed);
 
-			CMatrix A_approx = result.B * result.P;
-			CMatrix E = A - A_approx;
+			// A_approx = B * P
+			const CMatrix A_approx = result.B * result.P;
 
-			FloatType spectral_norm = randla::metrics::ErrorEstimators<FloatType>::estimateSpectralNorm(E, seed);
-			FloatType relative_error = spectral_norm / norm_A;
+			// ||A - A_approx||_F^2 = ||E||_F^2
+			const FloatType frob_norm_E_squared = (A - A_approx).squaredNorm();
 
-			if (relative_error < tol)
+			// preserved energy
+			const FloatType preserved_energy = 1.0 - (frob_norm_E_squared / frob_norm_A_squared);
+
+			if (preserved_energy >= energy_threshold)
 				return result;
 
-			// Adaptive update of k
-			int next_k;
-			if (growth_factor > 1.0) {
-				next_k = static_cast<int>(std::ceil(k * growth_factor));
-			} else if (growth_factor > 0.0) {
-				int step = static_cast<int>(std::ceil(growth_factor * k0));
-				if (step <= 0) step = 1;
-				next_k = k + step;
-			} else {
-				next_k = k + 1;
-			}
-
-			if (next_k <= k) next_k = k + 1; 
+			// update k
+			int next_k = static_cast<int>(std::ceil(k * growth_factor));
+			if (next_k <= k) next_k = k + 1;
 			k = std::min(next_k, k_max);
 
-			if (k >= k_max)
+			if (k > k_max || old_k == k)
 				break;
 		}
 
-	throw std::runtime_error( "MatrixFactorizer::adaptiveIDFactorization: failed to reach tolerance within allowed rank, last rank = " 
-    							+ std::to_string(old_k));
-}
+		throw std::runtime_error(
+			"MatrixFactorizer::adaptiveIDFactorization: failed to reach sufficient energy within allowed rank, last rank = "
+			+ std::to_string(old_k) + "k_max = " + std::to_string(k_max));
+	}
+
 
 	/**
 	 * @brief 
@@ -257,15 +257,16 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: ID of Q's rows, performing and ID on Q^T
-		double id_tol = 2 * tol;
-		int seed = 42;
 		IDResult ID;
 		try{
-			ID = adaptiveIDFactorization(Q.transpose(), id_tol, seed);
+			ID = adaptiveIDFactorization(Q.transpose());
 		} catch(const std::runtime_error& err){
 			std::cerr << "Adaptive ID failed: " << err.what() << std::endl;
 			throw;
 		}
+
+		auto id_residual = (Q.transpose() - ID.B * ID.P);
+		std::cout<< " id_residual err norm: " << id_residual.norm() <<std::endl;
 
 		// Q ≈ X * Q(J, :)  ->  X = ID.P^T, Q_J = ID.B^T
 		Matrix Q_J = ID.B.transpose().real();      // (k x n)
@@ -415,15 +416,16 @@ public:
 		const size_t n = A.cols();
 
 		// Step 1: Interpolative Decomposition over Q rows
-		double id_tol = 2 * tol;
-		int seed = 42;
 		IDResult ID;
 		try{
-			ID = adaptiveIDFactorization(Q.transpose(), id_tol, seed);
+			ID = adaptiveIDFactorization(Q.transpose());
 		} catch(const std::runtime_error& err){
 			std::cerr << "Adaptive ID failed: " << err.what() << std::endl;
 			throw;
 		}
+
+		auto id_residual = (Q.transpose() - ID.B * ID.P);
+		std::cout<< " id_residual err norm: " << id_residual.norm() <<std::endl;
 
 		Matrix Q_J = ID.B.transpose().real();  
 		Matrix X = ID.P.transpose().real();   

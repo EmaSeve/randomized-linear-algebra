@@ -15,26 +15,45 @@ using IDResult  = randla::Types<double>::IDResult;
 using EigenvalueDecomposition = randla::Types<double>::EigenvalueDecomposition;
 
 
-void print_approximation_error(const CMatrix & A, const IDResult & id, double r_t){
-        
-   auto B = id.B;
-   auto P = id.P;
+void print_approximation_error(const CMatrix & A, const IDResult & id, double r_t) {
+    const auto& B = id.B;
+    const auto& P = id.P;
+    const auto residual = (A - B * P);
 
-   auto residual = (A - B * P);
-   double frobenius_error = residual.norm() / A.norm();
+    const double frobenius_error = residual.norm() / A.norm();
+    const double energy_ratio = 1.0 - residual.squaredNorm() / A.squaredNorm();
 
-   
-   Eigen::BDCSVD<Matrix> svdA(A.real());
-   Eigen::BDCSVD<Matrix> svdR(residual.real());
-   double spec_error = svdR.singularValues()(0) / svdA.singularValues()(0);  
-        
-   double energy_ratio = 1.0 - residual.squaredNorm() / A.squaredNorm();
+    // Spectral analisys
+    Eigen::BDCSVD<Matrix> svdA(A.real());
+    Eigen::BDCSVD<Matrix> svdR(residual.real());
 
-   std::cout<< "rank/tol: "<<r_t<<std::endl;
-   std::cout << "Relative Frobenius error: " << frobenius_error << "\n";
-   std::cout << "Relative Spectral error  : " << spec_error << "\n";
-   std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n\n";
+    double sigma_kp1 = 0.0;
+    int k = B.cols();
+    if (svdA.singularValues().size() > k)
+        sigma_kp1 = svdA.singularValues()(k);
+
+    const double relative_spec_error = svdR.singularValues()(0) / (svdA.singularValues()(0) + 1e-14);
+    const double error_vs_sigma_kp1 = svdR.singularValues()(0) / (sigma_kp1 + 1e-14);
+
+    // Norm and Conditioning
+    const double p_max = P.cwiseAbs().maxCoeff();
+
+    Eigen::JacobiSVD<CMatrix> svdB(B, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    const auto s_vals = svdB.singularValues();
+    const double cond_B = s_vals(0) / (s_vals.tail(1)(0) + 1e-14);
+
+    std::cout << "-------------------------------------------------\n";
+    std::cout << "rank/tol                 : " << r_t << "\n";
+    std::cout << "Relative Frobenius error : " << frobenius_error << "\n";
+    std::cout << "Relative Spectral error  : " << relative_spec_error << "\n";
+    std::cout << "‖A - BP‖₂ / σₖ₊₁(A)       : " << error_vs_sigma_kp1 << "\n";
+    std::cout << "Preserved energy         : " << energy_ratio * 100 << "%\n";
+    std::cout << "‖P‖_∞                    : " << p_max << "\n";
+    std::cout << "cond(B)                  : " << cond_B << "\n";
+    std::cout << "-------------------------------------------------\n\n";
 }
+
+
 
 int numerical_rank(const Matrix& Q, double tol = -1){
    Eigen::JacobiSVD<Matrix> svd(Q);
@@ -84,7 +103,7 @@ void test_adaptiveIDFactorization(const CMatrix & A, const std::vector<double> &
       bool success = true;
 
       try{
-         id = MF::adaptiveIDFactorization(A, tol, seed, 0.8);
+         id = MF::adaptiveIDFactorization(A, seed);
       } catch(const std::runtime_error & err){
          std::cout<< err.what() <<std::endl;
          success = false;
@@ -99,7 +118,7 @@ void test_adaptiveIDFactorization(const CMatrix & A, double & tol, int seed){
       bool success = true;
 
       try{
-         id = MF::adaptiveIDFactorization(A, tol, seed, 0.8);
+         id = MF::adaptiveIDFactorization(A, seed);
       } catch(const std::runtime_error & err){
          std::cout<< err.what() <<std::endl;
          success = false;
@@ -220,50 +239,16 @@ void test_eigenvalueDecompositionInOnePass(const Matrix & Hermitian_A, const Mat
 
 int main(void){
    randla::threading::setThreads(1);
-
-/*************************************
-***** Test ID factorization
-*************************************/
-   int m = 100, n = 100;
-   double density = 0.5;
-   double decay_rate = 0.5; 
-   double noise = 0.5;
-   int rank = 110;
-   int seed = 100;
-
-   std::vector<int> ranks {10, 30, 50, 70, 90};
-
-   
-/*    CMatrix A_cmat = TestMat::randomSparseMatrix(m ,n, density, seed).cast<std::complex<double>>();
-   std::cout<< "- random sparse matrix -" <<std::endl;
-   test_IDfactorization(A_cmat, ranks, seed);
-
-   CMatrix X_cmat = TestMat::matrixWithExponentialDecay(m ,n, decay_rate, rank, seed).cast<std::complex<double>>();
-   std::cout<< "- exponential decay matrix (rank = 110, decay = 0.5) -" <<std::endl;
-   test_IDfactorization(X_cmat, ranks, seed);
-   
-   CMatrix Y_cmat = TestMat::lowRankPlusNoise(m ,n, rank, noise, seed).cast<std::complex<double>>();
-   std::cout<< "- low rank noise matrix (rank = 110, noise = 0.5) -" <<std::endl;
-   test_IDfactorization(Y_cmat, ranks, seed); 
-
-   // Adaptive version, specify a tolerance
-   std::cout<< "-- Adaptive ID factorization --"<<std::endl;
-   std::vector<double> tols = {10, 1, 0.5, 0.2, 0.15, 0.1};
-   std::cout<< "- random sparse matrix -" <<std::endl;
-   test_adaptiveIDFactorization(A_cmat, tols, seed); 
-   */ 
-/************************************    
-****** Test of Algorithms of Stage B 
-************************************/  
+ 
    const int rows = 150;
    const int cols = 140;
    const int size = 150; // for square matrix (size, size)
-   density = 0.9;
-   seed = 42;
+   double density = 0.9;
+   int seed = 42;
    double tol = 0.2;
    int q = 2;
    int l = 140;
-   rank = 140;
+   int rank = 140;
 
 /**
  * -----------  Building all type of matrices A
@@ -272,15 +257,12 @@ int main(void){
    Matrix sparse_A            = TestMat::randomSparseMatrix(rows,cols,density);
    Matrix hermitian_A         = TestMat::randomHermitianMatrix(size);
    Matrix psd_A               = TestMat::randomPositiveSemidefiniteMatrix(size);
-   Matrix lowRank_A           = TestMat::lowRankPlusNoise(rows, cols, 2, 0.0);
-   Matrix lowRankNoise_A      = TestMat::lowRankPlusNoise(rows, cols, 2, 0.5);
    Matrix dense_A             = TestMat::randomDenseMatrix(rows, cols);
    
    Eigen::VectorXd sv = Eigen::VectorXd::Zero(std::min(rows, cols));
    for (int i = 0; i < rank; ++i) sv(i) = 1.0;
 
    Matrix singularValues_A    = TestMat::matrixWithSingularValues(rows, cols, sv);
-   Matrix expDecay_A          = TestMat::matrixWithExponentialDecay(rows, cols, 0.5, 2);
 /**
  * -----------  Building corrisponding matrices Q
  **/ 
@@ -288,9 +270,7 @@ int main(void){
    // Adaptive method to compute Q (NOT for sparse matrix)
    Matrix Q_psd               = ARRF::adaptivePowerIteration(psd_A, tol, rank, q, -1);
    Matrix Q_psd2              = ARRF::adaptiveRangeFinder(psd_A, tol, rank, -1);
-   Matrix Q_lowRank           = ARRF::adaptivePowerIteration(lowRank_A, tol, rank + 10, 2, -1);
    Matrix Q_singularValues    = ARRF::adaptivePowerIteration(singularValues_A, tol, rank, q, -1);
-   Matrix Q_expDecay          = ARRF::adaptiveRangeFinder(expDecay_A, tol, rank, -1);
    Matrix Q_hermitian         = ARRF::adaptivePowerIteration(hermitian_A, tol, rank, q, -1);
    Matrix Q_dense             = ARRF::adaptiveRangeFinder(dense_A, tol, rank, -1);
 
@@ -298,24 +278,27 @@ int main(void){
    Matrix Q_sparse            = RRF::randomizedRangeFinder(sparse_A, rank, -1);
 
 
+/*************************************
+***** Test ID factorization
+*************************************/
+
 /**
  * ID tested on different A, knowing previusly its rank 
  *  */ 
 
-   int ID_oversampling = 4;
+   int ID_oversampling = 10;
 
-   int rank_dense_A = numerical_rank(dense_A);
-   std::cout<< "rank of dense A : " << rank_dense_A<<std::endl;
-   test_IDfactorization(dense_A, rank_dense_A - ID_oversampling);
+   int rank_Q_dense = numerical_rank(Q_dense);
+   std::cout<< "rank of dense Q : " << rank_Q_dense<<std::endl;
+   test_IDfactorization(Q_dense, rank_Q_dense - ID_oversampling);
 
-   int rank_hermitian_A = numerical_rank(hermitian_A);
-   std::cout<< "rank of hermitian A : " << rank_hermitian_A<<std::endl;
-   test_IDfactorization(hermitian_A, rank_hermitian_A - ID_oversampling);
+   int rank_hermitian_Q = numerical_rank(Q_hermitian);
+   std::cout<< "rank of hermitian Q : " << rank_hermitian_Q<<std::endl;
+   test_IDfactorization(Q_hermitian, rank_hermitian_Q - ID_oversampling);
 
-   int rank_psd_A = numerical_rank(psd_A);
-   std::cout<< "rank of psd A : " << rank_psd_A<<std::endl;
-   test_IDfactorization(psd_A, rank_psd_A - ID_oversampling);
-
+   int rank_psd_Q = numerical_rank(Q_psd);
+   std::cout<< "rank of psd Q : " << rank_psd_Q<<std::endl;
+   test_IDfactorization(Q_psd, rank_psd_Q - ID_oversampling);
 
 /**
  * Adaptive ID tested on different Q
@@ -341,18 +324,18 @@ int main(void){
    test_adaptiveIDFactorization(Q_hermitian, id_tol, seed);
 
 
-/**
- *  Stage B methods 
- *  */ 
+/************************************    
+****** Test of Algorithms of Stage B 
+************************************/ 
 
-   std::cout << "--- Testing A = sparse_A, Q = Q_sparse ---" << std::endl;
+   std::cout << "\n--- Testing A = sparse_A, Q = Q_sparse ---" << std::endl;
    double err_sparse_A_Q_sparse = Err::realError(sparse_A, Q_sparse);
    std::cout << "||A - QQ^T A|| = " << err_sparse_A_Q_sparse << std::endl;
 
    test_directSVD(sparse_A, Q_sparse, tol);
    test_SVDviaRowExtraction(sparse_A, Q_sparse, tol);
 
-   std::cout << "--- Testing A = hermitian_A, Q = Q_hermitian ---" << std::endl;
+   std::cout << "\n--- Testing A = hermitian_A, Q = Q_hermitian ---" << std::endl;
    double err_hermitian_A_Q_hermitian = Err::realError(hermitian_A, Q_hermitian);
    std::cout << "||A - QQ^T A|| = " << err_hermitian_A_Q_hermitian << std::endl;
 
@@ -362,7 +345,7 @@ int main(void){
    test_eigenvalueDecompositionViaRowExtraction(hermitian_A, Q_hermitian, tol);
    test_eigenvalueDecompositionInOnePass(hermitian_A, Q_hermitian, TestMat::randomDenseMatrix(size, size), tol);
 
-   std::cout << "--- Testing A = psd_A, Q = Q_psd ---" << std::endl;
+   std::cout << "\n--- Testing A = psd_A, Q = Q_psd ---" << std::endl;
    double err_psd_A_Q_psd = Err::realError(psd_A, Q_psd);
    std::cout << "||A - QQ^T A|| = " << err_psd_A_Q_psd << std::endl;
 
@@ -370,7 +353,7 @@ int main(void){
    test_SVDviaRowExtraction(psd_A, Q_psd, tol);
    test_eigenvalueDecompositionViaNystromMethod(psd_A, Q_psd, tol);
 
-   std::cout << "--- Testing A = psd_A, Q = Q_psd2 ---" << std::endl;
+   std::cout << "\n--- Testing A = psd_A, Q = Q_psd2 ---" << std::endl;
    double err_psd_A_Q_psd2 = Err::realError(psd_A, Q_psd2);
    std::cout << "||A - QQ^T A|| = " << err_psd_A_Q_psd2 << std::endl;
 
@@ -378,38 +361,14 @@ int main(void){
    test_SVDviaRowExtraction(psd_A, Q_psd2, tol);
    test_eigenvalueDecompositionViaNystromMethod(psd_A, Q_psd2, tol);
 
-   std::cout << "--- Testing A = lowRank_A, Q = Q_lowRank ---" << std::endl;
-   double err_lowRank_A_Q_lowRank = Err::realError(lowRank_A, Q_lowRank);
-   std::cout << "||A - QQ^T A|| = " << err_lowRank_A_Q_lowRank << std::endl;
-
-   test_directSVD(lowRank_A, Q_lowRank, tol);
-   test_SVDviaRowExtraction(lowRank_A, Q_lowRank, tol);
-   
-
-   std::cout << "--- Testing A = lowRankNoise_A, Q = Q_lowRank ---" << std::endl;
-   double err_lowRankNoise_A_Q_lowRank = Err::realError(lowRankNoise_A, Q_lowRank);
-   std::cout << "||A - QQ^T A|| = " << err_lowRankNoise_A_Q_lowRank << std::endl;
-
-   test_directSVD(lowRankNoise_A, Q_lowRank, tol);
-   test_SVDviaRowExtraction(lowRankNoise_A, Q_lowRank, tol);
-   
-
-   std::cout << "--- Testing A = singularValues_A, Q = Q_singularValues ---" << std::endl;
+   std::cout << "\n--- Testing A = singularValues_A, Q = Q_singularValues ---" << std::endl;
    double err_singularValues_A_Q_singularValues = Err::realError(singularValues_A, Q_singularValues);
    std::cout << "||A - QQ^T A|| = " << err_singularValues_A_Q_singularValues << std::endl;
 
    test_directSVD(singularValues_A, Q_singularValues, tol);
    test_SVDviaRowExtraction(singularValues_A, Q_singularValues, tol);
-   
 
-   std::cout << "--- Testing A = expDecay_A, Q = Q_expDecay ---" << std::endl;
-   double err_expDecay_A_Q_expDecay = Err::realError(expDecay_A, Q_expDecay);
-   std::cout << "||A - QQ^T A|| = " << err_expDecay_A_Q_expDecay << std::endl;
-
-   test_directSVD(expDecay_A, Q_expDecay, tol);
-   test_SVDviaRowExtraction(expDecay_A, Q_expDecay, tol);
-
-   std::cout << "--- Testing A = dense_A, Q = Q_dense ---" << std::endl;
+   std::cout << "\n--- Testing A = dense_A, Q = Q_dense ---" << std::endl;
    double err_dense = Err::realError(dense_A, Q_dense);
    std::cout << "||A - QQ^T A|| = " << err_dense << std::endl;
 
