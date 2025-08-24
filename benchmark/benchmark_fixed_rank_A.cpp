@@ -92,12 +92,17 @@ int main() {
         const int m = 5000, n = 2000, rank = 1000, l = 1000, q = 2;
         const int seed = 123;
 
-        std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::trunc);
+        // Apri il file in modalità append
+        std::ofstream csv("res_benchmark_fixed_rank_A.csv", std::ios::app);
         if (!csv) {
-            std::cerr << "Error: cannot open benchmark_results.csv for writing\n";
+            std::cerr << "Error: cannot open res_benchmark_fixed_rank_A.csv for writing\n";
             return 1;
         }
-        csv << "label,m,n,norm,method,l,threads,tag,cols,err,time_ms\n";
+        // Se il file è vuoto, scrivi l'intestazione
+        csv.seekp(0, std::ios::end);
+        if (csv.tellp() == 0) {
+            csv << "label,m,n,norm,method,l,threads,tag,cols,err,time_ms\n";
+        }
 
         // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);

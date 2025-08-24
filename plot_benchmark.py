@@ -1,3 +1,25 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator, LogFormatter
+import numpy as np
+import os
+
+def print_mean_speedup_table(speedup_df):
+    # Calcola la media sulle label (matrici) per ogni metodo, threads, tag
+    group_cols = ['method', 'threads', 'tag'] if 'tag' in speedup_df.columns else ['method', 'threads']
+    mean_df = speedup_df.groupby(group_cols)['speedup'].mean().reset_index()
+    methods = mean_df['method'].unique()
+    threads = sorted(mean_df['threads'].unique())
+    tags = mean_df['tag'].unique() if 'tag' in mean_df.columns else ['']
+    for tag in tags:
+        print(f"\nSPEEDUP MEDIO PER ALGORITMO (tag={tag}):")
+        header = 'Metodo'.ljust(20) + ''.join([f"{t:>10}t" for t in threads])
+        print(header)
+        for method in methods:
+            row = mean_df[(mean_df['method']==method) & ((mean_df['tag']==tag) if 'tag' in mean_df.columns else True)]
+            vals = [f"{row[row['threads']==t]['speedup'].values[0]:10.2f}" if t in row['threads'].values else ' '*10 for t in threads]
+            print(method.ljust(20) + ''.join(vals))
+
 def create_time_table(df, benchmark_type, plot_dir):
     """Crea una tabella con i tempi di esecuzione per ogni combinazione di label, metodo, tag e threads"""
     labels = df['label'].unique()
@@ -63,12 +85,6 @@ def create_time_table(df, benchmark_type, plot_dir):
                 plt.savefig(os.path.join(out_dir, filename), bbox_inches='tight', dpi=300)
                 plt.close()
                 print(f"  Salvata tabella tempi: {os.path.join(first_level, subdir, 'time', filename)}")
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import LogLocator, LogFormatter
-import numpy as np
-import os
-
 def create_speedup_table(speedup_df, benchmark_type, plot_dir):
     """Crea una tabella con gli speedup per ogni combinazione di label e metodo"""
     
@@ -200,30 +216,48 @@ for csv_path, benchmark_type in csv_files:
     # Crea tabella tempi per tutti
     create_time_table(df, benchmark_type, plot_dir)
 
-    # Solo per fixed_rank: speedup e tabella speedup
-    if benchmark_type == 'fixed_rank':
-        speedup_data = []
-        for label in labels:
-            for tag in tags:
-                subset = df[(df['label'] == label) & (df['tag'] == tag)] if 'tag' in df.columns else df[df['label'] == label]
-                for method in subset['method'].unique():
-                    method_data = subset[subset['method'] == method].sort_values('threads')
-                    if len(method_data) > 0:
-                        baseline_time = method_data[method_data['threads'] == 1]['time_ms']
-                        if len(baseline_time) > 0:
-                            baseline_time = baseline_time.iloc[0]
-                            for _, row in method_data.iterrows():
-                                speedup = baseline_time / row['time_ms']
-                                speedup_data.append({
-                                    'label': label,
-                                    'method': method,
-                                    'threads': row['threads'],
-                                    'tag': tag,
-                                    'speedup': speedup,
-                                    'time_ms': row['time_ms']
-                                })
-        if speedup_data:
-            speedup_df = pd.DataFrame(speedup_data)
-            create_speedup_table(speedup_df, benchmark_type, plot_dir)
+
+    # Calcola e stampa speedup medio per tutti i tag presenti, se possibile
+    speedup_data = []
+    for label in labels:
+        for tag in tags:
+            subset = df[(df['label'] == label) & (df['tag'] == tag)] if 'tag' in df.columns else df[df['label'] == label]
+            for method in subset['method'].unique():
+                method_data = subset[subset['method'] == method].sort_values('threads')
+                if len(method_data) > 0:
+                    baseline_time = method_data[method_data['threads'] == 1]['time_ms']
+                    if len(baseline_time) > 0:
+                        baseline_time = baseline_time.iloc[0]
+                        for _, row in method_data.iterrows():
+                            speedup = baseline_time / row['time_ms']
+                            speedup_data.append({
+                                'label': label,
+                                'method': method,
+                                'threads': row['threads'],
+                                'tag': tag,
+                                'speedup': speedup,
+                                'time_ms': row['time_ms']
+                            })
+    if speedup_data:
+        speedup_df = pd.DataFrame(speedup_data)
+        create_speedup_table(speedup_df, benchmark_type, plot_dir)
+        print_mean_speedup_table(speedup_df)
+
+# === TABELLA SPEEDUP MEDIO PER ALGORITMO SULLE 4 MATRICI ===
+def print_mean_speedup_table(speedup_df):
+    # Calcola la media sulle label (matrici) per ogni metodo, threads, tag
+    group_cols = ['method', 'threads', 'tag'] if 'tag' in speedup_df.columns else ['method', 'threads']
+    mean_df = speedup_df.groupby(group_cols)['speedup'].mean().reset_index()
+    methods = mean_df['method'].unique()
+    threads = sorted(mean_df['threads'].unique())
+    tags = mean_df['tag'].unique() if 'tag' in mean_df.columns else ['']
+    for tag in tags:
+        print(f"\nSPEEDUP MEDIO PER ALGORITMO (tag={tag}):")
+        header = 'Metodo'.ljust(20) + ''.join([f"{t:>10}t" for t in threads])
+        print(header)
+        for method in methods:
+            row = mean_df[(mean_df['method']==method) & ((mean_df['tag']==tag) if 'tag' in mean_df.columns else True)]
+            vals = [f"{row[row['threads']==t]['speedup'].values[0]:10.2f}" if t in row['threads'].values else ' '*10 for t in threads]
+            print(method.ljust(20) + ''.join(vals))
 
 print(f"Tutti i plot sono stati salvati nella cartella '{plot_dir}'")
