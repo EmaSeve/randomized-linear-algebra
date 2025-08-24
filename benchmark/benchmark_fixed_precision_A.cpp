@@ -81,16 +81,16 @@ static void runAlgorithmsDense(const std::string& label,
         csv.flush();
     };
 
-    runOne("ARF", 0, [&](int s){ return ARRF::adaptiveRangeFinder(A, tol, r, s); });
+    runOne("ARRF", 0, [&](int s){ return ARRF::adaptiveRangeFinder(A, tol, r, s); });
     runOne("API", 1, [&](int s){ return ARRF::adaptivePowerIteration(A, tol, r, q, s); });
-    runOne("AFRF", 3, [&](int s){ return ARRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
+    runOne("AFRRF", 3, [&](int s){ return ARRF::adaptiveFastRandRangeFinder(A, tol, r, s); });
 }
 
 int main() {
     try {
         std::cout << std::fixed << std::setprecision(6);
         
-        std::vector<int> threadCounts = {1};
+        std::vector<int> threadCounts = {0};
 
         const int m = 3000, n = 1500, rank = 500, r = 10, q = 2;
         const double tol = 1e-2;
@@ -116,8 +116,8 @@ int main() {
             TestMat::lowRankPlusNoise(m, n, rank, 0.01, seed + 1)
         );
         cases.emplace_back(
-            "ExpDecay(rate=0.1)",
-            TestMat::matrixWithExponentialDecay(m, n, 0.1, std::min(m, n), seed + 2)
+            "ExpDecay(rate=0.5)",
+            TestMat::matrixWithExponentialDecay(m, n, 0.5, std::min(m, n), seed + 2)
         );
         cases.emplace_back(
             "Gaussian",

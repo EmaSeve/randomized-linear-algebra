@@ -54,13 +54,15 @@ def create_time_table(df, benchmark_type, plot_dir):
                 plt.title(f'Time Table - {label} ({benchmark_type}, {tag})', pad=20, fontsize=14, fontweight='bold')
                 safe_label = label.replace(' ', '_').replace('(', '').replace(')', '').replace('=', '').replace('-', '_').replace('.', '_')
                 safe_tag = str(tag).replace(' ', '_')
+                # Primo livello: openmp o blas (in base al tag)
+                first_level = str(tag).lower() if str(tag).lower() in ['openmp', 'blas'] else 'other'
                 subdir = 'precision' if benchmark_type == 'fixed_precision' else 'rank'
-                out_dir = os.path.join(plot_dir, subdir, 'time')
+                out_dir = os.path.join(plot_dir, first_level, subdir, 'time')
                 os.makedirs(out_dir, exist_ok=True)
                 filename = f"time_table_{benchmark_type}_{safe_label}_{safe_tag}.png"
                 plt.savefig(os.path.join(out_dir, filename), bbox_inches='tight', dpi=300)
                 plt.close()
-                print(f"  Salvata tabella tempi: {os.path.join(subdir, 'time', filename)}")
+                print(f"  Salvata tabella tempi: {os.path.join(first_level, subdir, 'time', filename)}")
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import LogLocator, LogFormatter
@@ -89,10 +91,7 @@ def create_speedup_table(speedup_df, benchmark_type, plot_dir):
                     row = []
                     for thread_count in threads:
                         speedup_val = method_data[method_data['threads'] == thread_count]['speedup']
-                        time_val = method_data[method_data['threads'] == thread_count]['time_ms'] if 'time_ms' in method_data.columns else None
-                        if len(speedup_val) > 0 and time_val is not None and len(time_val) > 0:
-                            row.append(f"{speedup_val.iloc[0]:.2f}\n({time_val.iloc[0]:.0f} ms)")
-                        elif len(speedup_val) > 0:
+                        if len(speedup_val) > 0:
                             row.append(f"{speedup_val.iloc[0]:.2f}")
                         else:
                             row.append("-")
@@ -135,13 +134,15 @@ def create_speedup_table(speedup_df, benchmark_type, plot_dir):
                 plt.title(f'Speedup Table - {label} ({benchmark_type}, {tag})', pad=20, fontsize=14, fontweight='bold')
                 safe_label = label.replace(' ', '_').replace('(', '').replace(')', '').replace('=', '').replace('-', '_').replace('.', '_')
                 safe_tag = str(tag).replace(' ', '_')
+                # Primo livello: openmp o blas (in base al tag)
+                first_level = str(tag).lower() if str(tag).lower() in ['openmp', 'blas'] else 'other'
                 subdir = 'precision' if benchmark_type == 'fixed_precision' else 'rank'
-                out_dir = os.path.join(plot_dir, subdir, 'speedup')
+                out_dir = os.path.join(plot_dir, first_level, subdir, 'speedup')
                 os.makedirs(out_dir, exist_ok=True)
                 filename = f"speedup_table_{benchmark_type}_{safe_label}_{safe_tag}.png"
                 plt.savefig(os.path.join(out_dir, filename), bbox_inches='tight', dpi=300)
                 plt.close()
-                print(f"  Salvata tabella speedup: {os.path.join(subdir, 'speedup', filename)}")
+                print(f"  Salvata tabella speedup: {os.path.join(first_level, subdir, 'speedup', filename)}")
 
 # Lista dei file CSV da processare
 csv_files = [
@@ -186,13 +187,15 @@ for csv_path, benchmark_type in csv_files:
             plt.tight_layout()
             safe_label = label.replace(' ', '_').replace('(', '').replace(')', '').replace('=', '').replace('-', '_').replace('.', '_')
             safe_tag = str(tag).replace(' ', '_')
+            # Primo livello: openmp o blas (in base al tag)
+            first_level = str(tag).lower() if str(tag).lower() in ['openmp', 'blas'] else 'other'
             subdir = 'precision' if benchmark_type == 'fixed_precision' else 'rank'
-            out_dir = os.path.join(plot_dir, subdir, 'plot')
+            out_dir = os.path.join(plot_dir, first_level, subdir, 'plot')
             os.makedirs(out_dir, exist_ok=True)
             filename = f"plot_{benchmark_type}_{safe_label}_{safe_tag}.png"
             plt.savefig(os.path.join(out_dir, filename))
             plt.close()
-            print(f"  Salvato: {os.path.join(subdir, 'plot', filename)}")
+            print(f"  Salvato: {os.path.join(first_level, subdir, 'plot', filename)}")
 
     # Crea tabella tempi per tutti
     create_time_table(df, benchmark_type, plot_dir)

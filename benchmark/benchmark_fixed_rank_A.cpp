@@ -114,8 +114,8 @@ int main() {
             TestMat::lowRankPlusNoise(m, n, rank, 0.05, seed + 1)
         );
         cases.emplace_back(
-            "ExpDecay(rate=0.1)",
-            TestMat::matrixWithExponentialDecay(m, n, 0.1, std::min(m, n), seed + 2)
+            "ExpDecay(rate=0.5)",
+            TestMat::matrixWithExponentialDecay(m, n, 0.5, std::min(m, n), seed + 2)
         );
         cases.emplace_back(
             "Gaussian",
