@@ -105,7 +105,6 @@ TEST(MatrixFactorizer, IDFactorization_DenseQ) {
    ASSERT_GT(rank_Q_dense, ID_oversampling);
    EXPECT_NO_THROW({
       IDResult id = MF::IDFactorization(Q_dense(), rank_Q_dense - ID_oversampling, seed);
-      // check_approximation_error(Q_dense(), id, rank_Q_dense - ID_oversampling, 1e-8);
    });
 }
 
@@ -115,7 +114,6 @@ TEST(MatrixFactorizer, IDFactorization_HermitianQ) {
    ASSERT_GT(rank_hermitian_Q, ID_oversampling);
    EXPECT_NO_THROW({
       IDResult id = MF::IDFactorization(Q_hermitian(), rank_hermitian_Q - ID_oversampling, seed);
-      // check_approximation_error(Q_hermitian(), id, rank_hermitian_Q - ID_oversampling, 1e-8);
    });
 }
 
@@ -125,7 +123,6 @@ TEST(MatrixFactorizer, IDFactorization_PSDQ) {
    ASSERT_GT(rank_psd_Q, ID_oversampling);
    EXPECT_NO_THROW({
       IDResult id = MF::IDFactorization(Q_psd(), rank_psd_Q - ID_oversampling, seed);
-      // check_approximation_error(Q_psd(), id, rank_psd_Q - ID_oversampling, 1e-8);
    });
 }
 
@@ -133,7 +130,6 @@ TEST(MatrixFactorizer, AdaptiveIDFactorization_Qdense) {
    double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_dense(), seed);
-      // check_approximation_error(Q_dense(), id, id_tol, 1.0); // looser tol
    });
 }
 
@@ -141,7 +137,6 @@ TEST(MatrixFactorizer, AdaptiveIDFactorization_Qpsd) {
    double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_psd(), seed);
-      // check_approximation_error(Q_psd(), id, id_tol, 1.0);
    });
 }
 
@@ -149,7 +144,6 @@ TEST(MatrixFactorizer, AdaptiveIDFactorization_Qpsd2) {
    double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_psd2(), seed);
-      // check_approximation_error(Q_psd2(), id, id_tol, 1.0);
    });
 }
 
@@ -157,7 +151,6 @@ TEST(MatrixFactorizer, AdaptiveIDFactorization_Qsparse) {
    double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_sparse(), seed);
-      // check_approximation_error(Q_sparse(), id, id_tol, 1.0);
    });
 }
 
@@ -165,7 +158,6 @@ TEST(MatrixFactorizer, AdaptiveIDFactorization_Qhermitian) {
    double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_hermitian(), seed);
-      // check_approximation_error(Q_hermitian(), id, id_tol, 1.0);
    });
 }
 
