@@ -117,7 +117,7 @@ static Matrix adaptiveRangeFinder(
  * @tparam MatLike Matrix-like type supporting .rows(), .cols(), operator*.
  * @param A Input matrix.
  * @param tol Target absolute error tolerance.
- * @param r Number of random vectors to use per iteration.
+ * @param r Number of random vectors to use per iteration (reccommended for accuracy: 10).
  * @param q Number of power iterations.
  * @param seed Random seed for reproducibility.
  * @return Matrix Orthonormal basis Q.
