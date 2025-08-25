@@ -37,6 +37,7 @@ int numerical_rank(const Matrix& Q, double tol = -1){
 // GoogleTest: Each test is a TEST or TEST_F
 
 namespace {
+
 constexpr int rows = 150;
 constexpr int cols = 140;
 constexpr int size = 150;
@@ -47,41 +48,54 @@ constexpr int q = 2;
 constexpr int l = 140;
 constexpr int rank = 140;
 
-Matrix sparse_A() {
-   return TestMat::randomSparseMatrix(rows,cols,density);
+Matrix& sparse_A() {
+   static Matrix mat = TestMat::randomSparseMatrix(rows, cols, density, seed);
+   return mat;
 }
-Matrix hermitian_A() {
-   return TestMat::randomHermitianMatrix(size);
+Matrix& hermitian_A() {
+   static Matrix mat = TestMat::randomHermitianMatrix(size, seed + 1);
+   return mat;
 }
-Matrix psd_A() {
-   return TestMat::randomPositiveSemidefiniteMatrix(size);
+Matrix& psd_A() {
+   static Matrix mat = TestMat::randomPositiveSemidefiniteMatrix(size, seed + 2);
+   return mat;
 }
-Matrix dense_A() {
-   return TestMat::randomDenseMatrix(rows, cols);
+Matrix& dense_A() {
+   static Matrix mat = TestMat::randomDenseMatrix(rows, cols, seed + 3);
+   return mat;
 }
-Matrix singularValues_A() {
-   Eigen::VectorXd sv = Eigen::VectorXd::Zero(std::min(rows, cols));
-   for (int i = 0; i < rank; ++i) sv(i) = 1.0;
-   return TestMat::matrixWithSingularValues(rows, cols, sv);
+Matrix& singularValues_A() {
+   static Matrix mat = []() {
+      Eigen::VectorXd sv = Eigen::VectorXd::Zero(std::min(rows, cols));
+      for (int i = 0; i < rank; ++i) sv(i) = 1.0;
+      return TestMat::matrixWithSingularValues(rows, cols, sv, seed + 4);
+   }();
+   return mat;
 }
 
-Matrix Q_psd() {
-   return ARRF::adaptivePowerIteration(psd_A(), tol, rank, q, -1);
+Matrix& Q_psd() {
+   static Matrix mat = ARRF::adaptivePowerIteration(psd_A(), tol, rank, q, seed + 10);
+   return mat;
 }
-Matrix Q_psd2() {
-   return ARRF::adaptiveRangeFinder(psd_A(), tol, rank, -1);
+Matrix& Q_psd2() {
+   static Matrix mat = ARRF::adaptiveRangeFinder(psd_A(), tol, rank, seed + 11);
+   return mat;
 }
-Matrix Q_singularValues() {
-   return ARRF::adaptivePowerIteration(singularValues_A(), tol, rank, q, -1);
+Matrix& Q_singularValues() {
+   static Matrix mat = ARRF::adaptivePowerIteration(singularValues_A(), tol, rank, q, seed + 12);
+   return mat;
 }
-Matrix Q_hermitian() {
-   return ARRF::adaptivePowerIteration(hermitian_A(), tol, rank, q, -1);
+Matrix& Q_hermitian() {
+   static Matrix mat = ARRF::adaptivePowerIteration(hermitian_A(), tol, rank, q, seed + 13);
+   return mat;
 }
-Matrix Q_dense() {
-   return ARRF::adaptiveRangeFinder(dense_A(), tol, rank, -1);
+Matrix& Q_dense() {
+   static Matrix mat = ARRF::adaptiveRangeFinder(dense_A(), tol, rank, seed + 14);
+   return mat;
 }
-Matrix Q_sparse() {
-   return RRF::randomizedRangeFinder(sparse_A(), rank, -1);
+Matrix& Q_sparse() {
+   static Matrix mat = RRF::randomizedRangeFinder(sparse_A(), rank, seed + 15);
+   return mat;
 }
 }
 
