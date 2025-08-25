@@ -1,33 +1,171 @@
-# Randomized Linear Algebra
+# Randomized Linear Algebra (RandLA)
 
-Randomized linear algebra is a field of numerical linear algebra that uses randomization as a computational tool to develop faster and more scalable algorithms. These algorithms are particularly useful for dealing with large-scale data and matrices.
+Header-only C++17 library implementing **randomized algorithms for low-rank matrix approximation**.  
+It provides methods for *range finding* (Stage A) and *matrix factorizations* (Stage B), 
+integrating seamlessly with [Eigen](https://eigen.tuxfamily.org/), and optionally exploiting **OpenMP**, **OpenBLAS**, and **FFTW** for performance.
 
-## Key Concepts
+The implementation follows the algorithms described in:
+- N. Halko, P.-G. Martinsson, J. A. Tropp. *Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions*. SIAM Review, 2011.  
+- E. Liberty, F. Woolfe, P.-G. Martinsson, V. Rokhlin, M. Tygert. *Randomized algorithms for the low-rank approximation of matrices*. PNAS, 2007.
 
-- **Randomized Sampling**: Techniques to sample rows or columns of a matrix randomly to reduce its size while preserving its essential properties.
-- **Sketching**: Creating a smaller representation (sketch) of a matrix that approximates the original matrix.
-- **Low-Rank Approximation**: Finding a matrix of lower rank that approximates the original matrix, often using randomized methods.
+---
 
-## Applications
+## Features
 
-- **Machine Learning**: Speeding up algorithms for training models and making predictions.
-- **Data Compression**: Reducing the size of data while maintaining its integrity.
-- **Scientific Computing**: Solving large-scale linear systems and eigenvalue problems more efficiently.
+- **Stage A (Range Approximation):**
+  - Randomized Range Finder, Power Iteration, Subspace Iteration
+  - Fast Randomized Range Finder (SRFT, via FFTW)
+  - Adaptive randomized schemes (fixed-precision stopping criteria)
 
-# The project
-You have to develop a C++ library that implements some of the algorithm described in the given literature. The library should use efficient linear algebra sofware as the [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) or [Armadillo](https://arma.sourceforge.net/) for basic linear algebra operations.
+- **Stage B (Factorizations):**
+  - Direct SVD, Eigenvalue decomposition
+  - Nyström method for PSD matrices
+  - Interpolative Decomposition (ID)
+  - Single-pass methods for large/streaming data
 
-The library should be generic with respect of the floating point type an provide a clear API. Test cases should be made to compare effectiveness of the implemented algorithms.
+- **Utilities:**
+  - Synthetic matrix generators (low-rank, exponential decay, PSD, sparse, etc.)
+  - Error estimators (posterior bounds, spectral norm approximation)
+  - Random Gaussian/complex matrices and vectors
+  - Threading wrapper for OpenMP / BLAS
 
-## Further Reading
+---
 
-- "Finding Structure with Randomness: Probabilistic Algorithms for Constructing Approximate Matrix Decompositions" by Halko, Martinsson, and Tropp.
-- "Randomized Numerical Linear Algebra A Perspective on the Field With an Eye to Software" by R. Murrey et al.
+## Project Structure
 
-- "Randomized Algorithms for Matrices and Data" by Mahoney.
+```
+include/randla/      # Core headers
+ ├── types.hpp                 # Common type aliases
+ ├── aliases.hpp               # Ready-to-use typedefs (float, double, long double)
+ ├── randla.hpp                # Umbrella header (include <randla/randla.hpp>)
+ ├── algorithms/               # Stage A & Stage B algorithms
+ ├── metrics/error_estimators.hpp
+ ├── random/random_generator.hpp
+ ├── utils/matrix_generators.hpp
+ └── threading/threading.hpp
 
-## References
+tests/               # GoogleTest unit tests
+benchmark/           # Benchmark executables
+build.sh             # Helper script (configure + build + test/benchmark)
+CMakeLists.txt       # Build configuration
+plot_benchmark.py    # Python script for plotting benchmark results
+```
 
-- Halko, N., Martinsson, P. G., & Tropp, J. A. (2011). Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions. SIAM review, 53(2), 217-288.
-- Mahoney, M. W. (2011). Randomized algorithms for matrices and data. Foundations and Trends® in Machine Learning, 3(2), 123-224.
-- R. Murray et al. (2023) Randomized Numerical Linear Algebra A Perspective on the Field With an Eye to Software, https://arxiv.org/abs/2302.11474
+---
+
+## Build & Installation
+
+### Requirements
+- C++17 compiler
+- [Eigen3](https://eigen.tuxfamily.org/) (header-only)
+- [CMake ≥ 3.15](https://cmake.org)
+- [FFTW3](http://www.fftw.org/) (for SRFT algorithms)
+- Optional: OpenMP / OpenBLAS
+
+### Quick start with `build.sh`
+
+```bash
+# Default: OpenMP backend + run tests
+./build.sh
+
+# BLAS backend (OpenBLAS, via pkg-config)
+./build.sh --no-test --threading blas
+
+# Run benchmarks (fixed-rank only, OpenMP)
+./build.sh --benchmark fr --threading openmp
+```
+
+### Manual build (without script)
+
+```bash
+# OpenMP backend
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=openmp
+cmake --build build -j
+
+# BLAS backend
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=blas
+cmake --build build -j
+
+# Serial (single-threaded)
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=single
+cmake --build build -j
+```
+
+---
+
+## Usage in your project (CMake)
+
+```cmake
+find_package(Eigen3 QUIET NO_MODULE)
+add_subdirectory(path/to/randomized-linear-algebra)
+
+add_executable(my_app src/main.cpp)
+target_link_libraries(my_app PRIVATE randomized-linear-algebra)
+```
+
+---
+
+## Minimal Example
+
+```cpp
+#include <Eigen/Dense>
+#include <randla/randla.hpp>
+#include <iostream>
+
+int main() {
+    Eigen::MatrixXd A = Eigen::MatrixXd::Random(300, 150);
+    int l = 20, seed = 42;
+
+    auto Q = randla::RandRangeFinderD::randomizedRangeFinder(A, l, seed);
+
+    std::cout << "Computed basis Q of size "
+              << Q.rows() << " x " << Q.cols() << std::endl;
+}
+```
+
+Compile and run:
+
+```bash
+g++ -std=c++17 -Iinclude my_app.cpp -o my_app
+./my_app
+```
+
+---
+
+## Tests
+
+The project includes a GoogleTest suite:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+Covers:
+- Fixed-rank algorithms (range finders, power/subspace iteration, SRFT)
+- Adaptive algorithms (fixed-precision stopping)
+- Matrix factorizations (SVD, EVD, ID)
+
+---
+
+## Benchmarks
+
+Two benchmark drivers:
+- `benchmark_fixed_rank_A`
+- `benchmark_fixed_precision_A`
+
+Results are logged in CSV under `build/` and can be plotted with:
+
+```bash
+python3 plot_benchmark.py
+```
+
+This produces tables and plots in `benchmark_plots/`.
+
+---
+
+## Authors
+
+- Nicola Noventa  
+- Emanuele Severino  
+
+---
