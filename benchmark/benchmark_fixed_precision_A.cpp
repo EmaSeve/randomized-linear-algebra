@@ -96,19 +96,16 @@ int main() {
         const double tol = 1e-2;
         const int seed = 123;
 
-        // Apri il file in modalità append
         std::ofstream csv("res_benchmark_fixed_precision_A.csv", std::ios::app);
         if (!csv) {
             std::cerr << "Error: cannot open res_benchmark_fixed_precision_A.csv for writing\n";
             return 1;
         }
-        // Se il file è vuoto, scrivi l'intestazione
         csv.seekp(0, std::ios::end);
         if (csv.tellp() == 0) {
             csv << "label,m,n,norm,method,tol,r,q,threads,tag,cols,err,rel_err,time_ms\n";
         }
 
-        // Perform a light system warmup before starting actual benchmarks
         performLightWarmup(seed);
 
         std::vector<std::pair<std::string, Eigen::MatrixXd>> cases;
