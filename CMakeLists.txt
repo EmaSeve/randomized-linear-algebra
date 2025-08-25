@@ -143,19 +143,10 @@ if(BUILD_TESTS)
         PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1"
         DISCOVERY_TIMEOUT 60)
 
-    add_executable(test_matrix_factorizer_google tests/test_matrix_factorizer_google.cpp)
-    target_link_libraries(test_matrix_factorizer_google PRIVATE randomized-linear-algebra GTest::gtest_main)
-    gtest_discover_tests(test_matrix_factorizer_google
-        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
-endif()
-
-
-# TEST DI EMANUELE
-if(BUILD_TESTS)
-    enable_testing()
     add_executable(test_matrix_factorizer tests/test_matrix_factorizer.cpp)
-    target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra)
-    add_test(NAME MatrixFactorizerTest COMMAND test_matrix_factorizer)
+    target_link_libraries(test_matrix_factorizer PRIVATE randomized-linear-algebra GTest::gtest_main)
+    gtest_discover_tests(test_matrix_factorizer
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
 endif()
 
 # ========================
