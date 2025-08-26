@@ -52,54 +52,58 @@ public:
 		return SVDResult{std::move(U), std::move(S), std::move(V)};
 	}
 
-	/**
+	 /**
 	 * @brief
-	 * Computes a randomized Interpolative Decomposition (ID) of a complex matrix A using Algorithm I 
-	 * (meant to be used when efficient procedures for applying the matrix A and its adjoint A*
-	 * to arbitrary vectors are available)
+	 * Computes a randomized Interpolative Decomposition (ID) of a complex matrix A,
+	 * using a "variant" of Algorithm I (Liberty et al., 2007).
 	 *
-	 * Given a complex input matrix A (m x n), this function computes an approximate factorization:
+	 * Given a complex input matrix A ∈ ℂ^{m×n}, this function computes an approximate
+	 * factorization:
 	 *
 	 *     A ≈ B * P
 	 *
 	 * where:
-	 *   - B (m x k) is formed by selecting k columns from A,
-	 *   - P (k x n) is a coefficient matrix such that the leading k x k block is the identity,
-	 *     and ideally no entry in P exceeds 2 in absolute value (not enforced in this version).
+	 *   - B ∈ ℂ^{m×k} consists of k selected columns from A,
+	 *   - P ∈ ℂ^{k×n} is a coefficient matrix computed via least-squares such that
+	 *     B * P approximates A in Frobenius norm.
 	 *
 	 * The algorithm proceeds in three main steps:
 	 *
-	 * 1. Generate a random Gaussian matrix R (l x m), with l = k + oversampling,
-	 *    where entries are sampled i.i.d. from the complex standard normal distribution.
+	 * 1. Generate a random Gaussian matrix R ∈ ℂ^{l×m}, with l = k + oversampling,
+	 *    whose entries are i.i.d. standard complex normal variables.
 	 * 
-	 * 2. Form the sketch matrix Y = R * A (l x n), and perform a column-pivoted QR decomposition 
-	 *    on Y^T to identify the k most informative columns. These define the index set used to extract B.
+	 * 2. Form the sketch matrix Y = R * A ∈ ℂ^{l×n}, and perform a column-pivoted
+	 *    QR decomposition on Y_T to identify the k most informative directions.
+	 *    The corresponding columns of A are used to construct B.
 	 *
-	 * 3. Solve a least-squares problem to compute P such that B * P ≈ A, i.e.:
+	 * 3. Compute the coefficient matrix P via least-squares:
+	 *
 	 *       P = B⁺ * A
-	 *    using the Moore-Penrose pseudo-inverse of B computed via SVD.
+	 *
+	 *    using the Moore–Penrose pseudoinverse of B computed via SVD.
 	 *
 	 * Note:
-	 *   - The spectral error ||A - B*P||_2 is expected to be close to the (k+1)-th singular value of Y.
-	 *   - The output does not explicitly enforce the |P_ij| ≤ 2 constraint.
+	 *   - The output matrix P does not enforce the structural constraint that
+	 *     a subset of its columns form the identity matrix (as in canonical ID).
+	 *   - The theoretical bound ||A - B*P||₂ ≲ σ_{k+1}(A) does not strictly apply here.
+	 *   - In practice, this method often yields good accuracy in Frobenius norm.
 	 *
-	 * @param A    - Input complex matrix of size (m x n)
-	 * @param k    - Target rank for the decomposition (k < min(m, n))
-	 * @param  seed - Random seed for reproducibility
+	 * @param A     - Input complex matrix of size (m x n)
+	 * @param rank  - Target rank for the decomposition (k < min(m, n))
+	 * @param seed  - Random seed for reproducibility
 	 * @return An IDResult structure containing:
-	 *    	- B: (m x k) matrix of selected columns from A,
-	 *     	- P: (k x n) coefficient matrix,
-	 *     	- indices: vector of selected column indices
+	 *     - B: (m x k) matrix of selected columns from A
+	 *     - P: (k x n) coefficient matrix such that A ≈ B * P
+	 *     - indices: vector of selected column indices
 	 */
- 	static IDResult IDFactorization(const CMatrix & A, int rank, int seed = -1){
+	static IDResult IDFactorization(const CMatrix & A, int rank, int seed = -1){
 
 		const size_t m = A.rows();
 		const size_t n = A.cols();
 		const int oversampling = 5;
 		const size_t l = rank + oversampling;
-		// oversampling control the error on approximation - oversampling=10 -> 10^-5 (in theory)
-		// from theory : l < m and l < n
 
+		// from theory : l < m and l < n
 		if (rank < 1 || rank > std::min(m, n) - oversampling)
 			throw std::runtime_error("MatrixFactorizer - IDFactorization: error, rank value (k + oversampling) > min(rows, cols) ");
 
@@ -130,32 +134,46 @@ public:
 	} 
 
 	/**
-	 * @brief 
-	 * Computes an approximate Interpolative Decomposition (ID) of a complex matrix A using
-	 * an adaptive rank selection strategy based on spectral norm error estimation.
+	 * @brief
+	 * Computes an adaptive Interpolative Decomposition (ID) of a complex matrix A
+	 * without requiring the target rank to be specified in advance.
 	 *
-	 * This method performs multiple calls to the standard ID (Algorithm I), starting from a small
-	 * target rank k and doubling it until the approximation relative error ||A - B P||_2 / ||A||_2
-	 * falls below a user-specified tolerance.
+	 * The algorithm attempts to find a factorization of the form:
+	 *
+	 *     A ≈ B * P
+	 *
+	 * where:
+	 *   - B ∈ ℂ^{m×k} consists of k selected columns from A,
+	 *   - P ∈ ℂ^{k×n} is a coefficient matrix such that B * P approximates A
+	 *     in Frobenius norm.
+	 *
+	 * The rank k is determined adaptively: starting from a small initial value,
+	 * the algorithm increases k (multiplicatively) until the energy preserved in
+	 * the approximation exceeds a given threshold.
 	 *
 	 * At each iteration:
-	 *   1. A rank-k interpolative decomposition A ≈ B * P is computed.
-	 *   2. The residual E = A - B * P is formed.
-	 *   3. The spectral norm of the residual is estimated via power iteration.
-	 *   4. If the error ||E||_2 / ||A||_2 is below tol, the current approximation is returned.
+	 *   1. A randomized ID is computed via the method IDFactorization.
+	 *   2. The approximation error ||A - BP||_F is computed.
+	 *   3. The preserved energy is estimated as:
+	 *        energy = 1 - (||A - BP||_F² / ||A||_F²)
+	 *   4. If the preserved energy exceeds the user-defined threshold, the method returns.
+	 *   5. Otherwise, the rank k is increased and the process repeats.
 	 *
-	 * The method guarantees a good approximation without requiring the rank a priori,
-	 * but it does not reuse intermediate computations across iterations (e.g., R*A),
-	 * which can make it more expensive than necessary in practice. !!
+	 * This method does not reuse the sketch matrix Y = RA across iterations,
+	 * which may lead to higher computational cost compared to a batched strategy.
 	 *
 	 * Note:
-	 *   - The stopping criterion is based on the estimated relative spectral norm error.
-	 *   - If no acceptable approximation is found within rank ≤ min(m, n), the function throws.
-	 * 
-	 * @param A    - Input complex matrix (m x n)
-	 * @param tol  - Spectral (relative ?) error tolerance
-	 * @param seed - Seed for random vector generation (used in power iteration)
-	 * @return  IDResult
+	 *   - The approximation is based on Frobenius norm, not spectral norm.
+	 *   - The returned rank satisfies the constraint k + oversampling < min(m, n).
+	 *   - If the threshold is not reached before hitting the maximum allowed rank,
+	 *     the function throws an exception.
+	 *
+	 * @param A                - Input complex matrix (m × n)
+	 * @param seed             - Random seed for reproducibility
+	 * @param energy_threshold - Desired fraction of Frobenius norm preserved (e.g., 0.9)
+	 * @param growth_factor    - Factor used to increase rank at each iteration (e.g., 1.5)
+	 * @param k0               - Initial guess for the rank (default: 2)
+	 * @return IDResult
 	 */
 	static IDResult adaptiveIDFactorization(const CMatrix& A, int seed = -1, double energy_threshold = 0.9, double growth_factor = 1.5, int k0 = 2)
 	{
@@ -204,9 +222,8 @@ public:
 
 		throw std::runtime_error(
 			"MatrixFactorizer::adaptiveIDFactorization: failed to reach sufficient energy within allowed rank, last rank = "
-			+ std::to_string(old_k) + "k_max = " + std::to_string(k_max));
+			+ std::to_string(old_k) + ", k_max = " + std::to_string(k_max));
 	}
-
 
 	/**
 	 * @brief 

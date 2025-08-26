@@ -16,12 +16,12 @@ using SVDResult = randla::Types<double>::SVDResult;
 using IDResult  = randla::Types<double>::IDResult;
 using EigenvalueDecomposition = randla::Types<double>::EigenvalueDecomposition;
 
-void check_approximation_error(const CMatrix & A, const IDResult & id, double r_t, double tol_fro = 1e-8) {
+void check_approximation_error(const CMatrix & A, const IDResult & id, double tol_fro = 0.3) {
    const auto& B = id.B;
    const auto& P = id.P;
    const auto residual = (A - B * P);
    const double frobenius_error = residual.norm() / A.norm();
-   EXPECT_LE(frobenius_error, tol_fro) << "Frobenius error too high for rank/tol " << r_t;
+   EXPECT_LE(frobenius_error, tol_fro) << "Frobenius error too high: ";
 }
 
 int numerical_rank(const Matrix& Q, double tol = -1){
@@ -105,6 +105,7 @@ TEST(MatrixFactorizer, IDFactorization_DenseQ) {
    ASSERT_GT(rank_Q_dense, ID_oversampling);
    EXPECT_NO_THROW({
       IDResult id = MF::IDFactorization(Q_dense(), rank_Q_dense - ID_oversampling, seed);
+      check_approximation_error(Q_dense(), id);
    });
 }
 
@@ -114,6 +115,7 @@ TEST(MatrixFactorizer, IDFactorization_HermitianQ) {
    ASSERT_GT(rank_hermitian_Q, ID_oversampling);
    EXPECT_NO_THROW({
       IDResult id = MF::IDFactorization(Q_hermitian(), rank_hermitian_Q - ID_oversampling, seed);
+      check_approximation_error(Q_hermitian(), id);
    });
 }
 
@@ -123,39 +125,35 @@ TEST(MatrixFactorizer, IDFactorization_PSDQ) {
    ASSERT_GT(rank_psd_Q, ID_oversampling);
    EXPECT_NO_THROW({
       IDResult id = MF::IDFactorization(Q_psd(), rank_psd_Q - ID_oversampling, seed);
+      check_approximation_error(Q_psd(), id);
    });
 }
 
 TEST(MatrixFactorizer, AdaptiveIDFactorization_Qdense) {
-   double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_dense(), seed);
    });
 }
 
 TEST(MatrixFactorizer, AdaptiveIDFactorization_Qpsd) {
-   double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_psd(), seed);
    });
 }
 
 TEST(MatrixFactorizer, AdaptiveIDFactorization_Qpsd2) {
-   double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_psd2(), seed);
    });
 }
 
 TEST(MatrixFactorizer, AdaptiveIDFactorization_Qsparse) {
-   double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_sparse(), seed);
    });
 }
 
 TEST(MatrixFactorizer, AdaptiveIDFactorization_Qhermitian) {
-   double id_tol = 0.6;
    EXPECT_NO_THROW({
       IDResult id = MF::adaptiveIDFactorization(Q_hermitian(), seed);
    });
