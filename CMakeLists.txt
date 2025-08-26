@@ -57,7 +57,7 @@ endif()
 # ========================
 # OpenMP (optional)
 # ========================
-option(BUILD_TESTS "Build tests" ON)
+
 set(HAVE_OPENMP OFF)
 if(ENABLE_OPENMP)
     find_package(OpenMP)
@@ -113,6 +113,7 @@ target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 # ========================
 # Tests (GoogleTest + CTest)
 # ========================
+option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     include(CTest)
     enable_testing()
@@ -151,7 +152,7 @@ endif()
 # ========================
 # Benchmark
 # ========================
-option(BUILD_BENCHMARKS "Build benchmarks" ON)
+option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 if(BUILD_BENCHMARKS)
     if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_rank_A.cpp)
         add_executable(benchmark_fixed_rank_A benchmark/benchmark_fixed_rank_A.cpp)

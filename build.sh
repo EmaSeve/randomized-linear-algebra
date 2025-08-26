@@ -63,32 +63,37 @@ echo -e "${YELLOW}Configuring build...${NC}"
 
 mkdir -p build && cd build
 
-
-if [ "$RUN_BENCHMARK" = true ]; then
+if [ "$RUN_BENCHMARK" = true ] && [ "$RUN_TESTS" = true ]; then
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DBUILD_BENCHMARKS=ON -DTHREADING_MODE=${THREADING_MODE} || exit 1
+elif [ "$RUN_BENCHMARK" = true ]; then
     cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=ON -DTHREADING_MODE=${THREADING_MODE} || exit 1
-elif [ "$RUN_TESTS" = false ]; then
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
-else
+elif [ "$RUN_TESTS" = true ]; then
     cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DBUILD_BENCHMARKS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
+else
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
 fi
 
 echo -e "${YELLOW}Compiling...${NC}"
 make -j$(nproc) || exit 1
+
+
+if [ "$RUN_TESTS" = true ]; then
+    echo -e "${YELLOW}Running tests...${NC}"
+    ctest --output-on-failure || exit 1
+fi
 
 if [ "$RUN_BENCHMARK" = true ]; then
     if [ "$RUN_FIXED_RANK" = true ]; then
         echo -e "${YELLOW}Running fixed rank benchmark...${NC}"
         ./benchmark_fixed_rank_A || exit 1
     fi
-    
     if [ "$RUN_FIXED_PRECISION" = true ]; then
         echo -e "${YELLOW}Running fixed precision benchmark...${NC}"
         ./benchmark_fixed_precision_A || exit 1
     fi
-elif [ "$RUN_TESTS" = true ]; then
-    echo -e "${YELLOW}Running tests...${NC}"
-    ctest --output-on-failure || exit 1
-else
+fi
+
+if [ "$RUN_TESTS" = false ] && [ "$RUN_BENCHMARK" = false ]; then
     echo -e "${GREEN}Skipping tests and benchmarks.${NC}"
 fi
 
