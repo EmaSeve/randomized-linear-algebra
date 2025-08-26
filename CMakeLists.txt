@@ -1,6 +1,7 @@
 # ========================
-# Threading/BLAS selection
+# Threading/BLAS selection (choose parallelization backend)
 # ========================
+# Set threading mode and enable/disable OpenMP or OpenBLAS accordingly
 set(THREADING_MODE "openmp" CACHE STRING "Threading mode: openmp, blas, or single")
 set(ENABLE_OPENMP OFF)
 set(ENABLE_OPENBLAS OFF)
@@ -17,15 +18,22 @@ else()
     message(FATAL_ERROR "THREADING_MODE must be one of: openmp, blas, single")
 endif()
 
+
+# ========================
+# Project setup
+# ========================
 cmake_minimum_required(VERSION 3.15)
 project(randomized-linear-algebra VERSION 1.0.0 LANGUAGES CXX)
 
+
+# Require C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ========================
-# Eigen3 (header-only)
+# Eigen3 (header-only, required for linear algebra)
 # ========================
+# Try to find Eigen3, fallback to manual include if not found as a CMake target
 find_package(Eigen3 QUIET NO_MODULE)
 if(NOT TARGET Eigen3::Eigen)
     find_path(EIGEN3_INCLUDE_DIR
@@ -41,8 +49,9 @@ if(NOT TARGET Eigen3::Eigen)
 endif()
 
 # ========================
-# FFTW (double precision)
+# FFTW (double precision, optional)
 # ========================
+# Try to find FFTW3 using pkg-config, add as imported target if found
 find_package(PkgConfig QUIET)
 set(_have_fftw_target OFF)
 if(PKG_CONFIG_FOUND)
@@ -55,9 +64,10 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 # ========================
-# OpenMP (optional)
+# OpenMP (optional, for parallelism)
 # ========================
 
+# Enable OpenMP if requested and available
 set(HAVE_OPENMP OFF)
 if(ENABLE_OPENMP)
     find_package(OpenMP)
@@ -69,8 +79,9 @@ if(ENABLE_OPENMP)
 endif()
 
 # ========================
-# OpenBLAS (optional, for BLAS in Eigen)
+# OpenBLAS (optional, for BLAS backend in Eigen)
 # ========================
+# Enable OpenBLAS if requested and available
 set(HAVE_OPENBLAS OFF)
 if(ENABLE_OPENBLAS)
     find_package(PkgConfig QUIET)
@@ -88,8 +99,10 @@ if(ENABLE_OPENBLAS)
 endif()
 
 # ========================
-# randomized-linear-algebra (header-only)
+# randomized-linear-algebra (header-only main library)
 # ========================
+
+# Define the main interface library and its dependencies
 add_library(randomized-linear-algebra INTERFACE)
 target_include_directories(randomized-linear-algebra INTERFACE include)
 target_link_libraries(randomized-linear-algebra
@@ -98,6 +111,8 @@ target_link_libraries(randomized-linear-algebra
         FFTW::Double
 )
 
+
+# Add OpenMP/OpenBLAS to the interface if enabled
 if(HAVE_OPENMP)
     target_link_libraries(randomized-linear-algebra INTERFACE OpenMP::OpenMP_CXX)
     target_compile_definitions(randomized-linear-algebra INTERFACE EIGEN_USE_OPENMP=1)
@@ -113,6 +128,7 @@ target_compile_features(randomized-linear-algebra INTERFACE cxx_std_17)
 # ========================
 # Tests (GoogleTest + CTest)
 # ========================
+# Optionally build and configure tests using GoogleTest and CTest
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     include(CTest)
@@ -150,8 +166,9 @@ if(BUILD_TESTS)
 endif()
 
 # ========================
-# Benchmark
+# Benchmarks (optional)
 # ========================
+# Optionally build benchmarks if sources exist
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 if(BUILD_BENCHMARKS)
     if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark_fixed_rank_A.cpp)
