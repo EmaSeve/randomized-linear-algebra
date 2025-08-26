@@ -60,7 +60,17 @@ plot_benchmark.py    # Python script for plotting benchmark results
 - [Eigen3](https://eigen.tuxfamily.org/) (header-only)
 - [CMake ≥ 3.15](https://cmake.org)
 - [FFTW3](http://www.fftw.org/) (for SRFT algorithms)
-- Optional: OpenMP / OpenBLAS
+- Optional: [OpenMP](https://www.openmp.org/) / [OpenBLAS](https://www.openblas.net/)
+
+### Defaults
+- **Threading mode:** `openmp`
+- **Tests:** `BUILD_TESTS=ON`
+- **Benchmarks:** `BUILD_BENCHMARKS=OFF`
+
+So by default the library builds with OpenMP enabled and compiles the 
+GoogleTest-based unit tests. Benchmarks are not built unless explicitly requested.
+
+---
 
 ### Quick start with `build.sh`
 
@@ -68,12 +78,19 @@ plot_benchmark.py    # Python script for plotting benchmark results
 # Default: OpenMP backend + run tests
 ./build.sh
 
-# BLAS backend (OpenBLAS, via pkg-config)
+# BLAS backend (OpenBLAS, via pkg-config), without tests
 ./build.sh --no-test --threading blas
 
-# Run benchmarks (fixed-rank only, OpenMP)
+# Run benchmarks (fixed-rank only, OpenMP backend)
 ./build.sh --benchmark fr --threading openmp
 ```
+
+Flags:
+- `--no-test` → disables building/running tests  
+- `--benchmark [fr|fp]` → builds and runs benchmarks (fixed-rank, fixed-precision, or both)  
+- `--threading {openmp|blas|single}` → selects parallel backend  
+
+---
 
 ### Manual build (without script)
 
@@ -82,7 +99,7 @@ plot_benchmark.py    # Python script for plotting benchmark results
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=openmp
 cmake --build build -j
 
-# BLAS backend
+# BLAS backend (OpenBLAS via pkg-config)
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=blas
 cmake --build build -j
 
@@ -91,17 +108,38 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=single
 cmake --build build -j
 ```
 
+Additional options:
+- `-DBUILD_TESTS=OFF` → disable tests  
+- `-DBUILD_BENCHMARKS=ON` → enable benchmarks  
+
+Examples:
+```bash
+# Disable tests, build only the library
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release       -DTHREADING_MODE=openmp -DBUILD_TESTS=OFF
+
+# Enable benchmarks (in addition to library + tests)
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release       -DTHREADING_MODE=blas -DBUILD_BENCHMARKS=ON
+```
+
 ---
 
 ## Usage in your project (CMake)
 
+The library is **header-only** and exposes a CMake target 
+`randomized-linear-algebra`:
+
 ```cmake
+# In your CMakeLists.txt
 find_package(Eigen3 QUIET NO_MODULE)
 add_subdirectory(path/to/randomized-linear-algebra)
 
 add_executable(my_app src/main.cpp)
 target_link_libraries(my_app PRIVATE randomized-linear-algebra)
 ```
+
+The target automatically propagates include paths and links against its 
+dependencies (Eigen3, FFTW, and optionally OpenMP / OpenBLAS depending 
+on the chosen backend).
 
 ---
 
