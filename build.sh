@@ -59,17 +59,17 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-
 echo -e "${YELLOW}Configuring build...${NC}"
 
 mkdir -p build && cd build
 
 
-# Pass threading mode to CMake
 if [ "$RUN_BENCHMARK" = true ]; then
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=ON -DTHREADING_MODE=${THREADING_MODE} || exit 1
+elif [ "$RUN_TESTS" = false ]; then
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
 else
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DTHREADING_MODE=${THREADING_MODE} || exit 1
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DBUILD_BENCHMARKS=OFF -DTHREADING_MODE=${THREADING_MODE} || exit 1
 fi
 
 echo -e "${YELLOW}Compiling...${NC}"
