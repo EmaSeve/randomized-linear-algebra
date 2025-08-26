@@ -164,7 +164,7 @@ TEST(MatrixFactorizer, DirectSVD_SparseA_Qsparse) {
       SVDResult svd_A = MF::directSVD(sparse_A(), Q_sparse(), tol);
       auto A_approx = svd_A.U * svd_A.S.asDiagonal() * svd_A.V.transpose();
       double real_err = (sparse_A() - A_approx).norm();
-      EXPECT_LE(real_err, 1.0); // loose bound
+      EXPECT_LE(real_err, 1e-6);
    });
 }
 
@@ -173,7 +173,7 @@ TEST(MatrixFactorizer, DirectEigenvalueDecomposition_HermitianA_Qhermitian) {
       EigenvalueDecomposition ed = MF::directEigenvalueDecomposition(hermitian_A(), Q_hermitian(), tol);
       auto Hermitian_A_approx = ed.U * ed.Lambda * ed.U.transpose();
       double real_err = (hermitian_A() - Hermitian_A_approx).norm();
-      EXPECT_LE(real_err, 1.0);
+      EXPECT_LE(real_err, 1e-6);
    });
 }
 
@@ -182,7 +182,7 @@ TEST(MatrixFactorizer, EigenvalueDecompositionViaNystromMethod_PsdA_Qpsd) {
       EigenvalueDecomposition ed = MF::eigenvalueDecompositionViaNystromMethod(psd_A(), Q_psd(), tol);
       auto spd_A_approx = ed.U * ed.Lambda * ed.U.transpose();
       double real_err = (psd_A() - spd_A_approx).norm();
-      EXPECT_LE(real_err, 1.0);
+      EXPECT_LE(real_err, 1e-6);
    });
 }
 
@@ -192,7 +192,7 @@ TEST(MatrixFactorizer, EigenvalueDecompositionInOnePass_HermitianA_Qhermitian) {
       EigenvalueDecomposition ed = MF::eigenvalueDecompositionInOnePass(hermitian_A(), Q_hermitian(), Omega, tol);
       auto Hermitian_A_approx = ed.U * ed.Lambda * ed.U.transpose();
       double real_err = (hermitian_A() - Hermitian_A_approx).norm();
-      EXPECT_LE(real_err, 1.0);
+      EXPECT_LE(real_err, 1e-6);
    });
 
 // TEST(MatrixFactorizer, SVDViaRowExtraction_SparseA_Qsparse) {
@@ -200,7 +200,7 @@ TEST(MatrixFactorizer, EigenvalueDecompositionInOnePass_HermitianA_Qhermitian) {
 //       SVDResult svd_A = MF::SVDViaRowExtraction(sparse_A(), Q_sparse(), tol);
 //       auto A_approx = svd_A.U * svd_A.S.asDiagonal() * svd_A.V.transpose();
 //       double real_err = (sparse_A() - A_approx).norm();
-//       EXPECT_LE(real_err, 1.0);
+//       EXPECT_LE(real_err, 1e-6);
 //    });
 // }
 
@@ -209,7 +209,7 @@ TEST(MatrixFactorizer, EigenvalueDecompositionInOnePass_HermitianA_Qhermitian) {
 //       EigenvalueDecomposition ed = MF::eigenvalueDecompositionViaRowExtraction(hermitian_A(), Q_hermitian(), tol);
 //       auto Hermitian_A_approx = ed.U * ed.Lambda * ed.U.transpose();
 //       double real_err = (hermitian_A() - Hermitian_A_approx).norm();
-//       EXPECT_LE(real_err, 1.0);
+//       EXPECT_LE(real_err, 1e-6);
 //    });
 // }
 
