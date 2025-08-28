@@ -559,9 +559,8 @@ public:
 	 *
 	 * Given:
 	 *   - A ∈ ℝ^{n x n}, a Hermitian matrix,
-	 *   - Ω ∈ ℝ^{n x l}, a random test matrix,
-	 *   - Q ∈ ℝ^{n x k}, an orthonormal basis such that A ≈ QQ^*AQQ^* and Y = QQ^*Y with Y = AΩ,
-	 *
+	 *   - Ω ∈ ℝ^{n x l}, a random test matrix, 
+	 * 
 	 * this function computes an approximate factorization:
 	 *
 	 *     A ≈ U Λ U^*
@@ -572,11 +571,13 @@ public:
 	 *
 	 * The algorithm proceeds as follows:
 	 *
-	 * 1. Use a least-squares solver to estimate a Hermitian matrix B_approx satisfying:
+	 * 1. Compute Y = A * Omega, then construct a basis Q for the range of Y
+	 * 
+	 * 2. Use a least-squares solver to estimate a Hermitian matrix B_approx satisfying:
 	 *        B_approx (Q^* Ω) ≈ Q^* Y
 	 *
-	 * 2. Compute the eigendecomposition: B_approx = V Λ V^*
-	 * 3. Form the approximate eigenvector matrix: U = Q V
+	 * 3. Compute the eigendecomposition: B_approx = V Λ V^*
+	 * 4. Form the approximate eigenvector matrix: U = Q V
 	 *
 	 * Note:
 	 *   - This method requires only one pass over A to compute Y = A Ω.
@@ -584,13 +585,13 @@ public:
 	 *   - Oversampling (l > k) is recommended to improve stability.
 	 *
 	 * @param Hermitian_A       - Hermitian input matrix (n x n)
-	 * @param Q       - Orthonormal basis matrix (n x k)
 	 * @param Omega   - Random test matrix used to build the sketch Y = A Ω
 	 * @param tol     - Tolerance for validating the residual ||A - QQ^*A||
+	 * @param r 	  - Number of random vectors to use per iteration, used in the adaptiveRangeFinder()
 	 * @return EigenvalueDecomposition structure
 	 */
 	template<class MatLike>
-	static EigenvalueDecomposition eigenvalueDecompositionInOnePass(const MatLike & Hermitian_A, const MatLike & Q, const MatLike & Omega, double tol){
+	static EigenvalueDecomposition eigenvalueDecompositionInOnePass(const MatLike & Hermitian_A, const MatLike & Omega, double tol, int r){
 		
 		// Alias of Hermitian_A
 		const auto& A = Hermitian_A;
@@ -599,12 +600,11 @@ public:
 		if(!isHermitian)
 			throw std::runtime_error("MatrixFactorizer - eigenvalue decomposition in one pass: matrix A is NOT Hermitian");
 
-		double error = randla::metrics::ErrorEstimators<FloatType>::realError(A, Q);
-		if (error > tol) 
-			throw std::runtime_error("MatrixFactorizer - eigenvalue decomposition in one pass: residual norm exceeds tolerance");
-
 		// Step 1: Form the sample matrix Y = A * Omega
 		Matrix Y = A * Omega;
+		
+		// Step 2: construct a basis Q for the range of Y
+		Matrix Q = randla::algorithms::AdaptiveRandRangeFinder<FloatType>::adaptiveRangeFinder(A, tol, r, -1);
 
 		// Step 2: Solve least squares: Bapprox * (Q^* * Omega) ≈ Q^* * Y
 		Matrix Q_omega = Q.adjoint() * Omega;

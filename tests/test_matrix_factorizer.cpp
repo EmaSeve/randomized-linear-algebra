@@ -189,7 +189,8 @@ TEST(MatrixFactorizer, EigenvalueDecompositionViaNystromMethod_PsdA_Qpsd) {
 TEST(MatrixFactorizer, EigenvalueDecompositionInOnePass_HermitianA_Qhermitian) {
    EXPECT_NO_THROW({
       Matrix Omega = TestMat::randomDenseMatrix(size, size);
-      EigenvalueDecomposition ed = MF::eigenvalueDecompositionInOnePass(hermitian_A(), Q_hermitian(), Omega, tol);
+      int r = 10;
+      EigenvalueDecomposition ed = MF::eigenvalueDecompositionInOnePass(hermitian_A(), Omega, tol, r);
       auto Hermitian_A_approx = ed.U * ed.Lambda * ed.U.transpose();
       double real_err = (hermitian_A() - Hermitian_A_approx).norm();
       EXPECT_LE(real_err, 1e-6);
