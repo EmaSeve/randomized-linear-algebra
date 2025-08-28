@@ -604,7 +604,7 @@ public:
 		Matrix Y = A * Omega;
 		
 		// Step 2: construct a basis Q for the range of Y
-		Matrix Q = randla::algorithms::AdaptiveRandRangeFinder<FloatType>::adaptiveRangeFinder(A, tol, r, -1);
+		Matrix Q = randla::algorithms::AdaptiveRandRangeFinder<FloatType>::adaptiveRangeFinder(Y, tol, r, -1);
 
 		// Step 2: Solve least squares: Bapprox * (Q^* * Omega) ≈ Q^* * Y
 		Matrix Q_omega = Q.adjoint() * Omega;
